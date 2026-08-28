@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "record_id",
+    "status",
+    "audit_type",
+    "candidate_identity",
+    "scope",
+    "findings",
+    "result_consumption",
+    "evidence_limit"
+  ],
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_limit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "audit_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidate_identity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope": {
+      "type": "object"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "result_consumption": {
+      "type": "object"
+    }
+  },
+  "title": "Audit Receipt"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "lost-recomposition",
+  "title": "Lost Recomposition",
+  "prompt": "Synthetic representative scenario for framework evaluation.",
+  "expected_mechanisms": [
+    "semantic recomposition",
+    "interaction closure"
+  ],
+  "success_oracle": "The response preserves the requested outcome and names the evidence ceiling."
+}

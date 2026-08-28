@@ -1,0 +1,10 @@
+{
+  "id": "repeated-failure",
+  "title": "Repeated Failure",
+  "prompt": "Synthetic representative scenario for framework evaluation.",
+  "expected_mechanisms": [
+    "verification model",
+    "root cause"
+  ],
+  "success_oracle": "The response preserves the requested outcome and names the evidence ceiling."
+}

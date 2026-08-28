@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "record_id",
+    "status",
+    "raw_evidence",
+    "causal_hypothesis",
+    "scenario_and_impact",
+    "authorized_change",
+    "rollback",
+    "evidence_limit"
+  ],
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_limit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "raw_evidence": {
+      "type": "object"
+    },
+    "causal_hypothesis": {
+      "type": "object"
+    },
+    "scenario_and_impact": {
+      "type": "object"
+    },
+    "authorized_change": {
+      "type": "string"
+    },
+    "rollback": {
+      "type": "string"
+    }
+  },
+  "title": "Correction Authorization"
+}

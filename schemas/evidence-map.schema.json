@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "record_id",
+    "status",
+    "claim_map",
+    "planes",
+    "freshness",
+    "invalidation_triggers"
+  ],
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "claim_map": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "planes": {
+      "type": "object"
+    },
+    "freshness": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "invalidation_triggers": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  },
+  "title": "Evidence Map"
+}

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "record_id",
+    "status",
+    "primary_objective",
+    "clause_map",
+    "acceptance_criteria",
+    "constraints",
+    "prohibited_substitutes",
+    "evidence_limit"
+  ],
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_limit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "primary_objective": {
+      "type": "string",
+      "minLength": 1
+    },
+    "clause_map": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "constraints": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "prohibited_substitutes": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  },
+  "title": "Objective Contract"
+}

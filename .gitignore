@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.objective-integrity-backups/
+dist/
+build/
+*.egg-info/
+work/

@@ -1,0 +1,10 @@
+{
+  "id": "test-fix-loop",
+  "title": "Test Fix Loop",
+  "prompt": "Synthetic representative scenario for framework evaluation.",
+  "expected_mechanisms": [
+    "verification model",
+    "proof ceiling"
+  ],
+  "success_oracle": "The response preserves the requested outcome and names the evidence ceiling."
+}

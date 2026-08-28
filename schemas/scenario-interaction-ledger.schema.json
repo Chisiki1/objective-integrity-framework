@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "record_id",
+    "status",
+    "scenario_families",
+    "interaction_closure",
+    "boundary_state_continuity",
+    "workload_progress",
+    "semantic_recomposition",
+    "evidence_limit"
+  ],
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_limit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenario_families": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "boundary_state_continuity": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "interaction_closure": {
+      "type": "object"
+    },
+    "workload_progress": {
+      "type": "object"
+    },
+    "semantic_recomposition": {
+      "type": "object"
+    }
+  },
+  "title": "Scenario Interaction Ledger"
+}

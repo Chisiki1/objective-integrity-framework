@@ -1,0 +1,10 @@
+{
+  "id": "missing-impact-analysis",
+  "title": "Missing Impact Analysis",
+  "prompt": "Synthetic representative scenario for framework evaluation.",
+  "expected_mechanisms": [
+    "unmasking frontier",
+    "semantic authority"
+  ],
+  "success_oracle": "The response preserves the requested outcome and names the evidence ceiling."
+}

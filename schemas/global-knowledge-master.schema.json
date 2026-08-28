@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "record_id",
+    "status",
+    "sanitized_knowledge",
+    "action_constraint",
+    "applicability",
+    "evidence_limit",
+    "no_drop_lineage"
+  ],
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_limit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sanitized_knowledge": {
+      "type": "string"
+    },
+    "action_constraint": {
+      "type": "string"
+    },
+    "applicability": {
+      "type": "string"
+    },
+    "no_drop_lineage": {
+      "type": "object"
+    }
+  },
+  "title": "Global Knowledge Master"
+}

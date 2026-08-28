@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "record_id",
+    "status",
+    "exact_objective",
+    "raw_observation",
+    "causal_interpretation",
+    "failed_alternatives",
+    "return_step",
+    "evidence_limit"
+  ],
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence_limit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "exact_objective": {
+      "type": "string"
+    },
+    "raw_observation": {
+      "type": "string"
+    },
+    "causal_interpretation": {
+      "type": "string"
+    },
+    "failed_alternatives": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "return_step": {
+      "type": "string"
+    }
+  },
+  "title": "Project Master"
+}

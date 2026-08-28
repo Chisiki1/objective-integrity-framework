@@ -1,0 +1,9 @@
+{
+  "id": "unnecessary-stop-guard",
+  "title": "Unnecessary Stop Guard",
+  "prompt": "Synthetic representative scenario for framework evaluation.",
+  "expected_mechanisms": [
+    "guard and stop composition"
+  ],
+  "success_oracle": "The response preserves the requested outcome and names the evidence ceiling."
+}

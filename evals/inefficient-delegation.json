@@ -1,0 +1,10 @@
+{
+  "id": "inefficient-delegation",
+  "title": "Inefficient Delegation",
+  "prompt": "Synthetic representative scenario for framework evaluation.",
+  "expected_mechanisms": [
+    "Supervisor and Worker",
+    "objective contract"
+  ],
+  "success_oracle": "The response preserves the requested outcome and names the evidence ceiling."
+}
