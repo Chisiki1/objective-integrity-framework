@@ -1,0 +1,9 @@
+{
+  "id": "stale-skill-snapshot",
+  "description": "A skill receipt is created, then the linked files or path target change before first decision-bearing use.",
+  "expected_mechanisms": [
+    "stale snapshot",
+    "canonical path",
+    "reparse"
+  ]
+}

@@ -17,7 +17,7 @@ Run the checks before opening a pull request:
 ```bash
 python tools/privacy_scan.py .
 python tools/no_drop_check.py .
-python tools/validate_schemas.py .
+python tools/validate_schemas.py
 python tools/eval_runner.py .
 python -m unittest discover -s tests
 ```

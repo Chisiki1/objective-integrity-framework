@@ -8,3 +8,4 @@
 - Templates and JSON schemas for key records.
 - Generic and optional runtime-specific adapters.
 - Deterministic validators, privacy scanner, bootstrap tool, and evaluation fixtures.
+- Skill Book plane for deterministic reusable-skill resolution, selected and rejected receipts, lifecycle/effect records, exact-action preflight, stale snapshot handling, and measured activation/retirement guidance.

@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Skill Lifecycle Record",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "event_id",
+    "objective_id",
+    "source_claims",
+    "skill_id",
+    "proof_ceiling"
+  ],
+  "oneOf": [
+    {
+      "required": [
+        "skill_version",
+        "registry_sha256",
+        "selection_snapshot_sha256",
+        "planned_objective_delta",
+        "actual_objective_delta",
+        "planned_evidence_delta",
+        "actual_evidence_delta",
+        "outcome",
+        "consumer_result",
+        "side_effects",
+        "rollback_result",
+        "elapsed_ms",
+        "tool_calls",
+        "rework"
+      ]
+    },
+    {
+      "required": [
+        "from_state",
+        "to_state",
+        "reason",
+        "baseline",
+        "source_bound_benefit",
+        "representative_replay_or_shadow",
+        "normal_path_counterexamples",
+        "independent_challenge",
+        "bounded_activation_scope",
+        "rollback",
+        "retirement_trigger",
+        "measurement",
+        "identity_snapshot",
+        "ambiguity"
+      ]
+    }
+  ],
+  "properties": {
+    "schema_version": {
+      "enum": [
+        "skill-effect-v1",
+        "skill-transition-v1"
+      ]
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "objective_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "skill_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "proof_ceiling": {
+      "type": "string",
+      "minLength": 1
+    },
+    "registry_sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-Fa-f]{64}$"
+    },
+    "selection_snapshot_sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-Fa-f]{64}$"
+    },
+    "outcome": {
+      "enum": [
+        "advanced",
+        "no_effect",
+        "recurred",
+        "false_block",
+        "misselected",
+        "prevented",
+        "outcome_unknown",
+        "not_observed"
+      ]
+    },
+    "from_state": {
+      "type": "string",
+      "minLength": 1
+    },
+    "to_state": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_bound_benefit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "representative_replay_or_shadow": {
+      "type": "string",
+      "minLength": 1
+    },
+    "normal_path_counterexamples": {
+      "type": "array",
+      "minItems": 1
+    },
+    "independent_challenge": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bounded_activation_scope": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rollback": {
+      "type": "string",
+      "minLength": 1
+    },
+    "retirement_trigger": {
+      "type": "string",
+      "minLength": 1
+    },
+    "measurement": {
+      "type": "object",
+      "minProperties": 1
+    },
+    "identity_snapshot": {
+      "type": "object",
+      "required": [
+        "registry_sha256",
+        "selection_snapshot_sha256",
+        "skill_content_sha256"
+      ],
+      "properties": {
+        "registry_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-Fa-f]{64}$"
+        },
+        "selection_snapshot_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-Fa-f]{64}$"
+        },
+        "skill_content_sha256": {
+          "type": "string",
+          "pattern": "^[0-9A-Fa-f]{64}$"
+        }
+      }
+    }
+  }
+}

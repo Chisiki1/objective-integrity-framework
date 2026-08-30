@@ -13,7 +13,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def is_global_like(path: Path) -> bool:
     parts = {part.lower() for part in path.parts}
-    return ".codex" in parts or ".config" in parts
+    home = Path.home().resolve()
+    try:
+        relative_to_home = path.resolve().relative_to(home)
+    except ValueError:
+        relative_to_home = None
+    if ".codex" in parts or ".config" in parts or ".agents" in parts:
+        return True
+    if relative_to_home is not None and len(relative_to_home.parts) <= 1:
+        return True
+    return False
 
 
 def planned_files(adapter: str) -> dict[str, Path]:
@@ -28,6 +37,14 @@ def planned_files(adapter: str) -> dict[str, Path]:
             ".agents/skills/objective-integrity/SKILL.md": ROOT / ".agents" / "skills" / "objective-integrity" / "SKILL.md",
             ".agents/skills/objective-integrity/references/standard-workflow.md": ROOT / ".agents" / "skills" / "objective-integrity" / "references" / "standard-workflow.md",
             ".agents/skills/objective-integrity/references/high-assurance.md": ROOT / ".agents" / "skills" / "objective-integrity" / "references" / "high-assurance.md",
+            ".agents/skills/objective-integrity/references/skill-book.md": ROOT / ".agents" / "skills" / "objective-integrity" / "references" / "skill-book.md",
+        }
+    if adapter == "skill-book":
+        return {
+            "objective-integrity/skill-selection-receipt.md": ROOT / "templates" / "skill-selection-receipt.md",
+            "objective-integrity/skill-lifecycle-record.md": ROOT / "templates" / "skill-lifecycle-record.md",
+            "objective-integrity/exact-action-preflight.md": ROOT / "templates" / "exact-action-preflight.md",
+            "objective-integrity/skill-book.md": ROOT / "docs" / "skill-book.md",
         }
     raise ValueError(adapter)
 
@@ -51,7 +68,7 @@ def rollback(backup: Path) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Install project-local Objective Integrity Framework files.")
     parser.add_argument("--destination", help="Explicit project destination.")
-    parser.add_argument("--adapter", choices=["generic", "codex"], default="generic")
+    parser.add_argument("--adapter", choices=["generic", "codex", "skill-book"], default="generic")
     parser.add_argument("--apply", action="store_true", help="Write files. Default is dry-run.")
     parser.add_argument("--allow-global", action="store_true", help="Acknowledge a global-looking destination.")
     parser.add_argument("--rollback", help="Rollback from a generated backup directory.")

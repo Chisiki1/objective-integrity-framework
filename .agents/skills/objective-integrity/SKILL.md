@@ -16,9 +16,11 @@ Use this skill when work can drift from the requested outcome, when evidence mus
 3. Keep raw evidence, causal hypotheses, scenarios, intervention impact, and correction authorization separate.
 4. Preserve system-level scenario meaning when decomposing work into components or tests.
 5. Respect proof ceilings and consumer boundaries before release, external action, or completion claims.
-6. Record measured effects without claiming empirical superiority from structure alone.
+6. Resolve reusable skills or deterministic helpers from current work facts, selected and rejected reasons, path/hash identity, and blind-safety rules when a Skill Book is in scope.
+7. Record measured effects without claiming empirical superiority from structure alone.
 
 ## References
 
 - Read `references/standard-workflow.md` for normal implementation, repair, migration, or review.
 - Read `references/high-assurance.md` for public release, external writes, privacy-sensitive work, or long-running operations.
+- Read `references/skill-book.md` when reusable skills, deterministic action constraints, lifecycle records, or measured skill effects are part of the work.

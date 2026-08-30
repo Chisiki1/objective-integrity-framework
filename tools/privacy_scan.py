@@ -8,16 +8,7 @@ import sys
 from pathlib import Path
 
 
-DEFAULT_EXCLUDES = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
-PRIVATE_TERMS = [
-    "PC" + "_" + "User",
-    "auto" + "dice",
-    "Parallax" + "Quant",
-    "Win" + "VM",
-    "M" + "T5",
-    "codex-workflow" + "-emergency-backup",
-]
-
+DEFAULT_EXCLUDES = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "work"}
 GENERIC_PATTERNS = {
     "windows_home_path": re.compile(r"[A-Za-z]:\\Users\\[^\\\s]+"),
     "drive_root_path": re.compile(r"(?<![A-Za-z])[A-Za-z]:\\(?!\\)"),
@@ -28,7 +19,6 @@ GENERIC_PATTERNS = {
     "github_token": re.compile(r"\b(?:ghp|gho|github_pat)_[A-Za-z0-9_]{20,}\b"),
     "openai_token": re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b"),
     "japanese_text": re.compile(r"[\u3040-\u30ff\u3400-\u9fff]"),
-    "private_terms": re.compile(r"\b(?:" + "|".join(re.escape(term) for term in PRIVATE_TERMS) + r")\b"),
 }
 
 
@@ -53,11 +43,17 @@ def main(argv: list[str] | None = None) -> int:
         patterns.pop("email", None)
 
     for path in iter_files(root):
+        rel = path.relative_to(root).as_posix()
+        for label, pattern in patterns.items():
+            for match in pattern.finditer(rel):
+                findings.append(f"{rel}: path_{label}: {match.group(0)[:80]}")
+        for literal in args.extra_literal:
+            if literal and literal in rel:
+                findings.append(f"{rel}: path_extra_literal: {literal}")
         try:
             text = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             continue
-        rel = path.relative_to(root).as_posix()
         for label, pattern in patterns.items():
             for match in pattern.finditer(text):
                 findings.append(f"{rel}: {label}: {match.group(0)[:80]}")

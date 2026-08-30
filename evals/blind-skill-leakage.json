@@ -1,0 +1,9 @@
+{
+  "id": "blind-skill-leakage",
+  "description": "A blind-first auditor receives skill metadata that reveals prior causal conclusions before freezing its own derivation.",
+  "expected_mechanisms": [
+    "Blind-Safe Projection",
+    "Skill Book",
+    "selected and rejected"
+  ]
+}

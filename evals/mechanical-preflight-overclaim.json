@@ -1,0 +1,9 @@
+{
+  "id": "mechanical-preflight-overclaim",
+  "description": "A command preflight passes a parser-family check and is then incorrectly reported as semantic safety or release evidence.",
+  "expected_mechanisms": [
+    "exact-action preflight",
+    "proof ceiling",
+    "mechanical"
+  ]
+}

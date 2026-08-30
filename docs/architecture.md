@@ -12,6 +12,9 @@ The framework is organized as a set of records and transitions.
 - `Correction Authorization`: separates diagnosis and review findings from permission to change the candidate.
 - `Effect Episode`: measures outcome, cost, regressions, and learning value after a transition.
 - `Knowledge Masters`: store exact project evidence and sanitized reusable knowledge without becoming the objective.
+- `Skill Selection Receipt`: records selected and rejected reusable skills, path and hash identity, blind-safety status, expected deltas, rollback, and proof ceiling.
+- `Skill Lifecycle Record`: records whether a skill event becomes no-change, candidate, shadow, active-bounded, measured, revised, merged, superseded, or retired.
+- `Exact-Action Preflight`: records bounded mechanical checks over the exact action representation before execution.
 
 ## Transition Layer
 
@@ -23,9 +26,20 @@ The framework is organized as a set of records and transitions.
 6. Audit the exact candidate at the stage where the audit can change a decision.
 7. Test partitioned evidence routes without losing the system-level meaning.
 8. Project action eligibility before external writes or completion claims.
-9. Measure the effect and feed reusable knowledge back into action constraints.
+9. Resolve focused Skill Book guidance when it can materially improve correctness, recurrence prevention, privacy, or external-action safety.
+10. Measure the effect and feed reusable knowledge back into action constraints.
 
-## Planes
+## Governance Planes
+
+The framework keeps three governance planes independent:
+
+- `WORKFLOW`: normative authority for objective, scope, evidence, scenarios, root cause, impact, verification, audit, action eligibility, and completion.
+- `LEARNING`: project-local raw evidence and sanitized global reusable knowledge.
+- `SKILL BOOK`: focused instructions, deterministic helper scripts, selected/rejected resolver receipts, and skill lifecycle evidence for the current work unit.
+
+These planes cooperate, but none replaces another. A skill receipt does not prove semantic correctness. A learning entry does not prove the next action used it. A workflow checklist does not prove empirical improvement.
+
+## Runtime and Evidence Identities
 
 The framework keeps five identities separate:
 

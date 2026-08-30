@@ -11,6 +11,12 @@ Use two layers of learning ledgers when the cost is justified:
 
 The records are support infrastructure. They are never a substitute for the current objective, source, artifact, runtime, or external state.
 
+## Skill Book Feedback
+
+When a reusable skill or deterministic helper is invoked, record its effect separately from the fact that it was selected. A useful record distinguishes planned and actual objective delta, planned and actual evidence delta, consumer result, side effects, rollback, cost, rework, counterevidence, and proof ceiling.
+
+Project records retain exact effects and failed alternatives. Global records receive only sanitized reusable families, aggregate effect, applicability, invalidation trigger, and proof ceiling. This keeps the public lesson useful without turning private task details into shared guidance.
+
 ## Improving the Framework
 
 Before adding a new permanent mechanism, show:

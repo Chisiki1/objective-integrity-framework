@@ -157,11 +157,63 @@ Use project and global learning records when the cost is justified:
 
 Learning records do not replace current source inspection. A confirmed lesson has prevention value only when it is projected onto the exact matching action before execution.
 
-## 16. Self-Improvement
+## 16. Skill Book Plane
+
+Use a Skill Book when reusable instructions or deterministic helpers should be projected into the current work without turning the catalog into the objective.
+
+The framework keeps three independent planes:
+
+- The workflow remains the authority for objective, scope, scenarios, root cause, impact, verification, audit, action eligibility, and completion.
+- Project and global learning records preserve exact local evidence and sanitized reusable families.
+- The Skill Book resolves focused instructions and deterministic scripts for the current work unit.
+
+No plane promotes its evidence into another plane without an explicit evidence route. A skill, registry, resolver, script, selection receipt, lifecycle status, or audit never replaces the user source, current artifact, runtime, external state, blind scenario work, independent review, or final consumer result.
+
+### Resolution
+
+A resolver should derive selected and rejected entries from structured work facts, not from registry order, fuzzy description similarity, popularity, model preference, or first match. A receipt should bind the objective contract, source claims, job/action/tool/environment facts, registry hash, selected and rejected reasons, required inputs, resource claims, expected deltas, proof ceiling, expiry, rollback, canonical path, lexical path, linked file hashes, and a selection snapshot hash.
+
+Only `active-bounded` and `measured` entries are normally selectable. `candidate`, `shadow`, `audited`, `superseded`, and `retired` entries can remain for lineage but should not be normal resolution targets. Missing, stale, unreadable, conflicting, or expired entries hold only their dependent skill route. The normal workflow continues for unrelated work, and independently applicable exact-action constraints still apply.
+
+Resolvers should preserve path identity. Walk the lexical root-to-skill path before resolving it, record symlinks, junctions, and other reparse components with resolved targets, require the final physical path to remain under the resolved origin root, and include that information in the snapshot. A retargeted link, changed file, changed registry status, or changed objective fact invalidates the old snapshot before decision-bearing use.
+
+Duplicate and ancestor precedence must be explicit. If a user-level and project-level skill share a name, the resolver should either follow a declared precedence rule with lineage or return a conflict/user-decision result. It should not silently choose whichever entry is encountered first.
+
+### Blind-Safe Projection
+
+For blind-first diagnosis, scenario generation, or audit work, expose only non-conclusion mechanical entries before the initial derivation is frozen. Syntax, schema, path, permission, tool-contract, and execution-hygiene constraints can be blind-safe when they do not reveal causal, patch, test, scenario, or reviewer conclusions.
+
+Non-blind-safe skill identity, names, descriptions, triggers, selected/rejected reasons, paths, and references are withheld by count and release condition until the initial derivation is frozen. After that, rerun resolution in a reconciled phase and consume the full identity-bound receipt.
+
+### Lifecycle and Effects
+
+Material skill events should receive a rule-bound disposition such as existing skill applicable, existing generic invariant sufficient, candidate, merge candidate, revise candidate, supersede candidate, retire candidate, project-local no-skill, global family candidate, unconfirmed, or rejected.
+
+The ordinary lifecycle is:
+
+```text
+raw event -> causal family and solution -> disposition -> candidate -> shadow or replay -> independent audit -> active-bounded -> measured -> revise, merge, supersede, or retire
+```
+
+This is lineage, not a fixed phase quota. A single failure, a recurrence count, a model suggestion, registry validation, test pass, or self-authored documentation review is not enough to activate a semantic skill. Activation needs a source-bound benefit, baseline, representative replay or shadow evidence, normal-path counterexamples, independent challenge, bounded activation, rollback, measurement, and retirement trigger. Material ambiguity returns a user decision rather than an automatic transition.
+
+Effect records should distinguish planned and actual objective deltas, planned and actual evidence deltas, consumer result, side effects, rollback, elapsed time, tool/delegation cost, rework, counterevidence, and proof ceiling. Public effect outcomes include `advanced`, `no_effect`, `recurred`, `false_block`, `misselected`, `prevented`, `outcome_unknown`, and `not_observed`.
+
+`prevented` is limited to an observed pre-submission block with the rejected candidate preserved and the applicable constraint set matched to the final action representation. Post-submission parser rejection, exceptions, no-ops, and later repairs are containment evidence. They do not prove prevention or avoided consumer harm.
+
+### Single Writer and Retirement
+
+A single semantic writer should own registry or shared-learning updates for a work unit. Parallel jobs may read the same immutable snapshot or clearly separated snapshots with resource claims. They should not directly write shared registries or learning ledgers in parallel.
+
+Retirement requires more than a status change. Superseded and retired skills should leave active discovery roots, while immutable evidence and lineage remain preserved outside those roots. Replacement identity, reason, effective time, prior status, proof ceiling, and rollback path should be explicit.
+
+Skill scripts may provide deterministic structural evidence for schema, set equality, paths, hashes, typed matchers, exact-action discriminators, and lifecycle transitions. They should not decide semantic applicability, root cause, scenario completeness, reachability or harm, intervention safety, audit sufficiency, runtime discovery, consumer outcome, or empirical superiority.
+
+## 17. Self-Improvement
 
 Improve the framework through measured episodes, representative replay, independent challenge, rollback plans, and no-drop preservation. Do not claim empirical superiority from structural review alone.
 
-## 17. Completion
+## 18. Completion
 
 Completion requires:
 

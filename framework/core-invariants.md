@@ -38,6 +38,10 @@ Guards, stops, holds, retries, fallbacks, and fail-closed behavior must preserve
 
 Do not promote static, package, component, verifier, runtime, or external evidence beyond what it can prove. Claims crossing a consumer boundary need evidence at that boundary or a valid bridge.
 
-## 10. Learn Into Action
+## 10. Resolve Focused Guidance Deterministically
+
+When reusable skills or deterministic scripts are used, resolve them from current work facts, selected and rejected reasons, version, origin, canonical path, linked hashes, blind-safety rules, and stale-snapshot checks. Missing or conflicting skills fall back to the normal workflow for unrelated work; they do not bypass independently applicable action constraints.
+
+## 11. Learn Into Action
 
 Learning records matter when they constrain future matching actions, reduce repeated mistakes, or improve measured outcomes. Use two layers when the cost is justified: a project-local learning ledger for exact evidence and a sanitized shared ledger for reusable action knowledge. Recording a lesson is not evidence that the next action used it.

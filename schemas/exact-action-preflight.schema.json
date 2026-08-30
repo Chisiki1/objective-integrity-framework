@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Exact-Action Preflight",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "candidate_id",
+    "objective_id",
+    "action_class",
+    "exact_representation",
+    "representation_sha256",
+    "applicable_constraints",
+    "decision",
+    "proof_ceiling"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "exact-action-preflight-v1"
+    },
+    "candidate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "objective_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "action_class": {
+      "type": "string",
+      "minLength": 1
+    },
+    "exact_representation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "representation_sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-Fa-f]{64}$"
+    },
+    "applicable_constraints": {
+      "type": "array"
+    },
+    "decision": {
+      "enum": [
+        "pass",
+        "block",
+        "error",
+        "not_applicable"
+      ]
+    },
+    "proof_ceiling": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

@@ -27,6 +27,13 @@ This map shows where the major framework mechanisms are explained.
 | Supervisor and Worker topology | `framework/normative-reference.md`, `templates/audit-receipt.md` |
 | Two-layer continual learning | `docs/governance-self-improvement.md`, `templates/global-knowledge-master.md`, `templates/project-master.md` |
 | Knowledge-to-action recurrence prevention | `framework/core-invariants.md`, `tools/no_drop_check.py` |
+| Skill Book three-plane separation | `docs/skill-book.md`, `framework/normative-reference.md` |
+| Deterministic skill resolver receipts | `docs/skill-book.md`, `templates/skill-selection-receipt.md`, `schemas/skill-selection-receipt.schema.json`, `tools/skill_resolver.py` |
+| Skill lifecycle and effect records | `docs/skill-book.md`, `templates/skill-lifecycle-record.md`, `schemas/skill-lifecycle-record.schema.json`, `tools/skill_lifecycle.py` |
+| Exact-action mechanical preflight | `templates/exact-action-preflight.md`, `schemas/exact-action-preflight.schema.json`, `tools/exact_action_check.py` |
+| Blind-safe skill projection and reconciliation | `docs/skill-book.md`, `framework/normative-reference.md`, `evals/blind-skill-leakage.json` |
+| Stale snapshot, reparse, symlink, junction, and retarget handling | `docs/skill-book.md`, `framework/normative-reference.md`, `tools/skill_resolver.py`, `evals/stale-skill-snapshot.json` |
+| Skill retirement and single-writer safety | `docs/skill-book.md`, `framework/normative-reference.md`, `evals/parallel-skill-writer-conflict.json` |
 | Structural versus empirical claims | `docs/evidence-and-limits.md`, `README.md` |
 | Privacy and public-release eligibility | `tools/privacy_scan.py`, `examples/external-operation.md` |
 | Public provenance and clean-room generalization | `PRIVACY.md`, `PROVENANCE.md` |

@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Skill Selection Receipt",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "objective_id",
+    "source_claims",
+    "registry_sha256",
+    "selection_snapshot_sha256",
+    "selected",
+    "rejected",
+    "withheld_non_blind_safe_count",
+    "fallback_normal_workflow",
+    "proof_ceiling"
+  ],
+  "anyOf": [
+    {
+      "properties": {
+        "selected": {
+          "minItems": 1
+        }
+      }
+    },
+    {
+      "properties": {
+        "rejected": {
+          "minItems": 1
+        }
+      }
+    },
+    {
+      "properties": {
+        "withheld_non_blind_safe_count": {
+          "minimum": 1
+        }
+      }
+    }
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "skill-selection-receipt-v1"
+    },
+    "objective_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "registry_sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-Fa-f]{64}$"
+    },
+    "selection_snapshot_sha256": {
+      "type": "string",
+      "pattern": "^[0-9A-Fa-f]{64}$"
+    },
+    "selected": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    },
+    "rejected": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/rejected_entry"
+      }
+    },
+    "withheld_non_blind_safe_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "fallback_normal_workflow": {
+      "type": "boolean"
+    },
+    "proof_ceiling": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "skill_id",
+        "name",
+        "version",
+        "origin",
+        "status",
+        "lexical_path",
+        "canonical_path",
+        "reparse_components",
+        "reason",
+        "rollback",
+        "files",
+        "proof_ceiling"
+      ],
+      "properties": {
+        "skill_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "origin": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lexical_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canonical_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reparse_components": {
+          "type": "array"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rollback": {
+          "type": "string",
+          "minLength": 1
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "path",
+              "sha256"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9A-Fa-f]{64}$"
+              }
+            }
+          }
+        },
+        "proof_ceiling": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "rejected_entry": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "skill_id",
+        "name",
+        "version",
+        "origin",
+        "status",
+        "reason",
+        "proof_ceiling"
+      ],
+      "properties": {
+        "skill_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "origin": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proof_ceiling": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

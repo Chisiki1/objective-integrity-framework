@@ -4,7 +4,7 @@ An outcome-first operating framework for reliable AI agent work.
 
 Keep AI agents aimed at outcomes, not rituals.
 
-Objective Integrity Framework helps teams keep capable agents aimed at the result the user actually asked for. It turns recurring workflow failures into clear operating records, evidence boundaries, review gates, and action constraints without making tests, audits, blockers, or process artifacts the goal.
+Objective Integrity Framework helps teams keep capable agents aimed at the result the user actually asked for. It turns recurring workflow failures into clear operating records, evidence boundaries, review gates, focused skills, and action constraints without making tests, audits, blockers, or process artifacts the goal.
 
 The framework is platform-agnostic. It can be used as a lightweight checklist, a project playbook, a skill, a prompt adapter, or a higher-assurance control system around agentic work. Optional platform adapters live under `adapters/`; they are implementations, not the identity of the framework.
 
@@ -18,6 +18,7 @@ AI agents often fail in ordinary, fixable ways:
 - Component checks pass while the system-level scenario they represent is no longer covered.
 - Safety checks accumulate until the normal success path is effectively stopped.
 - Lessons are recorded but do not constrain the next matching action.
+- A reusable skill is selected by name, order, or memory instead of a current, hash-bound fit for the work.
 
 Objective Integrity Framework gives these failure modes names, records, and decision points. The result is not a claim of guaranteed correctness. It is a practical framework designed to preserve the requested outcome, reduce avoidable rework, and make evidence quality visible.
 
@@ -38,6 +39,8 @@ Use the framework read-only first.
 5. Scan your project copy for public-safety issues:
 
 ```bash
+mkdir -p sample-project/objective-integrity
+cp templates/objective-contract.md sample-project/objective-integrity/objective-contract.md
 python tools/privacy_scan.py ./sample-project
 ```
 
@@ -51,6 +54,7 @@ python tools/history_scan.py .
 python tools/no_drop_check.py .
 python tools/validate_schemas.py
 python tools/eval_runner.py .
+python tools/exact_action_check.py --command "Get-ChildItem | Select-Object -First 1"
 ```
 
 Optional bootstrap tools default to dry-run and require an explicit destination:
@@ -58,6 +62,7 @@ Optional bootstrap tools default to dry-run and require an explicit destination:
 ```bash
 python tools/bootstrap.py --destination ./sample-project --adapter generic
 python tools/bootstrap.py --destination ./sample-project --adapter generic --apply
+python tools/bootstrap.py --destination ./sample-project --adapter skill-book --apply
 python tools/bootstrap.py --rollback ./sample-project/.objective-integrity-backups/<backup-name>
 ```
 
@@ -76,7 +81,8 @@ flowchart TD
   I --> J[Release or Completion Eligibility]
   J --> K[Effect Episode]
   K --> L[Continual Learning Records]
-  L --> D
+  L --> M[Skill Book]
+  M --> D
 ```
 
 ## Main Concepts
@@ -89,6 +95,7 @@ flowchart TD
 - **Semantic recomposition:** A check that decomposed component evidence still proves the original system claim.
 - **Correction authorization:** A gate that separates raw evidence, causal hypotheses, findings, scenarios, impact analysis, and the actual permission to change something.
 - **Effect episode:** A measured record of what changed, what improved, what cost was added, and what remains empirical.
+- **Skill Book plane:** A focused-instruction layer that resolves applicable skills and deterministic checks from current work facts, records selected and rejected reasons, binds paths and hashes, and feeds measured effects back into learning records.
 
 ## Adoption Modes
 
@@ -96,6 +103,7 @@ flowchart TD
 - **Project-local use:** Add templates and a project master to a repository or task folder.
 - **Skill use:** Use `.agents/skills/objective-integrity` as a progressive-disclosure agent skill.
 - **Adapter use:** Use `adapters/generic` for generic system/developer prompt shaping, or `adapters/codex` where that runtime is intentionally selected.
+- **Skill Book use:** Use `tools/skill_resolver.py`, `templates/skill-selection-receipt.md`, and `docs/skill-book.md` when teams need deterministic skill selection and lifecycle evidence.
 
 No adoption mode writes to a global agent directory by default.
 
@@ -114,6 +122,9 @@ This initial release is an evidence-aware, production-inspired framework with wo
 - [Evidence Model](docs/evidence-model.md)
 - [Evaluation](docs/evaluation.md)
 - [Governance and Self-Improvement](docs/governance-self-improvement.md)
+- [Skill Book Plane](docs/skill-book.md)
+- [Skill Book Fallback Example](examples/skill-book-fallback.md)
+- [Minimal Skill Book Example](examples/skill-book-minimal/README.md)
 - [Platform Adapters](docs/platform-adapters.md)
 - [Core Invariants](framework/core-invariants.md)
 - [Normative Reference](framework/normative-reference.md)

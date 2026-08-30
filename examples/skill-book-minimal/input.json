@@ -1,0 +1,34 @@
+{
+  "objective_id": "OBJ-SAMPLE-001",
+  "source_claims": [
+    "SRC-01"
+  ],
+  "job": [
+    "command-preflight"
+  ],
+  "action": [
+    "execute-shell"
+  ],
+  "tool": [
+    "shell"
+  ],
+  "environment": [
+    "local"
+  ],
+  "cause_families": [
+    "mechanical-parser"
+  ],
+  "permissions": [
+    "read-project"
+  ],
+  "resources": [
+    "final-command"
+  ],
+  "consumers": [
+    "developer-terminal"
+  ],
+  "risks": [
+    "mechanical-parser"
+  ],
+  "blind_phase": "none"
+}

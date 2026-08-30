@@ -9,7 +9,12 @@ def main(path: str = ".") -> int:
     root = Path(path).resolve()
     reference = "\n".join(
         (root / rel).read_text(encoding="utf-8")
-        for rel in ["framework/core-invariants.md", "framework/normative-reference.md", "docs/evaluation.md"]
+        for rel in [
+            "framework/core-invariants.md",
+            "framework/normative-reference.md",
+            "docs/evaluation.md",
+            "docs/skill-book.md",
+        ]
     ).lower()
     failures = []
     seen = set()
@@ -26,7 +31,7 @@ def main(path: str = ".") -> int:
         print("eval_runner: FAIL")
         print("\n".join(failures))
         return 1
-    print(f"eval_runner: PASS ({len(seen)} fixtures)")
+    print(f"eval_runner: PASS ({len(seen)} fixtures; fixture wiring and reference-term coverage only)")
     return 0
 
 

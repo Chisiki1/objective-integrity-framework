@@ -1,0 +1,65 @@
+{
+  "schema_version": "skill-registry-v1",
+  "registry_id": "REG-SAMPLE-001",
+  "entries": [
+    {
+      "skill_id": "SKILL-SAMPLE-PARSER-001",
+      "name": "parser-preflight",
+      "version": "1.0.0",
+      "origin": "project",
+      "relative_path": "parser-preflight",
+      "status": "active-bounded",
+      "disclosure_class": "blind_safe_mechanical",
+      "match_clauses": [
+        {
+          "job": [
+            "command-preflight"
+          ],
+          "resources": [
+            "final-command"
+          ]
+        }
+      ],
+      "required_authority": [
+        "authority for the underlying command remains separate"
+      ],
+      "required_inputs": [
+        "exact finalized command representation"
+      ],
+      "resource_claims": [
+        "read command candidate only"
+      ],
+      "expected_delta": "mechanical preflight receipt",
+      "proof_ceiling": "mechanical structure only",
+      "rollback": "discard receipt and use the normal workflow"
+    },
+    {
+      "skill_id": "SKILL-SAMPLE-DEPLOY-001",
+      "name": "deployment-release",
+      "version": "1.0.0",
+      "origin": "project",
+      "relative_path": "deployment-release",
+      "status": "active-bounded",
+      "disclosure_class": "post-blind-semantic",
+      "match_clauses": [
+        {
+          "job": [
+            "deployment"
+          ]
+        }
+      ],
+      "required_authority": [
+        "external write authority"
+      ],
+      "required_inputs": [
+        "release candidate identity"
+      ],
+      "resource_claims": [
+        "external target"
+      ],
+      "expected_delta": "release eligibility evidence",
+      "proof_ceiling": "release route only",
+      "rollback": "do not run when deployment is not authorized"
+    }
+  ]
+}

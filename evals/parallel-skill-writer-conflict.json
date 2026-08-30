@@ -1,0 +1,9 @@
+{
+  "id": "parallel-skill-writer-conflict",
+  "description": "Two agents attempt to update a shared skill registry from different snapshots without a single semantic writer.",
+  "expected_mechanisms": [
+    "single semantic writer",
+    "Skill Book",
+    "immutable snapshot"
+  ]
+}

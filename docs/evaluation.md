@@ -19,6 +19,11 @@ Fixtures cover:
 - Audit-result non-consumption.
 - Repeated failure without new evidence.
 - Inefficient delegation.
+- Misselected reusable skills.
+- Stale resolver snapshots and retargeted paths.
+- Blind contamination from skill metadata.
+- Mechanical preflight overclaiming semantic proof.
+- Parallel skill registry writer conflict.
 
 These fixtures do not prove empirical superiority. They provide a starting set for measuring whether a team can detect and handle known workflow failure families.
 

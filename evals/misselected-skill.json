@@ -1,0 +1,9 @@
+{
+  "id": "misselected-skill",
+  "description": "A reusable skill is chosen because its name looks close, while the current work facts do not satisfy its authority or resource requirements.",
+  "expected_mechanisms": [
+    "Skill Book",
+    "selected and rejected",
+    "proof ceiling"
+  ]
+}

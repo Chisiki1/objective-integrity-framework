@@ -27,24 +27,106 @@
     },
     "scenario_families": {
       "type": "array",
+      "minItems": 1,
       "items": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "activation_conditions",
+          "consumer_oracle",
+          "recovery_oracle"
+        ],
+        "properties": {
+          "activation_conditions": {
+            "type": "array",
+            "minItems": 1
+          },
+          "consumer_oracle": {
+            "type": "string",
+            "minLength": 1
+          },
+          "recovery_oracle": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     },
     "boundary_state_continuity": {
       "type": "array",
+      "minItems": 1,
       "items": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "state_family",
+          "semantic_equivalence_oracle",
+          "consumer_decision"
+        ],
+        "properties": {
+          "state_family": {
+            "type": "string",
+            "minLength": 1
+          },
+          "semantic_equivalence_oracle": {
+            "type": "string",
+            "minLength": 1
+          },
+          "consumer_decision": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     },
     "interaction_closure": {
-      "type": "object"
+      "type": "object",
+      "required": [
+        "edges_or_hyperedges",
+        "consumer_oracles"
+      ],
+      "properties": {
+        "edges_or_hyperedges": {
+          "type": "array",
+          "minItems": 1
+        },
+        "consumer_oracles": {
+          "type": "array",
+          "minItems": 1
+        }
+      }
     },
     "workload_progress": {
-      "type": "object"
+      "type": "object",
+      "required": [
+        "progress_obligation",
+        "fairness_or_recovery"
+      ],
+      "properties": {
+        "progress_obligation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fairness_or_recovery": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     },
     "semantic_recomposition": {
-      "type": "object"
+      "type": "object",
+      "required": [
+        "relational_claims",
+        "recomposition_witness"
+      ],
+      "properties": {
+        "relational_claims": {
+          "type": "array",
+          "minItems": 1
+        },
+        "recomposition_witness": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     }
   },
   "title": "Scenario Interaction Ledger"

@@ -7,20 +7,10 @@ import subprocess
 from pathlib import Path
 
 
-PRIVATE_TERMS = [
-    "PC" + "_" + "User",
-    "auto" + "dice",
-    "Parallax" + "Quant",
-    "Win" + "VM",
-    "M" + "T5",
-    "codex-workflow" + "-emergency-backup",
-]
-
 PATTERNS = {
     "private_path": re.compile(r"[A-Za-z]:\\Users\\[^\\\s]+"),
     "uuid": re.compile(r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b"),
     "long_hex": re.compile(r"\b[0-9a-fA-F]{40,}\b"),
-    "private_terms": re.compile(r"\b(?:" + "|".join(re.escape(term) for term in PRIVATE_TERMS) + r")\b"),
     "token": re.compile(r"\b(?:ghp|gho|github_pat|sk-)[A-Za-z0-9_-]{20,}\b"),
 }
 
@@ -55,19 +45,24 @@ def main(argv: list[str] | None = None) -> int:
         for match in pattern.finditer(log.stdout):
             findings.append(f"git-log: {label}: {match.group(0)[:80]}")
 
-    files = git(root, "ls-files")
-    if files.returncode != 0:
+    commits = git(root, "rev-list", "--all")
+    if commits.returncode != 0:
         print("history_scan: FAIL")
-        print(files.stderr.strip() or "git ls-files failed")
+        print(commits.stderr.strip() or "git rev-list failed")
         return 1
-    for rel in [line for line in files.stdout.splitlines() if line]:
-        show = git(root, "show", f"HEAD:{rel}")
-        if show.returncode != 0:
-            findings.append(f"{rel}: tracked file cannot be read from HEAD")
+    for commit in [line for line in commits.stdout.splitlines() if line]:
+        files = git(root, "ls-tree", "-r", "--name-only", commit)
+        if files.returncode != 0:
+            findings.append(f"{commit}: tree cannot be listed")
             continue
-        for label, pattern in PATTERNS.items():
-            for match in pattern.finditer(show.stdout):
-                findings.append(f"{rel}: {label}: {match.group(0)[:80]}")
+        for rel in [line for line in files.stdout.splitlines() if line]:
+            show = git(root, "show", f"{commit}:{rel}")
+            if show.returncode != 0:
+                findings.append(f"{commit}:{rel}: tracked file cannot be read")
+                continue
+            for label, pattern in PATTERNS.items():
+                for match in pattern.finditer(show.stdout):
+                    findings.append(f"{commit}:{rel}: {label}: {match.group(0)[:80]}")
 
     if findings:
         print("\n".join(findings))
