@@ -18,6 +18,11 @@ from typing import Any
 OUTPUT_ENCODINGS: dict[str, str] = {}
 
 
+def powershell_hosts() -> list[str]:
+    """Discover optional native hosts without replacing a bound action payload."""
+    return list(dict.fromkeys(host for name in ("powershell", "pwsh") if (host := shutil.which(name))))
+
+
 def run_captured(command: list[str], env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     resolved = shutil.which(command[0], path=(env if env is not None else os.environ).get("PATH"))
     if resolved is None:
@@ -63,12 +68,14 @@ def make_directory_link(link: Path, target: Path) -> None:
         os.symlink(target, link, target_is_directory=True)
         return
     except OSError:
+        if os.name != "nt":
+            raise
         command = "$ErrorActionPreference='Stop'; New-Item -ItemType Junction -Path $env:MGSKILL_LINK -Target $env:MGSKILL_TARGET | Out-Null"
         environment = os.environ.copy()
         environment["MGSKILL_LINK"] = str(link)
         environment["MGSKILL_TARGET"] = str(target)
         completed = run_captured(
-            ["powershell", "-NoProfile", "-Command", command],
+            [(powershell_hosts() or ["powershell"])[0], "-NoProfile", "-Command", command],
             env=environment,
         )
         if completed.returncode != 0:
@@ -255,6 +262,7 @@ def main() -> int:
     inventory_v2 = here / "inventory_live_masters_v2.py"
     validator = here / "validate_registry.py"
     tests: list[dict[str, Any]] = []
+    skipped: list[dict[str, str]] = []
 
     def check(name: str, condition: bool, detail: Any) -> None:
         if not condition:
@@ -496,32 +504,23 @@ def main() -> int:
         ], {0})
         check("registry-superseded-replacement-normal-path", code == 0 and valid_superseded_result["valid"], valid_superseded_result["errors"])
 
-        blocked, code, _ = run_json([
-            "powershell", "-NoProfile", "-File", str(ps_script),
-            "-CommandText", "foreach ($x in 1..2) { $x } | ConvertTo-Json", "-IncludeSource",
-        ], {2})
-        check("powershell-foreach-block", code == 2 and blocked["decision"] == "BLOCK", blocked)
-
-        safe, code, _ = run_json([
-            "powershell", "-NoProfile", "-File", str(ps_script),
-            "-CommandText", "$items = foreach ($x in 1..2) { $x }; $items | ConvertTo-Json",
-        ], {0})
-        check("powershell-intermediate-safe", code == 0 and safe["decision"] == "PASS", safe)
-
-        quoted, code, _ = run_json([
-            "powershell", "-NoProfile", "-File", str(ps_script),
-            "-CommandText", "Write-Output 'foreach ($x in 1..2) { $x } | ConvertTo-Json'",
-        ], {0})
-        check("powershell-quoted-false-positive", code == 0 and quoted["decision"] == "PASS", quoted)
-
         literal_batch = write_json(temp, "literal.json", {"members": [{
             "id": "literal", "command": 'python tool.py --interface "default_prompt=Use $skill-name now"',
             "literal_dollar_required": True, "literal_tokens": ["$skill-name"]
         }]})
-        literal, code, _ = run_json([
-            "powershell", "-NoProfile", "-File", str(ps_script), "-InputJsonPath", str(literal_batch), "-IncludeSource",
-        ], {2})
-        check("powershell-literal-dollar-block", code == 2 and literal["decision"] == "BLOCK", literal)
+        native_cases = [
+            ("powershell-foreach-block", ["-CommandText", "foreach ($x in 1..2) { $x } | ConvertTo-Json", "-IncludeSource"], 2, "BLOCK"),
+            ("powershell-intermediate-safe", ["-CommandText", "$items = foreach ($x in 1..2) { $x }; $items | ConvertTo-Json"], 0, "PASS"),
+            ("powershell-quoted-false-positive", ["-CommandText", "Write-Output 'foreach ($x in 1..2) { $x } | ConvertTo-Json'"], 0, "PASS"),
+            ("powershell-literal-dollar-block", ["-InputJsonPath", str(literal_batch), "-IncludeSource"], 2, "BLOCK"),
+        ]
+        hosts = powershell_hosts()
+        for name, arguments, expected_code, decision in native_cases:
+            if not hosts:
+                skipped.append({"name": name, "reason": "No native PowerShell host is available"})
+            for host in hosts:
+                native, code, _ = run_json([host, "-NoProfile", "-File", str(ps_script), *arguments], {expected_code})
+                check(name, code == expected_code and native["decision"] == decision, {"host": host, "result": native})
 
         invalid_transition = write_json(temp, "invalid-transition.json", {
             "schema_version": "mgskill-transition-v1", "event_id": "E1", "objective_id": "O1",
@@ -604,6 +603,7 @@ def main() -> int:
         "passed": len(tests),
         "failed": 0,
         "tests": tests,
+        "skipped": skipped,
         "proof_ceiling": "bounded deterministic fixtures; runtime universal discovery, semantics, consumer outcomes and empirical benefit unproven",
     }
     print(json.dumps(output, ensure_ascii=False, sort_keys=True, indent=2))

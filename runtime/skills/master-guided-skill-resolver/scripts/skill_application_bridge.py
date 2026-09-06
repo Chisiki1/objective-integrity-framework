@@ -211,7 +211,9 @@ def prepare(bundle_path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
             {"path": item.relative_to(candidate_root).as_posix(), "sha256": sha_file(item), "size": item.stat().st_size}
             for item in sorted(actual_paths)
         ]
-        if actual_members != expected_members:
+        # Manifest order is hash-bound serialization, not a filesystem ordering
+        # contract. Compare complete records without losing case or duplicates.
+        if sorted(actual_members, key=canonical) != sorted(expected_members, key=canonical):
             errors.append("candidate member-set does not match current root")
     except (KeyError, FileNotFoundError, json.JSONDecodeError, OSError) as exc:
         errors.append(f"candidate cut unreadable:{exc}")

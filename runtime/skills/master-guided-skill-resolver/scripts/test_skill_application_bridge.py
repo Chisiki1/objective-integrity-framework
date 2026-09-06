@@ -320,6 +320,49 @@ def main():
         delivery = prepared.get("byte_delivery", {})
         check("bridge-generated-bytes-delivered", prepared["decision"] == "GO" and delivery.get("decision") == "BYTES_DELIVERED")
         check("bytes-delivery-keeps-comprehension-unproven", delivery.get("comprehension") == "UNPROVEN")
+
+        manifest = json.loads(Path(base["candidate_cut"]["manifest"]).read_text(encoding="utf-8"))
+        members = manifest.get("files") or [
+            {"path": item["path"], "sha256": item["sha256"], "size": item["bytes"]}
+            for item in manifest["members"]
+        ]
+
+        def member_case(name, encoding, changed, expected_error=None, stale_binding=False):
+            candidate = copy.deepcopy(working)
+            rewritten = {"managed_roots": manifest["managed_roots"]}
+            cut = sha_bytes(canonical(changed))
+            if encoding == "files":
+                rewritten.update(files=changed, member_set_sha256=cut)
+            else:
+                rewritten.update(
+                    members=[{"path": item["path"], "sha256": item["sha256"], "bytes": item["size"]} for item in changed],
+                    candidate_member_set_sha256=cut,
+                )
+            member_path = write(name + "-manifest.json", rewritten)
+            candidate["candidate_cut"].update(
+                manifest=str(member_path), manifest_sha256=sha_bytes(member_path.read_bytes()), member_set_sha256=cut,
+            )
+            candidate["envelope"]["candidate_member_set_sha256"] = cut
+            if stale_binding:
+                candidate["candidate_cut"]["manifest_sha256"] = "0" * 64
+            outcome, _ = run(bridge, "prepare", "--bundle", str(write(name + "-bundle.json", candidate)), expected=(2,) if expected_error else (0,))
+            check(name, expected_error in outcome["errors"] if expected_error else outcome["decision"] == "GO")
+
+        for encoding in ("files", "members"):
+            member_case(encoding + "-original-order", encoding, copy.deepcopy(members))
+            member_case(encoding + "-reversed-order", encoding, list(reversed(members)))
+            mismatch = "candidate member-set does not match current root"
+            for name, changed in (
+                ("omitted", members[:-1]),
+                ("duplicate", [*members, members[0]]),
+                ("extra", [*members, {**members[0], "path": "missing-member.txt"}]),
+                ("case-changed", [{**members[0], "path": members[0]["path"].swapcase()}, *members[1:]]),
+                ("hash-changed", [{**members[0], "sha256": "0" * 64}, *members[1:]]),
+                ("size-changed", [{**members[0], "size": members[0]["size"] + 1}, *members[1:]]),
+            ):
+                member_case(encoding + "-" + name + "-rejected", encoding, changed, mismatch)
+            member_case(encoding + "-stale-manifest-binding", encoding, list(reversed(members)), "candidate cut manifest hash mismatch", stale_binding=True)
+
         host = working["envelope"]["final_payload"]["powershell_executable"]
         native_available = shutil.which(host) is not None
         if native_available:
