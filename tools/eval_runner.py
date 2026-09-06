@@ -18,7 +18,10 @@ def main(path: str = ".") -> int:
     ).lower()
     failures = []
     seen = set()
-    for fixture in sorted((root / "evals").glob("*.json")):
+    fixtures = sorted((root / "evals").glob("*.json"))
+    if not fixtures:
+        failures.append("required evaluation fixtures are missing")
+    for fixture in fixtures:
         data = json.loads(fixture.read_text(encoding="utf-8"))
         fid = data.get("id")
         if not fid or fid in seen:

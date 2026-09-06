@@ -20,7 +20,18 @@ The primary objective is the observable result the user or downstream consumer s
 
 ## 2. Open Deliverable Ledger
 
-Keep every source-bound deliverable open until its observable outcome is satisfied, withdrawn, superseded, or deferred by the user. A answered subquestion, completed audit, or passing verifier does not satisfy an open parent deliverable by itself.
+Keep every source-bound deliverable open until its observable outcome is satisfied, withdrawn, superseded, or deferred by the user. Answering a subquestion, completing an audit, or passing a verifier does not satisfy an open parent deliverable by itself.
+
+For work that can resume, compact, hand off, queue, retry, or outlive one turn, maintain one durable ledger per logical objective tree:
+
+- Preserve exact source events as immutable content with identity and delivery lineage.
+- Classify later events as `ADD`, `CLARIFY`, `CORRECT`, `REPLACE`, or `WITHDRAW` against every affected open outcome.
+- Keep append-only journal history, a replayed machine projection, and a concise human projection separate.
+- Bind writes to an expected current head so stale writers do not append semantic state.
+- Preserve pending, partial, and unknown action effects until evidence-linked reconciliation.
+- Recover partial tails, abandoned locks, source-integrity gaps, and output failures without rewriting committed history.
+
+Raw event capture is evidence that input was received. The primary owner still determines its semantic relation to the active objective; a host hook, session identifier, child context, or copied prompt does not create authority by itself.
 
 ## 3. Active Objective Integrity View
 
@@ -36,6 +47,8 @@ Before and after material actions, compare:
 - Newly introduced mandatory conditions.
 
 If drift is detected, hold only the dependent next action, preserve evidence, restore the last valid objective checkpoint, and resume the exact eligible objective work.
+
+At a decision-bearing result, disposition the event as `CONSUME`, `REFUTE`, `CORRECT`, `USER_DECISION`, or `WAIT`. A wait is valuable only at a decision window where new evidence can change the next action. Status narration without objective or evidence delta is not objective control.
 
 ## 4. Baseline and Semantic Authority
 
@@ -135,18 +148,20 @@ For each stop, hold, reject, timeout, fallback, retry, or fail-closed rule, reco
 
 ## 14. Allocation and Delegation
 
-Choose model, reasoning depth, subagents, Worker reuse, and parallelism from task content and total cost. Domain labels are metadata, not automatic escalation. Delegate when independence, speed, or quality benefit exceeds instruction, startup, waiting, integration, and reverification cost.
+Choose model capability, reasoning depth, tools, subagents, job reuse, and parallelism from the actual deliverable, hardest cognitive operation, context and dependency shape, modality, ambiguity, evidence conflict, verification route, decomposability, latency, reversibility, and concrete error consequences. Domain and risk labels are inputs to assurance allocation, not fixed model tiers.
 
-Supervisor and Worker separation can help long tasks. In public-facing terms, this is a Coordinator and Executor topology.
+Record capability requirements, eligible configurations, requested and accepted configuration, effective metadata when observable, unavailable fields, expected total cost, and the concrete failure predicted from a weaker configuration. High consequence may require stronger independent verification without automatically selecting the most expensive executor.
 
-- The Coordinator preserves the source-bound objective, monitors decision-bearing events, and consumes Executor results by pull.
-- The Executor performs the objective-bound work and keeps progress, audit results, needs-attention states, and proof-carrying finals in its own work channel.
-- There is normally one primary Executor for one objective tree. Parallel work needs non-overlapping resource claims and positive total value.
-- Executor-to-Coordinator user-visible push is avoided unless the runtime provides an explicit non-contaminating mailbox.
-- The Coordinator is read-only toward product, verifier, external state, and shared learning ledgers unless a separate authority grants a write.
-- Result consumption is explicit: consume, refute, correct, ask for user decision, or wait. A status update without objective evidence delta is not supervision.
+One primary owner normally preserves the objective and performs authorized work in the same conversation. That owner classifies source events, consumes decision-bearing results, records action effects, and remains the single shared semantic writer for the objective tree.
 
-The Coordinator must not become a second Executor or invent new requirements.
+Independent review remains separate from execution:
+
+- The reviewer starts from the authorized source and fixed evidence rather than inheriting the owner's conclusion.
+- The reviewer remains read-only toward the candidate, verifier, external state, and shared learning records it reviews.
+- The owner consumes the result as `CONSUME`, `REFUTE`, `CORRECT`, `USER_DECISION`, or `WAIT`.
+- Parallel implementation uses bounded jobs with non-overlapping resource claims and a positive total-value case.
+
+A legacy coordinator/executor status channel is used only to recover an explicitly existing split-task lease. It does not create a second default topology, duplicate action owner, or automatic independent-review key.
 
 ## 15. Continual Learning
 
@@ -156,6 +171,12 @@ Use project and global learning records when the cost is justified:
 - Global records promote sanitized reusable knowledge, applicability, proof ceiling, and action constraints.
 
 Learning records do not replace current source inspection. A confirmed lesson has prevention value only when it is projected onto the exact matching action before execution.
+
+An actionable learning queue binds each candidate to its source objective, causal family, owner, artifact, next-use trigger, graph references, expected effect, rollback, immutable events, and current disposition. Supported states include `discovered`, `prepared`, `evaluated`, `active-bounded`, `measured`, `deferred`, `retired`, and `superseded`. A due query retrieves possible next work; it grants neither authority nor semantic applicability.
+
+A source-hash-bound index may make current controls and history retrievable. It preserves every occurrence and bounded cursor identity. It is a projection over source records, not a new semantic master.
+
+Metrics distinguish observed, unavailable, and not applicable values. Missing evidence is never encoded as numeric zero.
 
 ## 16. Skill Book Plane
 
@@ -171,7 +192,9 @@ No plane promotes its evidence into another plane without an explicit evidence r
 
 ### Resolution
 
-A resolver should derive selected and rejected entries from structured work facts, not from registry order, fuzzy description similarity, popularity, model preference, or first match. A receipt should bind the objective contract, source claims, job/action/tool/environment facts, registry hash, selected and rejected reasons, required inputs, resource claims, expected deltas, proof ceiling, expiry, rollback, canonical path, lexical path, linked file hashes, and a selection snapshot hash.
+Before resolution, compile provenance-bound facts from every source clause and the finalized job, action, tool payload, environment, permission, resource, and consumer. Each clause either emits evidence-backed selection facts or carries an explicit no-selection-fact disposition. Preserve source and payload hashes, action finality, tool-schema state, and a negative-selection challenge. Desired skill names or caller conclusions are not admissible facts.
+
+A resolver derives exact, near, rejected, and no-match entries from the compiled facts, not from registry order, fuzzy description similarity, popularity, model preference, or first match. A receipt binds the objective contract, source claims, compiler result, job/action/tool/environment facts, registry hash, selected and rejected reasons, required inputs, resource claims, expected deltas, proof ceiling, expiry, rollback, canonical path, lexical path, linked file hashes, reparse state, negative countermodel, and selection snapshot hash.
 
 Only `active-bounded` and `measured` entries are normally selectable. `candidate`, `shadow`, `audited`, `superseded`, and `retired` entries can remain for lineage but should not be normal resolution targets. Missing, stale, unreadable, conflicting, or expired entries hold only their dependent skill route. The normal workflow continues for unrelated work, and independently applicable exact-action constraints still apply.
 
@@ -201,6 +224,14 @@ Effect records should distinguish planned and actual objective deltas, planned a
 
 `prevented` is limited to an observed pre-submission block with the rejected candidate preserved and the applicable constraint set matched to the final action representation. Post-submission parser rejection, exceptions, no-ops, and later repairs are containment evidence. They do not prove prevention or avoided consumer harm.
 
+### Application Bridge
+
+Selection does not establish use. For a material application, bind one graph across exact source, objective owner, lease or work-unit identity, compiled finalized action, resolver snapshot, candidate member set, selected script, typed schema, resource claim, expected result, and effect route.
+
+The application bridge opens and hash-verifies selected non-UI bytes, records bytes delivered, revalidates the same graph immediately before execution, executes only the selected bounded script with exact arguments, captures raw result bytes and exit status, and later attaches independent effect observation. It is not a general-purpose command runner.
+
+Keep these states distinct: selected, bytes delivered, executed, action result, consumer effect observed, and lifecycle disposition. Hash-only or unavailable reading, stale identity, graph mismatch, missing action finality, or a hollow effect leaves only the dependent application claim unresolved.
+
 ### Single Writer and Retirement
 
 A single semantic writer should own registry or shared-learning updates for a work unit. Parallel jobs may read the same immutable snapshot or clearly separated snapshots with resource claims. They should not directly write shared registries or learning ledgers in parallel.
@@ -211,9 +242,39 @@ Skill scripts may provide deterministic structural evidence for schema, set equa
 
 ## 17. Self-Improvement
 
-Improve the framework through measured episodes, representative replay, independent challenge, rollback plans, and no-drop preservation. Do not claim empirical superiority from structural review alone.
+Improve the framework through measured episodes, representative replay, independent challenge, rollback plans, no-drop preservation, and later consumer effects. Every material candidate names its owner, source, reusable family, actual artifact, next eligible use, expected effect, and retirement trigger.
 
-## 18. Completion
+Prefer revise, narrow, merge, replace, or retire when an existing method can close the gap. Add a new mechanism only when existing generic invariants cannot express a reusable material need and the expected outcome or total-cost benefit exceeds added complexity. Registration, validation, selection, document count, and queue state are not improvement outcomes.
+
+## 18. Condition Stewardship
+
+Classify conditions by authority:
+
+- `HIGHER_PRIORITY`: platform, system, developer, or tool constraints outside project-level amendment.
+- `USER_CONDITION`: source-authored objective, acceptance, constraint, permission, or requested method.
+- `DELEGATED_METHOD`: an implementation method the owner may improve while preserving source meaning.
+- `UNKNOWN`: authority that must be resolved for its dependent decision.
+
+A delegated method may change through the normal improvement lifecycle. A user condition changes meaning only through an exact later user source bound to the current condition, proposed replacement, affected condition set, scope, dependencies, effective period, expected benefit and total cost, lost guarantees, independent challenge, rollback, and later effect route.
+
+Approval-shaped text, a matching hash, silence, queue activation, or a machine validator does not grant authority. An admitted amendment supersedes the prior condition only in its exact scope, preserves old and new source lineage, retains every unaffected condition, and remains reversible through its declared recovery route.
+
+## 19. Material Transition Admission
+
+Before a material correction, selected-skill action, external action, or other candidate-bearing transition, bind one identity graph across:
+
+- exact source authority or an independent refutation key;
+- causal or design readiness;
+- frozen scenario and interaction identity;
+- planned semantic and evidence delta;
+- omission consequence and return step;
+- allocation result and selected guidance application;
+- local and relational claims, recomposition witness, and final consumer oracle;
+- candidate, action, result, and later effect identities.
+
+The transition record checks that those references belong to the same work unit and current snapshot. It does not prove the semantic truth of the cause, scenarios, witness, safety, or consumer outcome. Missing structure changes only the dependent transition to diagnosis or advisory work; unrelated read-only work continues.
+
+## 20. Completion
 
 Completion requires:
 

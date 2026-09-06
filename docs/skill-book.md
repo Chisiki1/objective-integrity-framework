@@ -1,6 +1,6 @@
 # Skill Book Plane
 
-The Skill Book plane turns reusable operating knowledge into focused instructions and deterministic checks for one work unit. It is separate from the normative workflow and from learning records.
+The Skill Book turns reusable operating knowledge into focused instructions and bounded deterministic actions for one work unit. It is separate from the normative workflow and learning records, and it closes the path from source facts to actual application and measured effect.
 
 ## Three Independent Planes
 
@@ -10,16 +10,28 @@ Objective Integrity Framework uses three cooperating planes:
 - **Learning records:** Preserve exact project evidence locally and promote sanitized reusable families globally.
 - **Skill Book:** Resolves focused skills and deterministic scripts for the current job, then records whether they actually helped.
 
-No plane proves another. A selected skill does not prove semantic applicability. A registry pass does not prove the user objective. A learning entry does not prove the next action used it. A deterministic script can block or pass only the bounded mechanical claim it checks.
+No plane proves another. Selection, delivered bytes, execution, action result, and observed effect are separate states.
+
+## Compile Facts From the Source and Final Action
+
+Before resolution, build a typed fact set from:
+
+- every source clause, with either emitted selection facts or an explicit no-selection-fact disposition;
+- the finalized job, action, tool payload, environment, permissions, resources, and consumer;
+- tool-schema state as available, unavailable, or not applicable;
+- the source and payload identities;
+- a negative-selection challenge describing the strongest candidate that should remain unselected and why.
+
+The compiler rejects missing or duplicate clause dispositions, overlap between emitted and excluded facts, desired skill names disguised as facts, incomplete finality, and malformed schema state. This prevents a caller from selecting the desired answer by writing the conclusion into the input.
 
 ## Deterministic Resolution
 
-A resolver should select every applicable active skill and return rejected candidates with reasons. It should not choose by registry order, fuzzy description similarity, popularity, model preference, or first match.
+A resolver selects every applicable active skill and returns exact, near, rejected, and no-match candidates with reasons. It does not choose by registry order, fuzzy description similarity, popularity, model preference, or first match.
 
 A skill selection receipt should bind:
 
-- Objective contract and source-clause identifiers.
-- Normalized job, action, tool, environment, permission, resource, consumer, and risk facts.
+- Objective contract, exact source identity, and source-clause identifiers.
+- Compiled job, finalized action, canonical payload, tool, environment, permission, resource, consumer, and risk facts.
 - Registry identity and registry hash.
 - Selected and rejected skill identifiers, versions, origins, statuses, and reasons.
 - Canonical path, lexical path, and linked file hashes.
@@ -28,8 +40,11 @@ A skill selection receipt should bind:
 - Resource claim, rollback route, expiry, and revalidation triggers.
 - Selection snapshot hash.
 - Proof ceiling.
+- Negative-selection countermodel and compiler result.
 
 Only active, bounded entries should be selected by default. Candidate, shadow, audited, superseded, and retired entries can remain in the registry for lineage, but they should not be normal resolution targets.
+
+The public distribution catalog is generated from the shipped eight generic skill entrypoints. `tools/catalog.py` writes to stdout by default or to an explicit new output path. Catalog generation records public package identity; it does not activate skills or import private learning history.
 
 ## Path and Snapshot Integrity
 
@@ -42,6 +57,26 @@ Skill paths are mutable filesystem state. A safe resolver preserves both lexical
 - Include reparse information in the selection snapshot.
 
 If a link is retargeted, a file changes, a registry status changes, or the objective facts change before first decision-bearing use, the old selection is a stale snapshot and must be resolved again.
+
+## Apply the Selected Guidance
+
+Resolution is preparation, not application. A material application graph binds:
+
+```text
+source and owner
+-> compiled final action
+-> resolver snapshot
+-> selected path and member hashes
+-> bytes delivered
+-> exact execution receipt
+-> action result
+-> independent effect observation
+-> lifecycle disposition
+```
+
+The application bridge opens and hash-verifies selected non-UI files itself. It rechecks identity immediately before execution, passes exact arguments without a general-purpose shell for portable Python actions, captures stdout and stderr bytes and exit status before display decoding, and binds the result to the same owner, lease, candidate, action, schema, and member set.
+
+Caller-authored readiness labels do not replace these relations. Hash-only or unavailable file reading, stale members, a missing final action, graph mismatch, or an unbound script holds only the dependent application route.
 
 ## Blind-Safe Projection
 
@@ -77,7 +112,7 @@ A single failure, repeated count, model suggestion, registry validation, or docu
 
 Invocation effects belong first in the project-local record, where exact evidence can be preserved. A sanitized global record can summarize the reusable family, applicability, aggregate effect, invalidation trigger, and proof ceiling.
 
-Effect outcomes should distinguish:
+Effect outcomes distinguish:
 
 - Advanced the objective.
 - No effect.
@@ -88,14 +123,20 @@ Effect outcomes should distinguish:
 - Outcome unknown.
 - Not observed.
 
-An exact-action preflight is the bounded mechanical form of this check for commands, tool payloads, or parallel members. `prevented` is narrow. It requires an observed pre-submission block, the rejected candidate preserved, and applicable-set equality for the final action representation. Parser rejection after submission, exceptions, no-ops, or later repairs are containment evidence, not prevention evidence.
+An exact-action preflight is the bounded mechanical form of this check for commands, tool payloads, or parallel members. `prevented` is narrow: it requires an observed pre-submission block, the rejected candidate preserved, and applicable-set equality for the final action representation. Parser rejection after submission, exceptions, no-ops, or later repairs are containment evidence.
 
 ## Retirement and Parallel Safety
 
-Only one semantic writer should update the shared registry or learning ledgers for a work unit. Parallel jobs may read the same immutable snapshot, but their resource claims and write scopes must be separated.
+Only one semantic writer updates the shared registry or learning ledgers for a work unit. Parallel jobs may read the same immutable snapshot, but their resource claims and write scopes remain separated.
 
 Retirement is not just a status label. Retired or superseded skills should leave active discovery roots, while immutable evidence and lineage remain available outside those roots. Replacement identity, reason, effective time, prior status, and rollback path should be explicit.
 
-## Structural and Empirical Status
+## Lifecycle and Condition Changes
 
-The Skill Book can provide strong structural evidence: selected and rejected reasons, hashes, path identity, stale-snapshot detection, lifecycle conformance, and mechanical preflight results. Empirical improvement remains measured status. Reduced drift, fewer repeated failures, lower rework, better consumer outcomes, and lower cost require representative task evidence in the adopting environment.
+The learning queue keeps candidates actionable across tasks. It records due triggers, artifact and graph references, immutable events, typed metrics, later consumer results, and revise/narrow/merge/supersede/retire decisions.
+
+Changing a delegated method follows the normal improvement route. Changing a user-authored condition requires an exact later user source bound to the old and proposed condition set, scope, meaning delta, dependent conditions, lost guarantees, rollback, and effective period. Structural proposal matching never creates that authority.
+
+## Evidence Boundaries
+
+The Skill Book provides identity and structural evidence: compiled clause coverage, selected and rejected reasons, hashes, path identity, stale-snapshot detection, application graph consistency, lifecycle conformance, and bounded mechanical preflight results. Final objective progress and improvement are measured at the actual consumer. See [Runtime Reference](runtime-reference.md) for the executable entrypoints.

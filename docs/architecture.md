@@ -1,6 +1,20 @@
 # Architecture
 
-The framework is organized as a set of records and transitions.
+Objective Integrity Framework has one outcome path and three supporting planes. The outcome path begins at the user's source and ends at the final consumer; the supporting planes provide workflow rules, durable learning, and focused reusable guidance.
+
+## Primary Outcome Path
+
+```text
+exact source
+-> durable objective and open outcomes
+-> objective-necessary action
+-> evidence-bearing result
+-> final consumer outcome
+-> measured learning disposition
+-> later exact match
+```
+
+One same-conversation primary owner normally carries this path. Independent review is read-only toward its target. Material results return to the exact next objective-bound step rather than ending at a receipt, review, or status update.
 
 ## Record Layer
 
@@ -15,19 +29,23 @@ The framework is organized as a set of records and transitions.
 - `Skill Selection Receipt`: records selected and rejected reusable skills, path and hash identity, blind-safety status, expected deltas, rollback, and proof ceiling.
 - `Skill Lifecycle Record`: records whether a skill event becomes no-change, candidate, shadow, active-bounded, measured, revised, merged, superseded, or retired.
 - `Exact-Action Preflight`: records bounded mechanical checks over the exact action representation before execution.
+- `Objective Ledger`: preserves immutable source events, explicit source dispositions, open outcomes, progress, pending effects, recovery, and the current human projection.
+- `Learning Queue`: owns actionable improvement candidates, immutable lifecycle events, due triggers, metrics, and later-consumer references without duplicating raw incidents.
+- `Master Index`: binds source hashes and provides bounded retrieval across current controls and history.
+- `Transition Admission`: joins source authority or refutation, scenario identity, planned impact, allocation, selected guidance, recomposition, consumer oracle, and later effect for one material transition.
 
 ## Transition Layer
 
-1. Extract the objective.
-2. Freeze baseline and semantic authority boundaries.
-3. Generate blind scenarios before anchoring on the first error or proposed patch.
-4. Design or change only the causal link that advances the objective.
-5. Recompose decomposed evidence back to the system claim.
-6. Audit the exact candidate at the stage where the audit can change a decision.
-7. Test partitioned evidence routes without losing the system-level meaning.
-8. Project action eligibility before external writes or completion claims.
-9. Resolve focused Skill Book guidance when it can materially improve correctness, recurrence prevention, privacy, or external-action safety.
-10. Measure the effect and feed reusable knowledge back into action constraints.
+1. Capture the exact source and classify objective, deliverables, conditions, authority, methods, and preferences.
+2. Reuse or create one logical objective ledger; preserve all open outcomes and pending effects.
+3. Freeze baseline, normal success, and semantic authority boundaries.
+4. Generate blind scenarios and reachable interactions before anchoring on the first error or proposed patch.
+5. Choose only work with a source-bound omission consequence, then allocate capability, reasoning, tools, and independent review from the actual job shape.
+6. Resolve reusable guidance from provenance-bound source and finalized action facts when it will change the work.
+7. Admit a material correction or action only after its causal, scenario, impact, recomposition, consumer, and recovery relations are bound.
+8. Audit and test at the stage where each evidence route can change a decision, preserving the system claim across decomposed checks.
+9. Project action eligibility before external writes or completion claims, then preserve the real outcome and any partial or unknown effect.
+10. Turn a reusable result into a candidate, later matching action, observed effect, and revise/retire decision.
 
 ## Governance Planes
 
@@ -37,7 +55,20 @@ The framework keeps three governance planes independent:
 - `LEARNING`: project-local raw evidence and sanitized global reusable knowledge.
 - `SKILL BOOK`: focused instructions, deterministic helper scripts, selected/rejected resolver receipts, and skill lifecycle evidence for the current work unit.
 
-These planes cooperate, but none replaces another. A skill receipt does not prove semantic correctness. A learning entry does not prove the next action used it. A workflow checklist does not prove empirical improvement.
+These planes cooperate through identity-bound references. None replaces another. A skill receipt does not prove semantic correctness. A learning entry does not prove the next action used it. A workflow checklist does not prove the final consumer result.
+
+## Ownership and Review
+
+- One primary owner classifies source events, performs authorized work, records action outcomes, and owns shared semantic writes for one objective tree.
+- Independent reviewers derive their own challenge from the authorized source and fixed evidence, then remain read-only toward the reviewed target.
+- Parallel jobs declare non-overlapping resources and return proof-carrying results to the primary owner.
+- Legacy split-task status is used only to recover an explicitly existing lease; it does not define the default architecture.
+
+## State and Boundary Continuity
+
+The framework treats state capture, transfer, replay, rebuild, and first decision-bearing consumption as one relation. Each state family names its source, owner, lifecycle, clock or ordering basis, gap, consumer, equivalence oracle, and recovery. Exact bytes are identity evidence; semantic continuity depends on the consumer meaning.
+
+The same discipline applies to long-running progress. Component health, empty error logs, and local queue checks do not replace the supported workload, fairness, convergence, recovery, and final progress obligation.
 
 ## Runtime and Evidence Identities
 
@@ -50,3 +81,13 @@ The framework keeps five identities separate:
 - `EXTERNAL`: public repositories, production systems, deployed resources, accounts, and consumer-visible effects.
 
 Keeping these planes separate prevents a lower-level pass from being promoted beyond what it can prove.
+
+## Package Layout
+
+- `framework/`: portable normative rules and compact invariants.
+- `profiles/`: proportional operating modes.
+- `runtime/`: executable generic continuity, learning, selection, application, scenario, transition, and objective-control mechanisms.
+- `.agents/skills/objective-integrity/`: progressive agent guidance.
+- `templates/` and `schemas/`: portable records and structural contracts.
+- `tools/`: adoption, demonstration, scans, validation, and compatibility entrypoints.
+- `adapters/`: opt-in host integrations, including Codex and native PowerShell support.

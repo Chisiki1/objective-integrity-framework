@@ -1,0 +1,37 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://local.invalid/schemas/durable-supervisor-projection-evidence-v1.json",
+  "type":"object",
+  "additionalProperties":false,
+  "required":["schema_version","projection","decision_boundary","proof_ceiling"],
+  "properties":{
+    "schema_version":{"const":"durable-supervisor-projection-evidence-v1"},
+    "projection":{
+      "type":"object","additionalProperties":false,
+      "required":["source_kind","thread_id","turn_id","thread_status","turn_status","items_count","updated_at_utc","observed_at_utc","last_decision_delta_at_utc","contradiction_facts","expected_result_markers","raw_store_visibility","cursor_state","intentional_no_output"],
+      "properties":{
+        "source_kind":{"enum":["provider-read-task","provider-wait-task","local-runtime"]},
+        "thread_id":{"type":"string","minLength":1,"maxLength":512},"turn_id":{"type":["string","null"],"maxLength":512},
+        "thread_status":{"type":"string","minLength":1,"maxLength":128},"turn_status":{"type":"string","minLength":1,"maxLength":128},
+        "items_count":{"type":"integer","minimum":0},"updated_at_utc":{"type":"string","format":"date-time"},
+        "observed_at_utc":{"type":"string","format":"date-time"},
+        "last_decision_delta_at_utc":{"type":["string","null"],"format":"date-time"},
+        "contradiction_facts":{"type":"array","maxItems":64,"items":{"type":"string","minLength":1,"maxLength":1024}},
+        "expected_result_markers":{"type":"array","maxItems":64,"items":{"type":"string","minLength":1,"maxLength":1024}},
+        "raw_store_visibility":{"type":"array","maxItems":64,"items":{"type":"string","minLength":1,"maxLength":1024}},
+        "cursor_state":{"enum":["fresh","stale","advanced","unknown"]},"intentional_no_output":{"type":"boolean"}
+      }
+    },
+    "decision_boundary":{
+      "type":"object","additionalProperties":false,
+      "required":["decision_bearing","owner","next_decision_condition","maximum_harm","alternate_route","decision_window_ms"],
+      "properties":{
+        "decision_bearing":{"type":"boolean"},"owner":{"type":"string","minLength":1,"maxLength":2048},
+        "next_decision_condition":{"type":"string","minLength":1,"maxLength":2048},
+        "maximum_harm":{"type":"string","minLength":1,"maxLength":2048},
+        "alternate_route":{"type":"string","minLength":1,"maxLength":2048},"decision_window_ms":{"type":"integer","minimum":1}
+      }
+    },
+    "proof_ceiling":{"type":"string","minLength":1,"maxLength":2048}
+  }
+}

@@ -8,7 +8,11 @@ Thank you for improving Objective Integrity Framework.
 - Keep examples synthetic and public-safe.
 - Prefer clearer adoption paths over longer rule lists.
 - Add mechanisms only when they address a reusable failure mode.
-- Separate structural design claims from empirical outcome claims.
+- Keep generic behavior in the core and host-specific behavior in optional adapters.
+- Preserve same-conversation ownership and read-only independent review as the default topology.
+- Separate structural, behavioral, runtime, and external-consumer claims.
+
+Every release-facing change follows the [seven-condition maintainer guide](docs/maintainer-update-guide.md): current generic capability in isolated work, public quality, English throughout, easy truthful adoption, privacy by construction, outcome-led self-improvement, and careful progressive explanation.
 
 ## Development
 
@@ -27,5 +31,8 @@ python -m unittest discover -s tests
 - The change has a source-bound objective and acceptance criteria.
 - New terminology is introduced in `docs/terminology.md`.
 - New records have schemas or explain why a schema is not useful.
+- Every affected capability row in `docs/coverage-map.md` points to the public artifact that carries it.
 - Privacy-sensitive examples use neutral synthetic data.
 - Any new claim about effectiveness includes evidence or is framed as design intent.
+- Installation and generated-output changes preserve explicit destinations, preview, backup, conflict-aware rollback, and distribution/adoption separation.
+- User-condition changes retain exact source and old/new/rollback lineage; delegated-method changes preserve source meaning and the normal path.

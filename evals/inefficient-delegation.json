@@ -3,7 +3,9 @@
   "title": "Inefficient Delegation",
   "prompt": "Synthetic representative scenario for framework evaluation.",
   "expected_mechanisms": [
-    "Supervisor and Worker",
+    "Allocation and Delegation",
+    "primary owner",
+    "Independent review remains separate from execution",
     "objective contract"
   ],
   "success_oracle": "The response preserves the requested outcome and names the evidence ceiling."

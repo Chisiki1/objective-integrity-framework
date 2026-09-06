@@ -1,52 +1,77 @@
 # Objective Integrity Framework
 
-An outcome-first operating framework for reliable AI agent work.
+Keep the objective intact. Turn experience into better next actions.
 
-Keep AI agents aimed at outcomes, not rituals.
+Objective Integrity Framework is an open operating framework for agentic work that must stay faithful to the requested outcome across long tasks, corrections, handoffs, reviews, and external actions. It gives an agent a durable objective, a proportionate evidence model, and a practical learning loop without turning process artifacts into the goal.
 
-Objective Integrity Framework helps teams keep capable agents aimed at the result the user actually asked for. It turns recurring workflow failures into clear operating records, evidence boundaries, review gates, focused skills, and action constraints without making tests, audits, blockers, or process artifacts the goal.
-
-The framework is platform-agnostic. It can be used as a lightweight checklist, a project playbook, a skill, a prompt adapter, or a higher-assurance control system around agentic work. Optional platform adapters live under `adapters/`; they are implementations, not the identity of the framework.
+Use it as a five-minute review discipline, project-local guidance, a reusable agent skill, or a higher-assurance runtime. The core is platform-neutral. Product-specific integrations live in `adapters/` and remain optional.
 
 ## Why It Exists
 
-AI agents often fail in ordinary, fixable ways:
+Capable agents can still lose the thread in ordinary, fixable ways:
 
 - A multi-clause request is reinterpreted into a cleaner but different objective.
 - A test suite, audit, verifier, or blocker becomes the new finish line.
 - The first visible error is patched while the causal context is still unknown.
 - Component checks pass while the system-level scenario they represent is no longer covered.
 - Safety checks accumulate until the normal success path is effectively stopped.
-- Lessons are recorded but do not constrain the next matching action.
-- A reusable skill is selected by name, order, or memory instead of a current, hash-bound fit for the work.
+- A useful lesson is recorded but never reaches the next matching action.
+- A reusable skill is selected by name, order, or memory instead of current source and action facts.
 
-Objective Integrity Framework gives these failure modes names, records, and decision points. The result is not a claim of guaranteed correctness. It is a practical framework designed to preserve the requested outcome, reduce avoidable rework, and make evidence quality visible.
+Objective Integrity Framework connects each of those failure modes to an explicit decision, owner, evidence route, and recovery path. The result is a workflow that stays outcome-led while becoming easier to inspect, correct, and improve.
+
+## What You Get
+
+| Capability | Public path |
+|---|---|
+| One command directory for the complete package | `tools/oif.py`, `docs/runtime-reference.md` |
+| Source-bound objective and open-outcome continuity | `runtime/objective_ledger.py`, `docs/objective-continuity.md` |
+| Compact, standard, and high-assurance operating profiles | `profiles/`, `framework/core-invariants.md` |
+| Mid-work objective control and material-transition admission | `runtime/skills/objective-supervisor-control/`, `runtime/skills/workflow-transition-admission/` |
+| Blind scenario, interaction, and semantic-recomposition records | `runtime/skills/scenario-interaction-closure/`, `framework/normative-reference.md` |
+| Provenance-bound skill selection and exact application chain | `runtime/skills/master-guided-skill-resolver/`, `docs/skill-book.md` |
+| Action-linked learning queue, source index, and lifecycle decisions | `runtime/skills/master-guided-skill-lifecycle/`, `docs/governance-self-improvement.md` |
+| Project-local preview, installation, backups, and rollback | `tools/bootstrap.py`, `docs/adoption.md` |
+| Optional runtime integrations | `adapters/` |
 
 ## Quick Start
 
-Use the framework read-only first.
+Try the complete workflow in a new or empty sandbox, then install only into a separate destination you choose.
 
-1. Follow the [10-minute core loop](docs/core-loop.md).
-2. Read [Core Invariants](framework/core-invariants.md).
-3. Choose a profile:
-   - [Compact](profiles/compact.md) for small, low-risk work.
-   - [Standard](profiles/standard.md) for normal implementation, repair, review, and operations.
-   - [High Assurance](profiles/high-assurance.md) for release, external action, privacy, safety, financial, production, or long-running work.
-4. Copy one template into an isolated project folder, not into a global agent configuration:
-   - [Objective Contract](templates/objective-contract.md)
-   - [Open Deliverable Ledger](templates/open-deliverable-ledger.md)
-   - [Evidence Map](templates/evidence-map.md)
-5. Scan your project copy for public-safety issues:
+1. Run the synthetic demonstration outside this checkout:
 
 ```bash
-mkdir -p sample-project/objective-integrity
-cp templates/objective-contract.md sample-project/objective-integrity/objective-contract.md
-python tools/privacy_scan.py ./sample-project
+python tools/demo.py --directory ../oif-demo
 ```
 
-## Validate This Repository
+2. Follow the [10-minute core loop](docs/core-loop.md), then choose [Compact](profiles/compact.md), [Standard](profiles/standard.md), or [High Assurance](profiles/high-assurance.md).
+3. Preview a complete project-local installation into another separate directory:
 
-These commands validate this repository's own source, schemas, fixtures, and smoke-level no-drop coverage. They are useful for contributors and release checks; they are not a certification of a downstream adoption.
+```bash
+python tools/bootstrap.py --destination ../sample-project --adapter generic --mode complete
+```
+
+4. Review the printed members and copy its `plan-sha256`. Apply only while that exact preview still matches:
+
+```bash
+python tools/bootstrap.py --destination ../sample-project --adapter generic --mode complete --expect-plan <plan-sha256> --apply
+```
+
+The demo and adoption destinations must remain separate from this distribution tree. The preview does not write to the destination. `--expect-plan` binds source bytes, destination pre-state, adapter, mode, and installer identity to the reviewed preview; a mismatch asks for a fresh preview without changing destination files. Apply is destination-bounded, records replaced and created files, and creates rollback material before replacement. No mode writes to a global agent directory by default. See the [Adoption Guide](docs/adoption.md) for the exact write set, the explicit current-state apply route, recovery behavior, and manual/read-only options.
+
+## The Core Loop
+
+```text
+source -> objective and open outcomes -> next necessary action
+       -> evidence and actual effect -> reusable learning
+       -> exact later match -> better next action
+```
+
+The same conversation normally owns the objective and the work. An independent reviewer remains read-only toward the candidate it reviews. Separate legacy coordinator/executor recovery is available only when an existing split-task lease requires it.
+
+## Repository Checks
+
+Contributors can inspect the repository with the included structural, privacy, schema, and fixture checks:
 
 ```bash
 python tools/privacy_scan.py .
@@ -57,36 +82,34 @@ python tools/eval_runner.py .
 python tools/exact_action_check.py --command "Get-ChildItem | Select-Object -First 1"
 ```
 
-Optional bootstrap tools default to dry-run and require an explicit destination:
+These checks report the bounded claims they inspect. Runtime and external outcomes use their own evidence routes; see [Evidence Model](docs/evidence-model.md).
+
+For the complete command directory, run:
 
 ```bash
-python tools/bootstrap.py --destination ./sample-project --adapter generic
-python tools/bootstrap.py --destination ./sample-project --adapter generic --apply
-python tools/bootstrap.py --destination ./sample-project --adapter skill-book --apply
-python tools/bootstrap.py --rollback ./sample-project/.objective-integrity-backups/<backup-name>
+python tools/oif.py --help
+python tools/oif.py objective --help
 ```
+
+The directory is a thin dispatcher to the public implementations. It does not add implicit roots, permissions, or background services.
 
 ## Architecture Map
 
 ```mermaid
 flowchart TD
-  A[User Source] --> B[Objective Contract]
-  B --> C[Open Deliverable Ledger]
-  C --> D[Objective-Necessity Links]
-  D --> E[Evidence Map]
-  E --> F[Scenario and Interaction Ledger]
-  F --> G[Implementation or Operation]
-  G --> H[Audit Receipt]
-  H --> I[Correction Authorization]
-  I --> J[Release or Completion Eligibility]
-  J --> K[Effect Episode]
-  K --> L[Continual Learning Records]
-  L --> M[Skill Book]
-  M --> D
+  A[User source] --> B[Durable objective and open outcomes]
+  B --> C[Necessary next action]
+  C --> D[Scenario and evidence route]
+  D --> E[Implementation or operation]
+  E --> F[Consumer result]
+  F --> G[Learning disposition]
+  G --> H[Exact future match]
+  H --> C
 ```
 
 ## Main Concepts
 
+- **Durable objective state:** Immutable source events, explicit source classification, open outcomes, pending effects, append-only history, and a concise human projection.
 - **Objective contract:** A source-bound map of what the user asked for, what counts as acceptance, and what is out of scope.
 - **Open deliverable ledger:** A live list of requested outcomes that prevents a later subtask from silently replacing the parent objective.
 - **Objective-necessity link:** A short reason every material action belongs on the critical path.
@@ -94,34 +117,38 @@ flowchart TD
 - **Scenario and interaction ledger:** A structured way to preserve outcome, state, timing, dependency, recovery, and consumer-level risks without naive Cartesian expansion.
 - **Semantic recomposition:** A check that decomposed component evidence still proves the original system claim.
 - **Correction authorization:** A gate that separates raw evidence, causal hypotheses, findings, scenarios, impact analysis, and the actual permission to change something.
-- **Effect episode:** A measured record of what changed, what improved, what cost was added, and what remains empirical.
-- **Skill Book plane:** A focused-instruction layer that resolves applicable skills and deterministic checks from current work facts, records selected and rejected reasons, binds paths and hashes, and feeds measured effects back into learning records.
+- **Effect episode:** A measured record of what changed, what improved, what cost was added, and what should be revised, narrowed, merged, or retired.
+- **Skill Book plane:** A focused-instruction layer that compiles source and action facts, resolves exact reusable guidance, binds selected bytes to execution, and keeps selection, action result, observed effect, and lifecycle status distinct.
 
 ## Adoption Modes
 
-- **Read-only use:** Apply the invariants as review prompts and copy templates by hand.
-- **Project-local use:** Add templates and a project master to a repository or task folder.
-- **Skill use:** Use `.agents/skills/objective-integrity` as a progressive-disclosure agent skill.
-- **Adapter use:** Use `adapters/generic` for generic system/developer prompt shaping, or `adapters/codex` where that runtime is intentionally selected.
-- **Skill Book use:** Use `tools/skill_resolver.py`, `templates/skill-selection-receipt.md`, and `docs/skill-book.md` when teams need deterministic skill selection and lifecycle evidence.
+- **Read-only:** Apply the core loop without changing configuration.
+- **Project-local:** Install the complete generic package into an explicit project destination.
+- **Skill:** Use `.agents/skills/objective-integrity` for progressive agent guidance.
+- **Adapter:** Add only the integration for the runtime you intentionally use.
+- **Advanced:** Adopt the Skill Book, learning queue, native preflight, or legacy recovery adapter when the work needs them.
 
 No adoption mode writes to a global agent directory by default.
 
 ## Evidence and Maturity
 
-This initial release is an evidence-aware, production-inspired framework with working templates, schemas, validators, and representative evaluation fixtures. The included validators provide structural and smoke-check evidence: public-residue scans, schema shape checks, required-concept presence, fixture wiring, and bootstrap behavior. They are designed to support better objective fidelity, evidence discipline, and measured learning, but they do not prove semantic completeness, universal prevention, or empirical superiority. Teams should measure avoided drift, missed defects, rework, elapsed time, review cost, false holds, and final consumer outcomes in their own environment.
+The repository distinguishes evidence that a record is well formed from evidence that a real consumer outcome occurred. Templates, schemas, and validators support structural confidence. Behavioral, runtime, and external claims are tied to the route that can observe them. Teams can measure objective completion, avoided rework, missed defects, false holds, rollback success, elapsed cost, and final consumer outcomes without turning those metrics into substitute objectives.
 
 ## Repository Guide
 
 - [Philosophy](docs/philosophy.md)
 - [Architecture](docs/architecture.md)
 - [Adoption Guide](docs/adoption.md)
+- [Objective Continuity](docs/objective-continuity.md)
+- [Runtime Reference](docs/runtime-reference.md)
+- [Troubleshooting](docs/troubleshooting.md)
 - [Privacy](PRIVACY.md)
 - [Provenance](PROVENANCE.md)
 - [Terminology](docs/terminology.md)
 - [Evidence Model](docs/evidence-model.md)
 - [Evaluation](docs/evaluation.md)
 - [Governance and Self-Improvement](docs/governance-self-improvement.md)
+- [Maintainer Update Guide](docs/maintainer-update-guide.md)
 - [Skill Book Plane](docs/skill-book.md)
 - [Skill Book Fallback Example](examples/skill-book-fallback.md)
 - [Minimal Skill Book Example](examples/skill-book-minimal/README.md)

@@ -12,6 +12,10 @@
 
 **Consumer oracle:** Evidence tied to the result observed by the intended user, downstream system, or external resource.
 
+**Condition stewardship:** Source-aware maintenance that can improve delegated methods autonomously while requiring exact later user source for a change to a user-authored condition.
+
+**Durable objective state:** Immutable source events, explicit source dispositions, open outcomes, action effects, append-only journal history, and current machine and human projections for one logical objective tree.
+
 **Exact-action preflight:** A bounded check over the exact finalized command, tool payload, or parallel member before execution. It can pass or block known mechanical families; it does not prove semantic correctness.
 
 **Evidence limit:** The strongest claim a given evidence route can support. Also called a proof ceiling in the normative reference.
@@ -19,6 +23,8 @@
 **Interaction closure:** Coverage of reachable scenario combinations that can change harm, state, oracle, recovery, or consumer result.
 
 **Lifecycle disposition:** A rule-bound decision for a reusable skill event, such as existing skill applicable, generic invariant sufficient, candidate, revise, merge, supersede, retire, project-local, unconfirmed, or rejected.
+
+**Negative-selection challenge:** The strongest plausible skill-selection counterexample that should remain unselected, together with the evidence and rule that reject it.
 
 **Objective contract:** The source-bound map of requested outcomes, acceptance criteria, constraints, means, and assumptions.
 
@@ -42,4 +48,8 @@
 
 **Learning ledger:** Public shorthand for a project or global knowledge master.
 
-**Supervisor and Worker:** A precise topology where one thread preserves objective integrity and consumes Worker results, while one primary Worker performs the objective-bound work. The public docs also call this Coordinator and Executor when introducing the idea.
+**Primary owner:** The same-conversation owner that classifies source events, performs authorized work, records action outcomes, consumes review results, and owns shared semantic writes for one objective tree.
+
+**Independent reviewer:** A separate read-only challenge key that derives from the authorized source and fixed evidence and does not edit the target it reviews.
+
+**Supervisor and Worker:** Historical terms retained for legacy split-task recovery and tool compatibility. New work uses a same-conversation primary owner; independent review remains separate and read-only.

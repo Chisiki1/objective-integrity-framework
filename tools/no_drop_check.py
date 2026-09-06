@@ -21,7 +21,7 @@ REQUIRED_PHRASES = [
     "proof ceiling",
     "verification model",
     "guard and stop composition",
-    "Supervisor and Worker",
+    "same-conversation",  # Current execution topology; legacy roles remain in terminology.
     "two layers",
     "three governance planes",
     "Skill Book",
@@ -37,6 +37,11 @@ REQUIRED_PHRASES = [
     "empirical superiority",
     "privacy",
     "external action",
+    "objective.txt",
+    "learning queue",
+    "application bridge",
+    "condition stewardship",
+    "stage allocation",
 ]
 
 
@@ -53,6 +58,10 @@ def main(argv: list[str] | None = None) -> int:
         "framework/core-invariants.md",
         "framework/normative-reference.md",
         "docs/coverage-map.md",
+        "docs/terminology.md",
+        "docs/objective-continuity.md",
+        "docs/runtime-reference.md",
+        "docs/governance-self-improvement.md",
         "templates/skill-selection-receipt.md",
         "templates/skill-lifecycle-record.md",
         "templates/exact-action-preflight.md",
@@ -70,7 +79,7 @@ def main(argv: list[str] | None = None) -> int:
         for item in missing:
             print(f"missing: {item}")
         return 1
-    print("no_drop_check: PASS")
+    print("no_drop_check: PASS (normative family presence; semantic coverage is reviewed separately)")
     return 0
 
 

@@ -1,0 +1,47 @@
+{
+  "schema": "oif-runtime-demo-result-v1",
+  "objective": "Create a concise project status card with visible evidence.",
+  "source": {
+    "kind": "synthetic",
+    "sha256": "<SHA-256 of the generated synthetic source>"
+  },
+  "outcomes": {
+    "DEMO-O1": {
+      "status": "SATISFIED",
+      "evidence_refs": [
+        "file:outputs/status-card.txt#sha256=<SHA-256>"
+      ]
+    },
+    "DEMO-O2": {
+      "status": "SATISFIED",
+      "evidence_refs": [
+        "file:outputs/next-use-note.txt#sha256=<SHA-256>"
+      ]
+    }
+  },
+  "work_artifacts": [
+    "outputs/status-card.txt",
+    "outputs/next-use-note.txt"
+  ],
+  "improvement_candidate": {
+    "state": "prepared",
+    "review_status": "pending",
+    "materialized": false,
+    "artifact": "inputs/candidate-source/SKILL.md",
+    "sha256": "<SHA-256 of the owned unreviewed draft>",
+    "next_use_match_count": 1,
+    "materializer_preview": {
+      "decision": "INACTIVE_CANDIDATE_HOLD_INDEPENDENT_CHALLENGE",
+      "returncode": 3,
+      "writes_performed": [],
+      "receipt": "records/<step>-candidate-materialization-preview.stdout.json"
+    },
+    "effect_disposition": "The owned draft awaits genuine independent review before materialization or later matching use; broader benefit is not claimed."
+  },
+  "evidence": {
+    "run_record": "run-record.json",
+    "command_records": "records/",
+    "learning_queue": "queue/learning.sqlite3"
+  },
+  "scope": "All source, state, artifacts, and queue data are synthetic and contained in the explicit demo directory."
+}

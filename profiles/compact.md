@@ -1,6 +1,6 @@
 # Compact Profile
 
-Use for short, low-risk, read-only or simple local work. Keep one objective line, source, scope, answer, and limit. Do not use this profile for implementation, external action, release, privacy-sensitive work, or material audits.
+Use for short, single-purpose, low-risk, read-only work whose answer does not materially authorize an external action. Keep one objective line, source, scope, answer, and evidence limit. Move to Standard as soon as implementation, a setting change, diagnostic execution, material review, external-action planning, volatile identity, or meaningful harm enters scope.
 
 ## Required Record
 
@@ -9,10 +9,10 @@ One compact note is enough:
 - Requested outcome.
 - Source or target.
 - Allowed scope.
-- Answer or local change.
-- Evidence limit.
-- Open item or next step, if any.
+- Answer and evidence limit.
+- Explicitly bounded workflow metadata—source or target, scope, and an open item or next step—only when it helps interpret the answer. It does not authorize a target file or setting change.
+- One same-conversation owner; no separate coordinator or durable runtime is required for a genuinely finite compact answer.
 
 ## Exit Standard
 
-Exit when the answer or small local outcome is delivered and the evidence limit is stated. Move to Standard or High Assurance when implementation, release, external action, privacy, or material harm enters scope.
+Exit when the answer is delivered and its evidence limit is clear. Compact records cannot authorize implementation, release, external action, or a higher completion claim.
