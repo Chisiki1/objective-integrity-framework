@@ -2,6 +2,8 @@
 
 Use this route only for a real improvement opportunity or concrete condition blocker. If there is no candidate, continue ordinary work. The primary owner manages the route within the current source, workflow, higher-priority instructions, and task authority.
 
+For a method-only change, reuse the exact existing condition document rather than append a new conditions chapter. `scripts/workflow_governance.py --current-conditions <absolute-index.json>` verifies an explicitly supplied `workflow-condition-index-v1` index, its document/version and complete numbered-body inventory. Each condition binds a unique ID, numbered locator and body hash; no fixed project-specific condition count is required. Read `--help` and `scripts/test_current_conditions.py` for the exact synthetic format. Missing backing needs exact recovery or current source resolution, not deletion of obligations. A true approved condition delta produces one consolidated current document with old/new/source lineage; implementation detail belongs in the affected current Skill or master.
+
 ## Find the Useful Change
 
 Locate the failed link: retrieval, presentation, application, result, later consumer effect, or invalidation. Preserve raw project evidence and keep any shared reusable record sanitized. Another reminder does not repair a missing final-action application unless it changes that boundary. A successful but unnecessarily expensive route is also evidence.

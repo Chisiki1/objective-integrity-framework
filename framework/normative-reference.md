@@ -33,6 +33,8 @@ For work that can resume, compact, hand off, queue, retry, or outlive one turn, 
 
 Raw event capture is evidence that input was received. The primary owner still determines its semantic relation to the active objective; a host hook, session identifier, child context, or copied prompt does not create authority by itself.
 
+Reuse that ledger for additions, clarification, resume and compaction in the same logical conversation; forks receive separate identities. Read it at those boundaries, after material results and completed items, and before final delivery. Factor repeated source triples in the human view without dropping clause locators, open outcomes or immutable history. Keep one current completion-scope reference rather than competing definitions of done.
+
 ## 3. Active Objective Integrity View
 
 Before and after material actions, compare:
@@ -116,12 +118,14 @@ Treat product root cause, escaped product failure, and faulty verification model
 
 ## 10. Audit Placement
 
-Use audits where they can change a decision:
+Keep one source-wide scope for all required implementation items, connections and stage-appropriate checks. Bounded construction jobs do not narrow that scope.
 
-- Root-cause challenge after diagnosis and before correction.
-- Early structural audit after implementation snapshot and before behavioral tests.
-- Final audit on the tested release candidate.
-- Pre-action audit before external writes or completion claims.
+- BUILD completes the required implementation and connections. Small construction checks may answer a concrete next-build question; they do not accept an incomplete scope.
+- SWEEP freezes the complete candidate and gathers all safe independent findings for the current stage. Structural review can precede behavior-dependent checks when needed; it is not a per-component release cycle.
+- REPAIR starts from the collected findings, distinguishes mandatory source-backed defects from optional improvements, challenges material root causes and repairs connected causes together.
+- ACCEPT uses the original consumer outcome and required evidence, with final and pre-action review where they can change a decision.
+
+Preserve first faults and blocked dependent checks. Continue safe independent partitions rather than fixing the first visible issue before discovering the rest. External-action prerequisites remain action-relative; describing an operation as construction feedback does not bypass them.
 
 Do not repeat unchanged audits for wording, reviewer, model, or hash changes alone. Re-enter only for changed claims, new evidence, or invalidated dependency boundaries.
 
@@ -163,6 +167,8 @@ Independent review remains separate from execution:
 
 A legacy coordinator/executor status channel is used only to recover an explicitly existing split-task lease. It does not create a second default topology, duplicate action owner, or automatic independent-review key.
 
+Use typed allocation preparation and consume the actual fresh result before acting on it. A requested model is not observed effective metadata. Source-bound handoffs retain scope, resource claims, remaining work and proof ceiling; their dispatch-shaped output does not itself dispatch a job. Reuse genuinely read unchanged coverage, but one reader's receipt never certifies another reader's required reading or independent judgment.
+
 ## 15. Continual Learning
 
 Use project and global learning records when the cost is justified:
@@ -175,6 +181,8 @@ Learning records do not replace current source inspection. A confirmed lesson ha
 An actionable learning queue binds each candidate to its source objective, causal family, owner, artifact, next-use trigger, graph references, expected effect, rollback, immutable events, and current disposition. Supported states include `discovered`, `prepared`, `evaluated`, `active-bounded`, `measured`, `deferred`, `retired`, and `superseded`. A due query retrieves possible next work; it grants neither authority nor semantic applicability.
 
 A source-hash-bound index may make current controls and history retrievable. It preserves every occurrence and bounded cursor identity. It is a projection over source records, not a new semantic master.
+
+Organize touched knowledge families after meaningful results, recurrence or avoidable retrieval cost. Replace superseded current views only after complete immutable backing, cross-links, no-drop verification and compare-and-swap/readback close. Retrieval must include declared archives; a current-only query must not silently match obsolete control sections. Queue metadata corrections retain event history without claiming a new effect or lifecycle advancement.
 
 Metrics distinguish observed, unavailable, and not applicable values. Missing evidence is never encoded as numeric zero.
 
@@ -246,6 +254,10 @@ Improve the framework through measured episodes, representative replay, independ
 
 Prefer revise, narrow, merge, replace, or retire when an existing method can close the gap. Add a new mechanism only when existing generic invariants cannot express a reusable material need and the expected outcome or total-cost benefit exceeds added complexity. Registration, validation, selection, document count, and queue state are not improvement outcomes.
 
+When existing authority, preservation, representative normal-path evidence, independent challenge, bounded adoption and rollback are satisfied, carry a worthwhile candidate into its next real use without waiting for another prompt. At stalled integration, recurrence, support-heavy results or capability changes, also compare structural alternatives: change the work unit, entrypoint, representation or ownership, or consolidate/remove mechanisms. Neither novelty nor a brainstorming quota is a criterion.
+
+Use focused current primary-source research and counterevidence when they can change the decision. Distinguish available API features from the actual host's tools, configuration, trusted delivery and observed use. Evaluate objective progress and total delivery cost including induced rework; unavailable metrics are not zero.
+
 ## 18. Condition Stewardship
 
 Classify conditions by authority:
@@ -258,6 +270,8 @@ Classify conditions by authority:
 A delegated method may change through the normal improvement lifecycle. A user condition changes meaning only through an exact later user source bound to the current condition, proposed replacement, affected condition set, scope, dependencies, effective period, expected benefit and total cost, lost guarantees, independent challenge, rollback, and later effect route.
 
 Approval-shaped text, a matching hash, silence, queue activation, or a machine validator does not grant authority. An admitted amendment supersedes the prior condition only in its exact scope, preserves old and new source lineage, retains every unaffected condition, and remains reversible through its declared recovery route.
+
+Reuse a verified unchanged current-condition inventory for a delegated-method improvement. A pending amendment holds only the dependent change, not improvements that already preserve current conditions. An exact approved amendment uses the newly authorized criteria without circularly requiring the superseded text; unaffected obligations and downstream action authority remain binding.
 
 ## 19. Material Transition Admission
 
@@ -273,6 +287,8 @@ Before a material correction, selected-skill action, external action, or other c
 - candidate, action, result, and later effect identities.
 
 The transition record checks that those references belong to the same work unit and current snapshot. It does not prove the semantic truth of the cause, scenarios, witness, safety, or consumer outcome. Missing structure changes only the dependent transition to diagnosis or advisory work; unrelated read-only work continues.
+
+For source-wide work, v3 admission and owner control consume the same current phase/scope binding. Check that binding before classifying an action as lightweight: formal verification cannot pass as construction feedback, and a repair cannot bypass whole-stage findings collection. Legacy ordinary or split-lease records apply only to their explicit compatibility paths.
 
 ## 20. Completion
 

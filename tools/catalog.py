@@ -17,8 +17,8 @@ from bootstrap import no_links, within
 ROOT = Path(__file__).resolve().parents[1]
 # Public behavior descriptors, not copies of private events or registry records.
 SPECS = [
-    ("master-guided-skill-resolver", "1.5.0", "blind_safe_mechanical", [{"job": ["skill-resolution", "workflow-skill-resolution"]}]),
-    ("master-guided-skill-lifecycle", "1.5.0", "post-blind-semantic", [{"job": ["skill-effect-record", "skill-lifecycle-transition", "master-knowledge-retrieval", "learning-next-use", "workflow-condition-review"]}]),
+    ("master-guided-skill-resolver", "1.6.0", "blind_safe_mechanical", [{"job": ["skill-resolution", "workflow-skill-resolution"]}]),
+    ("master-guided-skill-lifecycle", "1.10.0", "post-blind-semantic", [{"job": ["skill-effect-record", "skill-lifecycle-transition", "master-knowledge-retrieval", "learning-next-use", "workflow-condition-review", "stage-resource-allocation", "completion-work-handoff", "workflow-capability-assessment", "source-wide-work-selection"]}]),
     ("powershell-exact-action", "1.0.0", "blind_safe_mechanical", [
         {"action": ["execute-powershell"], "tool": ["powershell"]},
         {"job": ["command-preflight"], "tool": ["powershell"]},
@@ -26,17 +26,17 @@ SPECS = [
     ("durable-supervisor-status", "1.1.1", "post-blind-semantic", [{
         "cause_families": ["SUPERVISOR::EMPTY-TASK-PROJECTION", "WORKFLOW::WORKER-LOCAL-STATUS"],
         "environment": ["legacy-split-chat"], "job": ["supervisor-observation-fallback"]}]),
-    ("workflow-transition-admission", "2.0.0", "post-blind-semantic", [
+    ("workflow-transition-admission", "2.1.0", "post-blind-semantic", [
         {"job": ["workflow-transition-admission", "supervisor-correction-admission", "same-chat-transition-admission"]},
         {"action": ["worker-candidate-transition", "released-external-action", "same-chat-candidate-transition"]},
         {"cause_families": ["WORKFLOW::CORRECTION-ADMISSION-BYPASS", "WORKFLOW::SKILL-SELECTED-NOT-APPLIED", "WORKFLOW::STALE-ACTION-PROJECTION"]}]),
     ("scenario-interaction-closure", "1.0.0", "post-blind-semantic", [
         {"job": ["scenario-interaction-closure", "material-correction"]},
         {"cause_families": ["WORKFLOW::SCENARIO-OMISSION", "WORKFLOW::RECOMPOSITION-LOSS"]}]),
-    ("objective-supervisor-control", "1.1.0", "post-blind-semantic", [
+    ("objective-supervisor-control", "1.3.0", "post-blind-semantic", [
         {"job": ["supervisor-decision-control", "monitoring-decision"]},
         {"cause_families": ["OBJECTIVE::SUPERVISOR-STATUS-NARRATION", "WORKFLOW::FIXED-WAIT"]}]),
-    ("chat-objective-continuity", "1.0.0", "post-blind-semantic", [
+    ("chat-objective-continuity", "1.3.0", "post-blind-semantic", [
         {"job": ["chat-objective-continuity", "objective-checkpoint"]},
         {"action": ["update-chat-objective", "restore-chat-objective"]},
         {"cause_families": ["OBJECTIVE::COMPACTION-LOSS", "OBJECTIVE::CROSS-CHAT-CONTAMINATION"]}]),

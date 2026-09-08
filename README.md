@@ -2,6 +2,8 @@
 
 Keep the objective intact. Turn experience into better next actions.
 
+Documentation edition: 2026-09-08. [Japanese guide](docs/ja/README.md).
+
 Objective Integrity Framework is an open operating framework for agentic work that must stay faithful to the requested outcome across long tasks, corrections, handoffs, reviews, and external actions. It gives an agent a durable objective, a proportionate evidence model, and a practical learning loop without turning process artifacts into the goal.
 
 Use it as a five-minute review discipline, project-local guidance, a reusable agent skill, or a higher-assurance runtime. The core is platform-neutral. Product-specific integrations live in `adapters/` and remain optional.
@@ -26,12 +28,14 @@ Objective Integrity Framework connects each of those failure modes to an explici
 |---|---|
 | One command directory for the complete package | `tools/oif.py`, `docs/runtime-reference.md` |
 | Source-bound objective and open-outcome continuity | `runtime/objective_ledger.py`, `docs/objective-continuity.md` |
+| Whole-scope build, findings collection, grouped repair, and acceptance | `docs/whole-scope-work.md`, `runtime/skills/master-guided-skill-lifecycle/` |
 | Compact, standard, and high-assurance operating profiles | `profiles/`, `framework/core-invariants.md` |
 | Mid-work objective control and material-transition admission | `runtime/skills/objective-supervisor-control/`, `runtime/skills/workflow-transition-admission/` |
 | Blind scenario, interaction, and semantic-recomposition records | `runtime/skills/scenario-interaction-closure/`, `framework/normative-reference.md` |
 | Provenance-bound skill selection and exact application chain | `runtime/skills/master-guided-skill-resolver/`, `docs/skill-book.md` |
 | Action-linked learning queue, source index, and lifecycle decisions | `runtime/skills/master-guided-skill-lifecycle/`, `docs/governance-self-improvement.md` |
-| Project-local preview, installation, backups, and rollback | `tools/bootstrap.py`, `docs/adoption.md` |
+| Compact current knowledge with complete retrievable history | `docs/knowledge-stewardship.md`, `runtime/skills/master-guided-skill-lifecycle/` |
+| Project-local preview, installation, settings-preserving update, and rollback | `tools/bootstrap.py`, `docs/adoption.md` |
 | Optional runtime integrations | `adapters/` |
 
 ## Quick Start
@@ -68,6 +72,10 @@ source -> objective and open outcomes -> next necessary action
 ```
 
 The same conversation normally owns the objective and the work. An independent reviewer remains read-only toward the candidate it reviews. Separate legacy coordinator/executor recovery is available only when an existing split-task lease requires it.
+
+For substantial implementation, keep one complete scope while splitting useful construction work. Build all requested parts and their required connections, collect findings across the frozen candidate, repair shared causes together, and accept against the original outcome. Small build checks stay available when they are needed to choose the next implementation; they do not become repeated mini-release cycles. See [Whole-Scope Work](docs/whole-scope-work.md).
+
+Learning happens in retained knowledge, reusable skills, and changed next actions. When an eligible improvement preserves the user's conditions and has the needed evidence and recovery path, the owner carries it into use without waiting for another prompt. Useful improvements can also simplify or remove process. The measure is a better consumer result and total delivery cost, not a longer instruction file.
 
 ## Repository Checks
 
@@ -110,6 +118,8 @@ flowchart TD
 ## Main Concepts
 
 - **Durable objective state:** Immutable source events, explicit source classification, open outcomes, pending effects, append-only history, and a concise human projection.
+- **Whole-scope execution:** One owner-controlled completion scope connects bounded jobs to the complete result; phase checks prevent premature formal verification from replacing unfinished implementation.
+- **Current knowledge and history:** Replace superseded current guidance while preserving exact, searchable backing. Repeated source references are factored rather than repeatedly pasted into the objective view.
 - **Objective contract:** A source-bound map of what the user asked for, what counts as acceptance, and what is out of scope.
 - **Open deliverable ledger:** A live list of requested outcomes that prevents a later subtask from silently replacing the parent objective.
 - **Objective-necessity link:** A short reason every material action belongs on the critical path.
@@ -148,7 +158,9 @@ The repository distinguishes evidence that a record is well formed from evidence
 - [Evidence Model](docs/evidence-model.md)
 - [Evaluation](docs/evaluation.md)
 - [Governance and Self-Improvement](docs/governance-self-improvement.md)
-- [Maintainer Update Guide](docs/maintainer-update-guide.md)
+- [Whole-Scope Work](docs/whole-scope-work.md)
+- [Knowledge Stewardship](docs/knowledge-stewardship.md)
+- [Japanese Guide](docs/ja/README.md)
 - [Skill Book Plane](docs/skill-book.md)
 - [Skill Book Fallback Example](examples/skill-book-fallback.md)
 - [Minimal Skill Book Example](examples/skill-book-minimal/README.md)
@@ -159,3 +171,7 @@ The repository distinguishes evidence that a record is well formed from evidence
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE).
+
+## Sponsors
+
+Thanks to [@BlueSnyaiper](https://x.com/BlueSnyaiper) and [@kekkon_soon](https://x.com/kekkon_soon) for providing computing resources.

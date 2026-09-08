@@ -19,8 +19,11 @@ Use one explicitly configured project-local ledger to keep the exact source, obj
 8. Keep the journal authoritative. Under one identity-bound lock, replay and validate the complete proposed transition before append. A rejected transition leaves the semantic head unchanged. Publish projection bytes atomically, preserve append and cleanup faults separately, and recover a lock only by exact identity with conservative evidence that its owner is gone.
 9. Reopen every dependent source identity before consumption. Missing or changed source bytes hold only dependent mutation. Preserve partial tails and capture gaps until exact source recovery or explicit owner disposition.
 10. Keep `objective.txt` concise: active objective, conditions, prohibitions, open outcomes and effects, blockers, return step, and current-contract next work. Follow its pointers to `current.json` and `journal.jsonl` for complete machine and history state.
+11. For source-wide implementation, point current progress to the one owner-controlled completion scope and state described in the sibling lifecycle [source-wide route](../master-guided-skill-lifecycle/references/source-wide-execution.md). Name the phase and remaining implementation/connections without duplicating its matrix. Child completion never closes the parent objective. Reuse the same binding after instructions, completed items, resume and compaction; the human projection does not itself select a phase.
 
 Read [ledger-contract.md](references/ledger-contract.md) before bootstrap, host integration, source classification, action recording, or recovery. Use `runtime/objective_ledger.py` rather than recreating persistence in a shell command.
+
+Use `scripts/ledger_input.py --help` for owner progress/action input generation. Supply the explicit runtime path/hash, config, logical ID and expected current head. It derives the current contract and validates the proposed input through normal in-memory replay; apply the returned JSON through the unchanged ledger CLI with that same head. It creates no journal event, permission, automatic retry or host hook. Submit the semantic delta once rather than copying accumulated history.
 
 ## Effect Boundary
 

@@ -16,7 +16,7 @@ PATTERNS = {
 
 
 def git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(["git", *args], cwd=root, text=True, capture_output=True)
+    return subprocess.run(["git", *args], cwd=root, text=True, encoding="utf-8", capture_output=True)
 
 
 def main(argv: list[str] | None = None) -> int:

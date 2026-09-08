@@ -9,6 +9,7 @@ import json
 import re
 import subprocess
 import sys
+import types
 from pathlib import Path
 from typing import Any
 
@@ -48,11 +49,13 @@ def main() -> int:
     path = Path(args.input).resolve(strict=True)
     data = json.loads(path.read_text(encoding="utf-8"))
     errors: list[str] = []
-    v2 = isinstance(data, dict) and data.get("schema_version") == "workflow-transition-admission-v2"
+    v3 = isinstance(data, dict) and data.get('schema_version') == 'workflow-transition-admission-v3'
+    v2 = isinstance(data, dict) and data.get("schema_version") in {"workflow-transition-admission-v2", "workflow-transition-admission-v3"}
     root_fields = ROOT_FIELDS | ({"job_id", "job_shape_sha256"} if v2 else set())
+    if v3: root_fields |= {'work_phase'}
     if not exact(data, root_fields, "root", errors):
         return emit(path, "HELD_INVALID", errors, [])
-    if data["schema_version"] not in {"workflow-transition-admission-v1", "workflow-transition-admission-v2"}:
+    if data["schema_version"] not in {"workflow-transition-admission-v1", "workflow-transition-admission-v2", "workflow-transition-admission-v3"}:
         errors.append("schema_version: unsupported")
     if not nonempty(data["receipt_id"]) or not nonempty(data["objective_id"]):
         errors.append("receipt_id/objective_id: non-empty required")
@@ -147,9 +150,27 @@ def main() -> int:
             errors.append("consumer.status: invalid")
 
     holds: list[str] = []
+    phase = {'source_wide_evaluated': False, 'proof_ceiling': 'legacy transition; no source-wide selection'}
+    if v3 and not errors:
+        try:
+            module_path = Path(__file__).resolve().parents[2]/'master-guided-skill-lifecycle/scripts/work_phase.py'
+            module = types.ModuleType('transition_work_phase'); module.__file__ = str(module_path)
+            exec(compile(module_path.read_bytes(), str(module_path), 'exec'), module.__dict__)
+            phase = module.evaluate(data['work_phase'], objective_id=data['objective_id'],
+                source_sha256=data['source_sha256'], owner_chat_id=topology['chat_id'])
+            if not phase['admitted']: holds.append('SOURCE_WIDE_PHASE_HOLD')
+            action = data['work_phase']['action']
+            if data['requested_transition'] == 'EDIT' and action not in {'IMPLEMENT', 'REPAIR_FINDINGS'}:
+                holds.append('EDIT_REQUIRES_IMPLEMENTATION_OR_GROUPED_REPAIR')
+            if action == 'CONSTRUCTION_FEEDBACK' and (data['released_external_action'] or data['action_class'] in {'external_apply','commit_push','ci_dispatch','binding_correction'}):
+                holds.append('CONSTRUCTION_FEEDBACK_CANNOT_RECLASSIFY_EXTERNAL_OR_REGRESSION_ACTION')
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            errors.append('work_phase: '+str(exc))
+    # Include the actual decision in every later result, including a held action.
+    emit.phase = phase
     if not errors:
         if data["action_class"] == "trivial_read_only" and not data["material_candidate_action"]:
-            return emit(path, "ADMIT_LIGHTWEIGHT", [], [])
+            if not holds: return emit(path, "ADMIT_LIGHTWEIGHT", [], [])
         binding_classes = {"binding_correction", "finalized_dependent_action", "commit_push", "ci_dispatch", "external_apply"}
         binding_material = data["action_class"] in binding_classes
         if binding_material:
@@ -229,7 +250,7 @@ def main() -> int:
             if not freshness["dependent_claim_ids"] or not all(nonempty(v) for v in freshness["dependent_claim_ids"]):
                 holds.append("JIT_DEPENDENT_CLAIMS_MISSING")
             if freshness["baseline_status"] != "CURRENT":
-                return emit(path, "REPLAN", [], ["ACTION_STATE_NOT_CURRENT"])
+                return emit(path, "REPLAN", [], holds + ["ACTION_STATE_NOT_CURRENT"])
 
         if monitoring["applicable"]:
             require_refs(monitoring, ("decision_window_ref", "wait_value_ref"), "monitoring", holds)
@@ -303,6 +324,7 @@ def emit(path: Path, decision: str, errors: list[str], holds: list[str]) -> int:
         "errors": sorted(set(errors)),
         "holds": sorted(set(holds)),
         "input_sha256": hashlib.sha256(path.read_bytes()).hexdigest().upper(),
+        "work_phase": getattr(emit, 'phase', {'source_wide_evaluated': False}),
         "proof_ceiling": "structural presence, enum, identity-format and bounded cross-field consistency only; semantic source, root cause, scenario, impact, freshness, Skill effect and objective outcome remain unproven",
     }
     print(json.dumps(result, sort_keys=True, indent=2))

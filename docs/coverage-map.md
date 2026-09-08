@@ -55,4 +55,13 @@ This map keeps established normative families and the current executable capabil
 | Safe preview, complete project-local install, and rollback | `tools/bootstrap.py`, `tools/demo.py`, `docs/adoption.md` |
 | Unified command discovery and bounded dispatch | `tools/oif.py`, `docs/runtime-reference.md` |
 | Public eight-skill catalog generation | `tools/catalog.py`, `templates/distribution-catalog.md`, `docs/skill-book.md` |
-| Seven-condition public update standard | `docs/maintainer-update-guide.md`, `CONTRIBUTING.md` |
+| Whole-scope implementation, findings collection and grouped repair | `docs/whole-scope-work.md`, `runtime/skills/master-guided-skill-lifecycle/scripts/work_phase.py` |
+| Scope-bound owner, transition and internal-job consumption | `runtime/skills/objective-supervisor-control/`, `runtime/skills/workflow-transition-admission/`, `runtime/skills/master-guided-skill-lifecycle/scripts/work_io.py` |
+| Typed allocation-state and actual result consumption | `runtime/skills/master-guided-skill-lifecycle/scripts/allocation_io.py`, `docs/runtime-reference.md` |
+| Owner input generation and factored source projection | `runtime/skills/chat-objective-continuity/scripts/ledger_input.py`, `runtime/objective_ledger.py` |
+| Exact current/history organization and complete retrieval | `docs/knowledge-stewardship.md`, `runtime/skills/master-guided-skill-lifecycle/scripts/master_index.py` |
+| Same-state learning metadata correction without false advancement | `runtime/skills/master-guided-skill-lifecycle/scripts/learning_queue.py`, `docs/governance-self-improvement.md` |
+| External method calibration and supplied capability snapshots | `runtime/skills/master-guided-skill-lifecycle/references/external-calibration.md`, `runtime/skills/master-guided-skill-lifecycle/scripts/capability_snapshot.py` |
+| Explicit current-condition document and body identity | `runtime/skills/master-guided-skill-lifecycle/scripts/workflow_governance.py`, `runtime/skills/master-guided-skill-lifecycle/references/condition-stewardship.md` |
+| Settings-preserving package update and owned-obsolete recovery | `tools/bootstrap.py`, `tests/test_package_update.py`, `docs/adoption.md` |
+| Optional same-edition Japanese explanation | `docs/ja/README.md` |

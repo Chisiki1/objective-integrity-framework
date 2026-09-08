@@ -1448,9 +1448,21 @@ def render_projection(state: dict[str, Any]) -> str:
         "SOURCE CLAUSE REFERENCES",
     ])
     if contract:
+        # Render each exact source binding once. Every clause ID and locator
+        # remains visible; only byte-identical repeated source triples move to
+        # a local dictionary. Contract/journal/machine schemas are unchanged.
+        bindings = {}
         for clause in contract.get("clauses", []):
+            key = (clause['source_event_id'], clause['source_ref'], clause['source_sha256'])
+            if key not in bindings:
+                bindings[key] = 'S' + str(len(bindings) + 1)
+        for (event_id, source_ref, digest), alias in bindings.items():
+            lines.append(f"- {alias} = {event_id} | {source_ref} | {digest}")
+        lines.append("CLAUSE LOCATORS (S aliases bind the complete source triple above)")
+        for clause in contract.get("clauses", []):
+            key = (clause['source_event_id'], clause['source_ref'], clause['source_sha256'])
             lines.append(
-                f"- {clause['clause_id']} | {clause['source_event_id']} | {clause['source_ref']} | {clause['source_sha256']}"
+                f"- {clause['clause_id']} | {bindings[key]}"
                 + (f" | locator={clause['locator']}" if clause.get("locator") else "")
             )
     else:

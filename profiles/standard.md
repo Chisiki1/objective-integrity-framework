@@ -17,4 +17,8 @@ Use for normal implementation, repair, migration, review, and project-local oper
 
 ## Exit Standard
 
+For material implementation, keep one complete source scope: BUILD all required parts and connections, SWEEP a frozen candidate for the current stage, REPAIR grouped findings, then ACCEPT the actual result. Construction feedback may unblock implementation without becoming premature formal acceptance. See [Whole-Scope Work](../docs/whole-scope-work.md).
+
+At useful results, organize touched current knowledge with complete history retained and carry eligible lessons to the next matching action. Do not add rules, Skills or checks merely to increase their count.
+
 Exit when the source-bound outcome and mandatory acceptance criteria are satisfied within the profile's evidence limit. When blocked, preserve the minimum unblock condition and exact return step without turning the blocker into the objective.

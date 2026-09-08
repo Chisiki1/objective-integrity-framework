@@ -25,11 +25,15 @@ python tools/oif.py <command> --help
 | Command | Capability |
 |---|---|
 | `objective` | Durable objective ledger. |
+| `objective-input` | Typed owner-input preparation and compare-and-swap progress against the native ledger. |
+| `work`, `work-phase` | Source-bound work handoff and whole-scope phase selection. |
 | `facts-build`, `facts-compile` | Provenance-bound source and action fact preparation. |
 | `resolve`, `registry-check`, `skill-inventory`, `master-inventory` | Skill selection, registry structure, and bounded inventory. |
 | `apply-skill` | Identity-bound selected-script preparation, execution, and effect. |
 | `learning`, `index`, `lifecycle` | Candidate queue, source index, and effect transitions. |
 | `allocate`, `candidate`, `adopt`, `governance` | Stage allocation, isolated candidate/adoption, and condition governance. |
+| `allocation-io` | Typed allocation state preparation and fresh allocator-result consumption. |
+| `capabilities` | Pure bounded assessment of supplied host capability metadata. |
 | `transition`, `scenarios`, `control` | Material transition, scenario/recomposition, and objective-control checks. |
 | `legacy-status` | Explicit legacy split-task recovery. |
 | `catalog` | Generate a public eight-skill distribution catalog to stdout or an explicit new file. |
@@ -61,6 +65,16 @@ Start with the demonstration unless you are integrating the API directly.
 
 `status`, host start, and compact recovery are semantically read-only but may write bounded repair metadata inside the configured ledger root. They can acquire its lock, preserve a partial tail, and rebuild `current.json` and `objective.txt`; they do not classify source, change objective meaning, or authorize an action.
 
+`objective-input` retains the native ledger's validation and expected-head checks; it is not another objective store. The human projection factors repeated source triples into aliases without dropping source clauses or outcomes. Current progress references can change while immutable outcome history remains available.
+
+## Whole-Scope Work
+
+`work-phase` consumes a hash-bound `source-wide-scope-v1` and `source-wide-state-v1` binding. The scope maps source requirements to every implementation item, required connection, and stage-appropriate check. The state records implementation, findings and BUILD/SWEEP/REPAIR/ACCEPT progress. The owner-control and v3 transition consumers use that same binding; a child result cannot reduce the owner's completion scope.
+
+`work` prepares source-bound work units and proof-carrying handoffs. Its `{target, message}` output is a caller contract, not an executed dispatch. An integration maps `internal:<opaque-id>` (or a compatible `/root/...` target) to its host's actual internal-job API. It does not send a message into another user-visible task or create new authority.
+
+Use [Whole-Scope Work](whole-scope-work.md) and the runtime [work entrypoint contract](../runtime/skills/master-guided-skill-lifecycle/references/work-entrypoint.md) for exact record shapes and manual fallback. Inspect command help before preparing advanced JSON inputs.
+
 ## Learning Queue and Index
 
 Entrypoints:
@@ -70,7 +84,9 @@ Entrypoints:
 
 The queue supports `init`, `upsert`, `status`, `history`, and `due`. It stores candidate identity, state, graph references, artifact references, immutable event history, and typed metrics. Missing measurements remain unavailable instead of becoming numeric zero.
 
-The index supports `build` and `query`. A build binds source hashes; a query can filter terms or controls and uses bounded cursors. The index is a retrieval projection, not a replacement for its source files.
+The index supports `build`, `query`, and `propose-organization`. A build binds source hashes and complete declared archive members; a query can filter terms or current controls and uses bounded cursors. Organization proposals do not mutate masters. Retained backing, no-drop verification, compare-and-swap replacement and independent review belong to the adopting owner. The index is a retrieval projection, not a replacement for its source files. See [Knowledge Stewardship](knowledge-stewardship.md) for the archive protocol and current/history separation.
+
+Queue metadata such as next-use details may be corrected without inventing an effect or advancing lifecycle state. Preserve the correction in the immutable event history.
 
 ## Lifecycle, Allocation, and Condition Governance
 
@@ -78,11 +94,15 @@ The lifecycle package also provides:
 
 - `skill_lifecycle.py`: validate effect records and lifecycle transitions.
 - `stage_allocation.py`: choose a capability-satisfying execution configuration from a typed stage view.
+- `allocation_io.py`: build typed state and retain the fresh allocator result before the caller acts on it.
+- `capability_snapshot.py`: assess explicit supplied capability metadata without reading live settings, browsing, dispatching, or activating hooks.
 - `materialize_skill_candidate.py`: preview or create an isolated candidate from explicit roots and manifests.
 - `isolated_registry_adoption.py`: preview or apply a destination-bounded registry adoption.
 - `workflow_governance.py`: validate condition proposals, evaluations, approvals, rollback, and source lineage.
 
 Candidate materialization and isolated adoption are dry-run by default. Model and reasoning allocation are computed from work shape and required capability, not from domain labels or a fixed tier ladder. The record distinguishes requested, accepted, effective, estimated, and unavailable values.
+
+Condition governance accepts an explicit `workflow-condition-index-v1` inventory whose complete numbered source bodies, IDs and hashes are checked. There is no fixed condition count. Reuse a verified unchanged inventory for method-only work; source-authorized amendments remain a separate route, not a prerequisite for every improvement.
 
 ## Provenance-Bound Skill Resolution
 

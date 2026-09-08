@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import os
 import stat
 import subprocess
@@ -64,7 +65,15 @@ def main() -> int:
         runtime_tests = sorted((ROOT / "runtime").rglob("test_*.py"))
         if not runtime_tests:
             failures.append("runtime regression inventory is missing")
-        commands.extend((path.relative_to(ROOT).as_posix(), [str(path)]) for path in runtime_tests)
+        for path in runtime_tests:
+            argv = [str(path)]
+            if path.relative_to(ROOT).as_posix() == "runtime/skills/chat-objective-continuity/scripts/test_ledger_input.py":
+                runtime = ROOT / "runtime/objective_ledger.py"
+                argv.extend(["--runtime", str(runtime), "--runtime-sha256", hashlib.sha256(runtime.read_bytes()).hexdigest().upper(),
+                             "--temp-root", str(temporary)])
+            elif path.relative_to(ROOT).as_posix() == "runtime/skills/master-guided-skill-lifecycle/scripts/test_work_io.py":
+                argv.extend(["--temp-root", str(temporary)])
+            commands.append((path.relative_to(ROOT).as_posix(), argv))
     else:
         for base in (ROOT / "tools", ROOT / "runtime", ROOT / "tests"):
             for path in sorted(base.rglob("*.py")):

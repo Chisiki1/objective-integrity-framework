@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from path_identity import comparison_identity, within
+from demo_current_workflow import run_current_workflow
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -295,6 +296,17 @@ def run_demo(destination: Path) -> dict[str, Any]:
         *common,
         stdin={"action_id": "DEMO-A1", "status": "SUCCEEDED", "effect_state": "EFFECT_CONFIRMED_SUCCEEDED", "evidence_refs": [status_card_ref]},
     )
+    progress_state = runner.run("status-card-input-state", LEDGER, "status", *common)["state"]
+    progress_input = runner.run(
+        "status-card-owner-input", ROOT / "tools" / "oif.py", "objective-input", "progress",
+        "--runtime", str(LEDGER), "--runtime-sha256", sha256_file(LEDGER),
+        "--expected-head", progress_state["head_hash"], *common,
+        stdin={
+            "outcome_updates": [{"outcome_id": "DEMO-O1", "status": "SATISFIED", "evidence_refs": [status_card_ref]}],
+            "next_eligible_work": "Classify the additive source without dropping the completed outcome.",
+            "proof_ceiling": "File creation and ledger evidence inside this demo only.",
+        },
+    )
     runner.run(
         "status-card-progress",
         LEDGER,
@@ -303,13 +315,10 @@ def run_demo(destination: Path) -> dict[str, Any]:
         "-",
         "--event-id",
         "DEMO-PROGRESS-ONE",
+        "--expected-head",
+        progress_state["head_hash"],
         *common,
-        stdin={
-            "contract_id": "demo-contract-v1",
-            "outcome_updates": [{"outcome_id": "DEMO-O1", "status": "SATISFIED", "evidence_refs": [status_card_ref]}],
-            "next_eligible_work": "Classify the additive source without dropping the completed outcome.",
-            "proof_ceiling": "File creation and ledger evidence inside this demo only.",
-        },
+        stdin=progress_input,
     )
 
     addition = "Also create a next-use note while preserving the completed status-card outcome."
@@ -496,6 +505,7 @@ def run_demo(destination: Path) -> dict[str, Any]:
         runner.publish("FAILED")
         raise DemoFailure(runner.first_fault)
 
+    current_workflow = run_current_workflow(runner, write_json=write_json, write_bytes=write_bytes)
     result = {
         "schema": "oif-runtime-demo-result-v1",
         "objective": "Create a concise project status card with visible evidence.",
@@ -522,6 +532,7 @@ def run_demo(destination: Path) -> dict[str, Any]:
         },
         "evidence": {"run_record": "run-record.json", "command_records": "records/", "learning_queue": "queue/learning.sqlite3"},
         "scope": "All source, state, artifacts, and queue data are synthetic and contained in the explicit demo directory.",
+        "current_workflow": current_workflow,
     }
     write_json(destination / "demo-result.json", result)
     runner.publish("COMPLETED")
@@ -542,6 +553,7 @@ def main(argv: list[str] | None = None) -> int:
         print("Objective: two synthetic outcomes were preserved across an additive update.")
         print("Work evidence: outputs/status-card.txt and outputs/next-use-note.txt")
         print(f"Improvement: one owned draft is queued pending independent review; exact next-use matches: {result['improvement_candidate']['next_use_match_count']}")
+        print("Current workflow: connected files built, findings collected, shared cause repaired, original history retained.")
         print("Details: demo-result.json and run-record.json")
         return 0
     except (OSError, ValueError, KeyError, TypeError, DemoFailure) as exc:

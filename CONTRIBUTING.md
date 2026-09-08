@@ -12,8 +12,6 @@ Thank you for improving Objective Integrity Framework.
 - Preserve same-conversation ownership and read-only independent review as the default topology.
 - Separate structural, behavioral, runtime, and external-consumer claims.
 
-Every release-facing change follows the [seven-condition maintainer guide](docs/maintainer-update-guide.md): current generic capability in isolated work, public quality, English throughout, easy truthful adoption, privacy by construction, outcome-led self-improvement, and careful progressive explanation.
-
 ## Development
 
 Run the checks before opening a pull request:

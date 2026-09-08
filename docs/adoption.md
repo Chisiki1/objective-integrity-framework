@@ -10,7 +10,7 @@ The demonstration creates its state only under the explicit new or empty directo
 python tools/demo.py --directory ../oif-demo
 ```
 
-Use the generated files to follow one synthetic flow from source capture through progress, an action result, a learning candidate, and a later matching query. The demonstration does not install project guidance or change an agent's global configuration.
+Use the generated files to follow source capture, owner-input progress, an action result, a learning candidate, and a later matching query. The `current_workflow` result adds a complete BUILD → SWEEP → REPAIR → SWEEP → ACCEPT example, typed allocation, and current/history retrieval. Inspect `current-workflow/first-sweep-observations.json` alongside the repaired observations: the first findings remain available. Review references in the demo are synthetic structural fixtures, not a real independent review. The demonstration does not dispatch agents, install project guidance, or change an agent's global configuration.
 
 ## Preview a Complete Project-Local Installation
 
@@ -102,6 +102,28 @@ For teams with multiple reusable procedures, add the [Skill Book](skill-book.md)
 
 For a small task where this chain would not change a decision, use the core loop directly.
 
+## Update an Existing Complete Installation
+
+Run the new distribution's installer from its separate checkout. Retain the destination's `.objective-integrity-backups` directory: its active hash-bound installation manifest identifies exactly which package files the installer owns. Both the previous `oif-install-v2` and current `oif-install-v3` manifests are accepted.
+
+Preview the update:
+
+```bash
+python tools/bootstrap.py --destination ../sample-project --adapter generic --mode complete --update
+```
+
+Review the printed package members, any obsolete owned members to remove, and the new `plan-sha256`. The plan also binds the selected retained installation manifest, so a changed manifest invalidates the preview. Then apply that exact plan:
+
+```bash
+python tools/bootstrap.py --destination ../sample-project --adapter generic --mode complete --update --expect-plan <plan-sha256> --apply
+```
+
+`--update` changes only recorded package members under `.oif/`. It preserves top-level `AGENTS.md`, project Skills, objective records, and user settings. Choose the adapter already used by the project; updating the package is not an adapter migration. New documentation does not silently replace customized project guidance—review any desired guidance changes separately.
+
+The installer refuses an edited owned package member, a new package path occupied by an unowned file, a changed preview, or an unresolved prior installation. Unowned files are not cleanup targets. Obsolete files are removed only when the retained manifest proves ownership and their current bytes still match that installation; each removal has a backup for rollback. If package files were customized, preserve and reconcile those edits explicitly before retrying. Without a valid complete-install manifest, use a fresh separate destination and migrate deliberately instead of guessing ownership.
+
+Run the installed demonstration or the installed-only checks above to inspect the updated package. Save the new backup path if you may need to restore the previous package.
+
 ## Rollback and Uninstall
 
 Keep the backup path printed by the apply operation. To restore that action:
@@ -110,7 +132,7 @@ Keep the backup path printed by the apply operation. To restore that action:
 python tools/bootstrap.py --rollback <backup-directory>
 ```
 
-Rollback restores files replaced by the matching hash-bound installation and removes files that installation created. If a tracked destination file changed after installation, rollback reports a conflict and preserves the later content for explicit recovery. Each rollback attempt records its pending member and restored frontier. An interrupted attempt retains `ROLLBACK_INTERRUPTED` and its first fault so a later retry can distinguish completed work while rechecking the full destination before another mutation. Legacy backup directories without the current hash-bound manifest require manual review rather than automatic restoration.
+Rollback restores files replaced or removed by the matching hash-bound action and removes files that action created. It supports both v2 installation manifests and v3 installation/update manifests. If a tracked destination file changed after the action, rollback reports a conflict and preserves the later content for explicit recovery. Each rollback attempt records its pending member and restored frontier. An interrupted attempt retains `ROLLBACK_INTERRUPTED` and its first fault so a later retry can distinguish completed work while rechecking the full destination before another mutation. Older backup directories without a supported hash-bound manifest require manual review rather than automatic restoration.
 
 Manual adoption has no bootstrap manifest. Remove or revert only the files you deliberately copied.
 

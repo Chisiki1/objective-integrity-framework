@@ -9,6 +9,9 @@ Use one durable objective ledger when a task can resume, compact, queue, retry, 
 - Use one logical objective-tree identity across model, title, workspace, and context changes.
 - Bind semantic writes to the current head so stale writers do not append.
 - Keep open outcomes, blockers and return steps, pending effects, completed evidence, and next eligible work explicit.
+- Reuse the existing logical-task ledger on additional instructions and resume; give forks separate identities. Read on user updates, material results, completed items, compaction recovery and before final delivery.
+- Factor repeated source identities in the human view while retaining every clause locator and open outcome. Replace superseded current pointers, not immutable source or outcome history.
+- Link one current whole-scope work record; child jobs must not create competing definitions of completion.
 
 ## Source Events
 

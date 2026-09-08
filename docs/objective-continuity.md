@@ -18,6 +18,10 @@ The runtime keeps three complementary views under an explicit project-local ledg
 
 The exact source event remains immutable. The human projection is a view, not a replacement source.
 
+Repeated source identities are displayed once in a source dictionary and referenced by aliases. Every clause retains its locator; open outcomes are not truncated to meet a line budget. Current next-work references replace superseded current pointers, while source, outcome and action history stay recoverable. See [Knowledge Stewardship](knowledge-stewardship.md).
+
+Create the ledger at the first effective user instruction, reuse it for the same logical conversation, and give forks separate identities. Re-read it on a user update, after a material result or completed item, on resume or compaction recovery, and before the final response. Automatic delivery depends on the host integration; a manual owner read remains the fallback.
+
 ## Classifying New Instructions
 
 Every later source event receives an explicit disposition:
@@ -61,5 +65,7 @@ That command is for a source checkout. In a complete installed destination, use 
 Use an explicit configuration, ledger root, logical identifier, and source file. The portable runtime also exposes `classify-source`, `progress`, `action-start`, `action-outcome`, `action-reconcile`, `verify`, `status`, `preflight`, and `hook`. Exact arguments and event contracts are summarized in [Runtime Reference](runtime-reference.md).
 
 ## Consumer Check
+
+For larger implementations, link one current [whole completion scope](whole-scope-work.md) from the objective state. Bounded jobs advance that scope instead of maintaining rival definitions of done. The `objective-input` command prepares owner updates against the exact native ledger version and head; it does not replace source classification or authorize an action.
 
 Continuity is working when an ordinary add or clarification preserves progressed outcomes, a stale writer is rejected without append, an unknown action effect survives retry pressure, and the human projection leads back to the exact next objective-bound step. File presence alone is not that consumer result.

@@ -18,9 +18,9 @@ Default to one primary owner in the same conversation. Keep independent review r
 3. Before each material action, state the source-bound claim it advances, the omission consequence, evidence route and ceiling, expected outcome delta, and next eligible objective step.
 4. Preserve raw evidence and first-fault information separately from causal hypotheses, findings, blind scenarios, intervention impact, and correction authority.
 5. Freeze system-level scenario meaning and reachable interactions before candidate-bearing changes. When checks are decomposed, preserve relational claims and a consumer-level recomposition witness.
-6. Use proportional verification and read-only independent review. Project eligibility from current evidence before external writes, release, or completion claims.
+6. Keep one whole completion scope. Build required parts and connections, freeze and sweep the current stage, collect safe independent findings, repair connected causes together, then accept the actual outcome. Distinguish construction feedback from formal verification. Use proportional checks and read-only independent review; project eligibility before external writes, release, or completion.
 7. When reusable guidance matters, compile facts from every source clause and the finalized action, resolve selected and rejected candidates, revalidate exact paths and hashes, bind selected bytes to the actual action/result, and observe the later effect.
-8. Turn useful results into owned, retrievable candidates with next-use triggers and revise, narrow, merge, supersede, or retire them from measured consumer outcomes.
+8. Turn useful results into owned, retrievable candidates and actual next use. Organize touched current knowledge with complete backing history retained. Carry eligible within-authority improvements into use without another prompt; compare structural simplification where worthwhile and revise, narrow, merge, supersede, or retire from consumer effects.
 9. Improve delegated methods within source meaning. Change user-authored conditions only through an exact later user source with scoped old/new/rollback lineage.
 
 ## References

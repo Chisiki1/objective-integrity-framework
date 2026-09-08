@@ -9,6 +9,8 @@ from pathlib import Path
 
 
 DEFAULT_EXCLUDES = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "work"}
+# A narrow language exception, not an exclusion from privacy or secret checks.
+JAPANESE_EXPLANATIONS = {"docs/ja/README.md"}
 GENERIC_PATTERNS = {
     "windows_home_path": re.compile(r"[A-Za-z]:\\Users\\[^\\\s]+"),
     "drive_root_path": re.compile(r"(?<![A-Za-z])[A-Za-z]:\\(?!\\)"),
@@ -55,6 +57,8 @@ def main(argv: list[str] | None = None) -> int:
         except UnicodeDecodeError:
             continue
         for label, pattern in patterns.items():
+            if label == "japanese_text" and rel in JAPANESE_EXPLANATIONS:
+                continue
             for match in pattern.finditer(text):
                 findings.append(f"{rel}: {label}: {match.group(0)[:80]}")
         for literal in args.extra_literal:

@@ -6,9 +6,11 @@ Objective Integrity Framework is designed for public, project-local adoption.
 
 - Private operational logs.
 - Personal machine paths.
-- Usernames, account identifiers, credentials, tokens, cookies, and session material.
+- Private usernames and account identifiers; credentials, tokens, cookies, and session material.
 - Private repository names, private task identifiers, raw memory files, and private incident records.
 - Product-specific financial, deployment, or runtime details from any private project.
+
+Public contributor or sponsor credits use only information explicitly supplied for publication. They do not disclose private operational provenance or imply additional identities or relationships.
 
 ## Safe Examples
 

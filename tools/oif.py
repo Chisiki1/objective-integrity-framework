@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILLS = ROOT / "runtime/skills"
 COMMANDS = {
     "objective": ROOT / "runtime/objective_ledger.py",
+    "objective-input": SKILLS / "chat-objective-continuity/scripts/ledger_input.py",
     "facts-build": SKILLS / "master-guided-skill-resolver/scripts/build_skill_fact_input.py",
     "facts-compile": SKILLS / "master-guided-skill-resolver/scripts/compile_skill_facts.py",
     "resolve": SKILLS / "master-guided-skill-resolver/scripts/resolve_skills.py",
@@ -21,6 +22,10 @@ COMMANDS = {
     "index": SKILLS / "master-guided-skill-lifecycle/scripts/master_index.py",
     "lifecycle": SKILLS / "master-guided-skill-lifecycle/scripts/skill_lifecycle.py",
     "allocate": SKILLS / "master-guided-skill-lifecycle/scripts/stage_allocation.py",
+    "allocation-io": SKILLS / "master-guided-skill-lifecycle/scripts/allocation_io.py",
+    "work": SKILLS / "master-guided-skill-lifecycle/scripts/work_io.py",
+    "work-phase": SKILLS / "master-guided-skill-lifecycle/scripts/work_phase.py",
+    "capabilities": SKILLS / "master-guided-skill-lifecycle/scripts/capability_snapshot.py",
     "candidate": SKILLS / "master-guided-skill-lifecycle/scripts/materialize_skill_candidate.py",
     "adopt": SKILLS / "master-guided-skill-lifecycle/scripts/isolated_registry_adoption.py",
     "governance": SKILLS / "master-guided-skill-lifecycle/scripts/workflow_governance.py",

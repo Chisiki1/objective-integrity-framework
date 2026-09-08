@@ -2,7 +2,7 @@
 
 Objective Integrity Framework is a clean public generalization of practical workflow patterns for objective continuity, evidence-led change, and action-linked learning.
 
-The public repository contains original English documentation, synthetic examples, schemas, portable runtime code, focused skill entrypoints, and bounded validation and adoption tools. Generic runtime behavior is represented through public contracts and neutral examples rather than copied operational records. The package excludes private memories, ledgers, logs, repository history, deployments, live registries, operating conditions, and configuration state.
+The public repository contains original English documentation, an optional Japanese explanation, synthetic examples, schemas, portable runtime code, focused skill entrypoints, and bounded validation and adoption tools. Generic runtime behavior is represented through public contracts and neutral examples rather than copied operational records. The package excludes private memories, ledgers, logs, private repository history, deployments, live registries, operating-condition records, and configuration state.
 
 ## Evidence Status
 

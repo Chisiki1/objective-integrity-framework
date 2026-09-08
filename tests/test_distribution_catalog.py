@@ -24,7 +24,11 @@ class DistributionCatalog(unittest.TestCase):
             self.assertEqual(len(data["entries"]), 8)
             lifecycle = next(item for item in data["entries"] if item["name"] == "master-guided-skill-lifecycle")
             members = {item["path"]: item["sha256"] for item in lifecycle["files"]}
-            for relative in ("references/learning-loop.md", "references/condition-stewardship.md"):
+            for relative in ("references/learning-loop.md", "references/condition-stewardship.md",
+                             "references/source-wide-execution.md", "references/work-entrypoint.md",
+                             "references/convergence.md", "references/external-calibration.md",
+                             "scripts/allocation_io.py", "scripts/work_phase.py", "scripts/work_io.py",
+                             "scripts/capability_snapshot.py"):
                 actual = ROOT / "runtime/skills/master-guided-skill-lifecycle" / relative
                 self.assertEqual(members[relative], hashlib.sha256(actual.read_bytes()).hexdigest().upper())
             result = subprocess.run(

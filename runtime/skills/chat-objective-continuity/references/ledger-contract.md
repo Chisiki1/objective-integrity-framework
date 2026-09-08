@@ -2,6 +2,10 @@
 
 Use the reviewed `objective_ledger.py` candidate or its exact installed copy. The script uses only the Python standard library. Its journal is authoritative; `current.json` and `objective.txt` are replaceable projections.
 
+The human projection factors repeated source event/ref/hash triples into a local `S1`, `S2`, etc. dictionary, followed by every clause ID and locator. Read both together; these aliases are display keys, never source identity or authority. Every current condition, unresolved outcome/effect, source and gap remains visible. Machine and journal schemas are unchanged: shorter display does not retire history or license dropping old contracts from replay state. Hash-bound callers explicitly rebind a reviewed runtime change; historical evidence and other tasks' callers remain untouched.
+
+The companion `scripts/ledger_input.py` produces owner-authored progress, action-start and action-outcome JSON from the current expected head and contract. It validates through the explicitly bound runtime without appending; the owner still applies it and reads back the actual result. Outcome evidence lists merge new references, while top-level current-progress references replace the prior view. Keep needed current dependencies and immutable history links instead of copying the entire growing list.
+
 ## Identity and trust
 
 The config schema is `chat-objective-continuity-config-v1` and requires `namespace`, `implicit_session_ledgers: true`, `session_bindings`, and `data_root`. The common config is not fixed to one chat. For an unseen host session the exact `session_id` becomes the logical-chat ID when the first `UserPromptSubmit` arrives. The directory key is SHA-256 over namespace and logical-chat ID. Titles, models, workspaces, repository paths, and prompt words never enter this key.

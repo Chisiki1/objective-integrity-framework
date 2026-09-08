@@ -19,6 +19,8 @@ Add:
 
 ## Material Transition
 
+Complete the source-wide implementation and necessary connections before formal stage checks. Preserve all safe independent findings before grouped repair; combine compatible audits on the same frozen candidate and reuse unaffected evidence. A source-wide phase binding is shared by the owner-control and transition consumers when the complete runtime is used. Minimal Skill use keeps the equivalent decisions in project records.
+
 Bind one transition identity across the exact source or independent refutation, causal readiness, frozen scenario/interactions, intended impact, allocation, selected guidance, relation set, recomposition witness, candidate, action, result, and later effect. A structural receipt can admit the route; it does not prove those semantic claims.
 
 Before external action, distinguish non-executing transfer, bounded staging, operational application, and completion assertion by their actual consumer effect. Refresh target, identity, freshness, authority, and recovery immediately before the action. A lower-plane pass cannot override a missing or contrary consumer claim.

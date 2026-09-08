@@ -19,6 +19,10 @@ Retire or defer work that has no source-bound omission consequence. Tests, revie
 
 ## Working Records
 
+Keep one completion scope mapping every requirement to its implementation items, required connections and acceptance checks. In BUILD, implement that whole scope; small construction feedback only answers a next-build question. In SWEEP, freeze the candidate and collect all safe independent stage findings. In REPAIR, preserve the first findings and repair their shared causes together. In ACCEPT, return to the original consumer outcome. A child job's completion is not the whole scope's completion. Never relabel an external action as build feedback to bypass its prerequisites.
+
+These are owner decisions, not a mandatory collection of new tools. A minimal Skill installation can keep them in existing project records. Complete runtime mode adds executable phase and handoff checks without replacing semantic judgment.
+
 Create or update only the records the work needs:
 
 - Objective contract.

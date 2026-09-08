@@ -498,6 +498,7 @@ def _normalize_event(event: Mapping[str, Any]) -> dict[str, Any]:
         "return_trigger",
         "successor_candidate_id",
         "predecessor_candidate_ids",
+        "change_kind",
     }
     unknown = sorted(set(event) - allowed)
     if unknown:
@@ -506,6 +507,11 @@ def _normalize_event(event: Mapping[str, Any]) -> dict[str, Any]:
         raise QueueError("INVALID_EVENT_SCHEMA", "schema_version must be learning-queue-event-v1")
 
     normalized = dict(event)
+    if "change_kind" in event:
+        if event["change_kind"] not in {"transition", "metadata"}:
+            raise QueueError("INVALID_CHANGE_KIND", "change_kind must be transition or metadata")
+        if event["change_kind"] == "metadata":
+            normalized["reason"] = _require_reference(event.get("reason"), "reason")
     normalized["event_id"] = _require_identifier(event.get("event_id"), "event_id")
     normalized["candidate_id"] = _require_identifier(event.get("candidate_id"), "candidate_id")
     expected_revision = event.get("expected_revision")
@@ -631,6 +637,25 @@ LEGAL_TRANSITIONS = {
 
 def _validate_identity_continuity(current: sqlite3.Row, event: Mapping[str, Any]) -> None:
     prior = json.loads(current["payload_json"])
+    if event.get("change_kind") == "metadata":
+        # A correction of current navigation/disposition is not another
+        # activation, evaluation or lifecycle transition. All proof and
+        # identity fields remain byte-equivalent JSON values.
+        mutable = {
+            "event_id", "expected_revision", "change_kind", "reason",
+            "source_refs", "project_event_ref", "global_disposition_ref",
+            "next_consumer_ref", "next_use_trigger", "return_trigger",
+            "evidence_refs", "rollback_refs",
+        }
+        changed = sorted(k for k in (set(prior) | set(event)) - mutable
+                         if prior.get(k) != event.get(k))
+        if changed:
+            raise QueueError("METADATA_PROOF_CHANGED", "metadata cannot change identity, state or stage evidence",
+                             details={"changed": changed})
+        for name in ("evidence_refs", "rollback_refs"):
+            if not set(prior.get(name, [])) <= set(event.get(name, [])):
+                raise QueueError("METADATA_REFERENCE_REMOVED", "metadata must preserve previous evidence and rollback references",
+                                 details={"field": name})
     immutable_fields = (
         "candidate_id",
         "owner_ref",
@@ -829,7 +854,10 @@ def upsert_candidate(
                 },
             )
         from_state = str(current["state"]) if current is not None else None
-        if normalized["state"] not in LEGAL_TRANSITIONS[from_state]:
+        metadata = normalized.get("change_kind") == "metadata"
+        if metadata and (current is None or from_state != normalized["state"]):
+            raise QueueError("METADATA_REQUIRES_SAME_STATE", "metadata requires an existing unchanged lifecycle state")
+        if not metadata and normalized["state"] not in LEGAL_TRANSITIONS[from_state]:
             raise QueueError(
                 "ILLEGAL_TRANSITION",
                 f"illegal transition: {from_state or '<new>'}->{normalized['state']}",

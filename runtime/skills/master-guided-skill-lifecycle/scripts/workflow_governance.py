@@ -667,11 +667,71 @@ def evaluate(input_path: str) -> dict[str, Any]:
     return result
 
 
+def current_conditions(index_path: str) -> dict[str, Any]:
+    """Resolve a caller-owned numbered condition document without changing it.
+
+    The index must name every numbered condition body in the supplied document.
+    Counts and IDs are caller-defined; no private condition set is installed or
+    inferred. Locators are exact numbered prefixes such as ``01.`` or ``105.``.
+    Other prose and requirements outside this document remain outside the check.
+    """
+    index_raw = _read_bound_file(index_path)
+    index = _decode_json(index_raw)
+    if not isinstance(index, dict) or index.get("schema_version") != "workflow-condition-index-v1":
+        raise ValueError("unsupported condition index")
+    ref = index.get("current_condition_document")
+    if not isinstance(ref, dict) or not isinstance(ref.get("sha256"), str) or not SHA256_RE.fullmatch(ref["sha256"]):
+        raise ValueError("current condition document requires an exact SHA256")
+    raw = _read_bound_file(ref["path"])
+    if _sha256(raw) != ref["sha256"].upper():
+        raise ValueError("current condition document changed")
+    bodies: dict[str, str] = {}
+    for match in re.finditer(r"(?m)^(\d+\.) (.*)$", raw.decode("utf-8")):
+        locator, body = match.groups()
+        if locator in bodies:
+            raise ValueError("duplicate numbered condition locator: " + locator)
+        bodies[locator] = body.rstrip("\r")
+    rows = index.get("conditions")
+    if not isinstance(rows, list) or not rows:
+        raise ValueError("explicit nonempty condition inventory required")
+    identifiers: list[str] = []
+    locators: set[str] = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("condition inventory rows must be objects")
+        identity, locator, digest = row.get("id"), row.get("locator"), row.get("current_body_sha256")
+        if not isinstance(identity, str) or not identity.strip() or identity in identifiers:
+            raise ValueError("condition IDs must be nonempty and distinct")
+        if not isinstance(locator, str) or not re.fullmatch(r"\d+\.", locator) or locator in locators:
+            raise ValueError("condition locators must be distinct numbered prefixes")
+        if not isinstance(digest, str) or not SHA256_RE.fullmatch(digest):
+            raise ValueError("condition body requires an exact SHA256")
+        if locator not in bodies or _sha256(bodies[locator].encode("utf-8")) != digest.upper():
+            raise ValueError("condition body identity differs: " + identity)
+        identifiers.append(identity)
+        locators.add(locator)
+    if locators != set(bodies):
+        raise ValueError("numbered document and condition inventory differ")
+    # Preserve a bounded current cut, not a future-use lease or automatic reload.
+    if _read_bound_file(index_path) != index_raw or _read_bound_file(ref["path"]) != raw:
+        raise ValueError("condition index or document changed during resolution")
+    return {"route": "REUSE_EXACT_CURRENT_CONDITIONS", "path": ref["path"],
+            "sha256": _sha256(raw), "bytes": len(raw), "index_sha256": _sha256(index_raw),
+            "condition_ids": identifiers, "condition_count": len(identifiers),
+            "authority_granted": False, "version_created": False,
+            "proof_ceiling": "exact caller-supplied document and numbered body identities only; semantic completeness, authority and amendments require owner review"}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", required=True, help="absolute path to workflow-governance-v1 JSON")
+    route = parser.add_mutually_exclusive_group(required=True)
+    route.add_argument("--input", help="absolute path to workflow-governance-v1 JSON")
+    route.add_argument("--current-conditions", help="resolve an explicit current condition index; no version creation")
     args = parser.parse_args(argv)
-    result = evaluate(args.input)
+    try:
+        result = current_conditions(args.current_conditions) if args.current_conditions else evaluate(args.input)
+    except (ValueError, KeyError, TypeError, OSError, BoundFileError) as exc:
+        result = {"route": "INVALID_REQUEST", "error": str(exc), "authority_granted": False}
     print(json.dumps(result, ensure_ascii=True, sort_keys=True, separators=(",", ":")))
     return 0 if result["route"] != "INVALID_REQUEST" else 2
 

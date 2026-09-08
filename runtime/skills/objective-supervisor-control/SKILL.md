@@ -13,4 +13,8 @@ Provide the frozen objective, event identity, objective evidence delta, omission
 python -B scripts/supervisor_control.py --input <event.json>
 ```
 
-The result may be `WATCH`, `CONSUME`, `REFUTE`, `CORRECT`, `USER_DECISION`, or `WAIT_AT_DECISION_WINDOW`. A status-only event or fixed polling returns a dependent hold. Slow work with concrete evidence progress may wait at a bounded decision window. The result does not authorize edits or external actions.
+The requested decision may be `WATCH`, `CONSUME`, `REFUTE`, `CORRECT`, `USER_DECISION`, `WAIT_AT_DECISION_WINDOW`, or v2 `ACT`. The result returns `ADMIT` or `HOLD` with that decision. A status-only event or fixed polling returns a dependent hold. Slow work with concrete evidence progress may wait at a bounded decision window. The result does not authorize edits or external actions.
+
+Source-wide implementation uses `objective-supervisor-control-v2`: the v1 fields plus `source_sha256`, `owner_chat_id` and `work_phase`. Read the sibling lifecycle [source-wide contract](../master-guided-skill-lifecycle/references/source-wide-execution.md), bind the same owner scope/state as dispatch and transition admission, and consume `work_phase.next_actions`. `ACT` selects that action; `CORRECT` requires grouped `REPAIR_FINDINGS`, not the first failure in an unfinished sweep. Legacy v1 remains usable for ordinary non-product events and explicitly has no source-wide selection.
+
+At a missing consumer connection, recurring family or support-heavy result, use the sibling [convergence route](../master-guided-skill-lifecycle/references/convergence.md). Change the next actual input, shared builder or handoff when supported, preserve useful parallel components and unchanged evidence, and return to the required consumer. A control record is not itself a correction or a reason for fixed polling.

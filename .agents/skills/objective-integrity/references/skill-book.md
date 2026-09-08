@@ -28,6 +28,10 @@ Activation needs source-bound benefit, baseline, representative replay or shadow
 
 The actionable learning queue binds each candidate to its source, owner, family, artifact, next-use trigger, graph references, evidence, rollback, immutable state history, and later consumer. Missing metrics remain unavailable rather than becoming zero. Deferral names a return trigger.
 
+Once the evidence, standing authority, preservation and recovery requirements close, perform the eligible improvement and its next real use without waiting for another prompt. At recurrence, stalled integration or avoidable process cost, compare smaller fixes with changed work units, entrypoints, representations, ownership and removed/consolidated mechanisms. Use current primary-source research when it can change that decision; API features do not imply actual host support.
+
+Keep current Project and Global guidance compact while preserving complete source-linked backing. Organize touched families, retrieve relevant archived history, and correct metadata without manufacturing state progress. An organization proposal is not permission to discard history.
+
 ## Application
 
 Selection is not application. Bind one graph across source, owner, work unit, compiled final action, resolver snapshot, selected path/member hashes, delivered bytes, execution receipt, action result, independent effect observation, and lifecycle disposition.
@@ -43,3 +47,5 @@ Record planned and actual objective/evidence deltas, consumer result, side effec
 Choose execution and review configurations from the actual job shape and capability floor. Preserve requested, accepted, effective, estimated, unavailable, and not-applicable values rather than inventing effective metadata.
 
 Improve delegated methods through the normal lifecycle. A user-authored condition changes only through an exact later user source bound to the old and proposed condition set, scope, dependencies, lost guarantees, rollback, effective period, and later effect. Structural matching and queue state do not grant authority.
+
+Reuse verified unchanged current conditions for method-only work. A pending amendment holds only its dependent change, not unrelated improvements already within authority. In complete runtime mode, use the typed allocation-input/result route; minimal guidance can retain the same distinctions in project records.
