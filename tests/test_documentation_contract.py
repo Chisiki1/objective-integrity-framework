@@ -1,6 +1,7 @@
 """Keep optional translation aligned without creating a privacy exclusion."""
 import importlib.util
 import re
+import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -8,6 +9,8 @@ from io import StringIO
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+# A file-location import must resolve the scanner's sibling tool modules too.
+sys.path.insert(0, str(ROOT / "tools"))
 spec = importlib.util.spec_from_file_location("oif_document_privacy", ROOT / "tools/privacy_scan.py")
 privacy = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(privacy)
