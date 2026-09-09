@@ -27,7 +27,7 @@ class PluginPackage(unittest.TestCase):
         self.root = self.parent / "source"
         for directory in ("packaging", ".agents/skills/objective-integrity", "docs/assets", "evals", "tools"):
             shutil.copytree(ROOT / directory, self.root / directory)
-        for name in ("LICENSE", "PRIVACY.md"):
+        for name in ("LICENSE", "NOTICE", "PRIVACY.md"):
             shutil.copyfile(ROOT / name, self.root / name)
 
     def tearDown(self):
@@ -90,6 +90,7 @@ class PluginPackage(unittest.TestCase):
     def test_metadata_and_required_resources(self):
         manifest, members = plugin.payload(self.root)
         mutations = [
+            lambda m: m.update(license="MIT"),
             lambda m: m["extensions"]["com.openai"]["interface"].update(shortDescription="x" * 31),
             lambda m: m["extensions"]["com.openai"]["interface"].update(defaultPrompt=["same", " same "]),
             lambda m: m["extensions"]["com.openai"].update(apps="./.app.json"),
@@ -102,11 +103,14 @@ class PluginPackage(unittest.TestCase):
             with self.subTest(change=change), self.assertRaises(ValueError):
                 plugin.validate_metadata(changed)
         required_pages = ("standard-workflow.md", "objective-continuity.md", "high-assurance.md", "skill-book.md", "in-work-learning.md")
-        for missing in ("assets/icon.png", *("skills/objective-integrity/references/" + n for n in required_pages)):
+        for missing in ("LICENSE", "NOTICE", "assets/icon.png", *("skills/objective-integrity/references/" + n for n in required_pages)):
             incomplete = dict(members)
             del incomplete[missing]
             with self.subTest(missing=missing), self.assertRaises(ValueError):
                 plugin.validate_members(incomplete, manifest)
+        short_license = dict(members, LICENSE=b"Apache License Version 2.0")
+        with self.assertRaisesRegex(ValueError, "Complete Apache"):
+            plugin.validate_members(short_license, manifest)
         for name in ("../escape", "skills\\escape", "assets/ICON.png"):
             changed = dict(members)
             changed[name] = b"bad"

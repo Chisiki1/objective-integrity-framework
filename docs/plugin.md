@@ -17,6 +17,10 @@ derived from the portable metadata, not maintained as a second configuration.
 
 ## Build a package
 
+Prefer the ready-to-download ZIP on the [release page](https://github.com/Chisiki1/objective-integrity-framework/releases/latest).
+The [release guide](releases.md) explains archive choice, checksum verification
+and version compatibility. Building locally is optional.
+
 Run these commands from the OIF repository with Python 3.10 or later. The output
 directory must not exist; its parent must exist and remain separate from OIF.
 
@@ -46,7 +50,8 @@ oif-plugin/
     README.md
     PRIVACY.md
     LICENSE
-  objective-integrity-0.1.0.zip
+    NOTICE
+  objective-integrity-0.1.1.zip
   build.json
 ```
 
@@ -121,5 +126,5 @@ actual host installation are separate observations.
 Use the [issue tracker](https://github.com/Chisiki1/objective-integrity-framework/issues)
 for general questions and bugs, and [SECURITY.md](../SECURITY.md) for sensitive
 reports. Include a minimal synthetic reproduction, not task ledgers, secrets or
-private source history. Read [PRIVACY.md](../PRIVACY.md) and the [MIT license](../LICENSE)
+private source history. Read [PRIVACY.md](../PRIVACY.md) and the [Apache 2.0 license](../LICENSE)
 for data handling and software terms.

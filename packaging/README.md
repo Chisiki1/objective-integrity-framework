@@ -49,4 +49,4 @@ Report general issues at the project's
 For sensitive reports, follow
 [SECURITY.md](https://github.com/Chisiki1/objective-integrity-framework/blob/main/SECURITY.md).
 Remove private task data before sharing a reproduction. The included `LICENSE`
-sets the MIT licensing terms.
+contains the Apache License 2.0 terms; `NOTICE` retains the project attribution.

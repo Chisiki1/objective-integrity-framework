@@ -134,7 +134,7 @@ def planned_files(adapter: str, mode: str = "minimal") -> dict[str, Path]:
                 no_links(path)
                 if path.is_file() and path.suffix not in {".pyc", ".pyo"}:
                     result[".oif/" + path.relative_to(ROOT).as_posix()] = path
-        for name in ("README.md", "LICENSE", "PRIVACY.md", "PROVENANCE.md", "CONTRIBUTING.md"):
+        for name in ("README.md", "LICENSE", "NOTICE", "VERSION", "PRIVACY.md", "PROVENANCE.md", "CONTRIBUTING.md", "SECURITY.md", "CODE_OF_CONDUCT.md", "CHANGELOG.md"):
             result[".oif/" + name] = ROOT / name
     return result
 

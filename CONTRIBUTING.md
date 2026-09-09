@@ -14,15 +14,32 @@ Thank you for improving Objective Integrity Framework.
 
 ## Development
 
-Run the checks before opening a pull request:
+Use Python 3.10+ with standard-library `sqlite3` and Git. No third-party Python
+packages are required. Run the static checks before opening a pull request:
 
 ```bash
-python tools/privacy_scan.py .
-python tools/no_drop_check.py .
-python tools/validate_schemas.py
-python tools/eval_runner.py .
-python -m unittest discover -s tests
+python -B tools/check.py
 ```
+
+For runtime changes, run the complete regression route with an **existing**
+temporary directory outside the checkout. Use a short writable path on Windows:
+
+```bash
+python -B tools/check.py --runtime --temp-root <existing-separate-temp-directory>
+```
+
+The same commands run in CI on Windows/Linux and Python 3.10/latest. A focused
+test is useful while building; disclose any omitted full checks or host-dependent
+skips in the PR. Preserve the first failure and fix shared causes together.
+
+Use [issue templates](https://github.com/Chisiki1/objective-integrity-framework/issues/new/choose)
+for bugs or questions, [support](docs/support.md) for reporting context and
+[SECURITY.md](SECURITY.md) for sensitive issues. All participation follows the
+[code of conduct](CODE_OF_CONDUCT.md). Contributions are provided under the
+project's [Apache-2.0 license](LICENSE); retain applicable attribution notices.
+
+For a public-facing change, update [CHANGELOG.md](CHANGELOG.md). Release downloads
+and local asset reproduction are documented in [releases](docs/releases.md).
 
 ## Pull Request Checklist
 

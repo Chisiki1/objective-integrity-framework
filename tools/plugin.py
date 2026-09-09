@@ -28,6 +28,9 @@ from bootstrap import absolute, no_links, within
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
+# Canonical full text from https://www.apache.org/licenses/LICENSE-2.0.txt.
+# Attribution belongs in NOTICE, not in a shortened or modified license.
+APACHE_LICENSE_SHA256 = "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
 
 
 def encoded(value) -> bytes:
@@ -70,6 +73,8 @@ def relative(value):
 def validate_metadata(manifest):
     if manifest.get("$schema") != SCHEMA:
         raise ValueError("Expected portable Agent Plugins schema")
+    if manifest.get("license") != "Apache-2.0":
+        raise ValueError("This OIF package must declare Apache-2.0")
     name = text(manifest.get("name"), 64)
     if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
         raise ValueError("Use a stable lowercase kebab-case plugin name")
@@ -130,7 +135,7 @@ def payload(root=ROOT):
     manifest = read_json(sources["plugin.json"])
     validate_metadata(manifest)
     sources[".codex-plugin/plugin.json"] = encoded(compatibility(manifest))
-    for name in ("LICENSE", "PRIVACY.md"):
+    for name in ("LICENSE", "NOTICE", "PRIVACY.md"):
         add(name, root / name)
     add("README.md", root / "packaging/README.md")
     add("assets/icon.png", root / "docs/assets/oif-icon.png")
@@ -151,6 +156,9 @@ def payload(root=ROOT):
 
 def validate_members(members, manifest):
     interface = validate_metadata(manifest)
+    license_text = members.get("LICENSE", b"")
+    if digest(license_text.replace(b"\r\n", b"\n")) != APACHE_LICENSE_SHA256 or not members.get("NOTICE", b"").strip():
+        raise ValueError("Complete Apache-2.0 LICENSE and project NOTICE are required")
     if len(members) > 5000 or sum(map(len, members.values())) > 512 * 1024 * 1024:
         raise ValueError("Package exceeds supported archive limits")
     names = set()

@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.1.1 — 2026-09-09
+
+### Added
+
+- First versioned release: full-framework and skills-only archives, SHA-256
+  checksums and a source-bound release manifest. The local builder previews an
+  exact clean commit, protects existing destinations and does not publish.
+- Download/verification, version compatibility and support guides; issue and
+  pull-request templates; current complete contributor check commands.
+- A reproducible query-response byte benchmark with duplicate-rich, distinct,
+  contradiction, empty-result and stale-source controls. Its scoped results
+  measure the preceding query improvement, not general agent productivity.
+
+### Fixed
+
+- Include the complete Apache License 2.0 and preserve contributor attribution
+  in `NOTICE`. Correct inconsistent MIT metadata and plugin documentation;
+  reject incomplete license payloads before packaging. The project's intended
+  Apache-2.0 license is unchanged.
+- Complete installations retain version, attribution, security, code-of-conduct
+  and changelog files alongside the existing runtime and documentation.
+
+The framework and plugin share version 0.1.1. No runtime schema or task-record
+migration is required. Earlier changes below predate this release hardening.
+
 ## 2026-09-09
 
 ### Added

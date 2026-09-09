@@ -4,13 +4,21 @@
 
 Keep the objective intact. Turn experience into better next actions.
 
-Documentation edition: 2026-09-09. [Japanese guide](docs/ja/README.md).
+Version **0.1.1** · [Download](https://github.com/Chisiki1/objective-integrity-framework/releases/latest) · [Changelog](CHANGELOG.md) · [Japanese guide](docs/ja/README.md).
+
+[![CI](https://github.com/Chisiki1/objective-integrity-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/Chisiki1/objective-integrity-framework/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 Objective Integrity Framework is an open operating framework for agentic work that must stay faithful to the requested outcome across long tasks, corrections, handoffs, reviews, and external actions. It gives an agent a durable objective, a proportionate evidence model, and a practical learning loop without turning process artifacts into the goal.
 
 Use it as a five-minute review discipline, project-local guidance, a reusable agent skill, a skills-only plugin package, or a higher-assurance runtime. The core is platform-neutral. Product-specific integrations live in `adapters/` and remain optional.
 
 ## What's New
+
+**0.1.1 release packaging:** versioned full-framework and skills-only ZIPs,
+SHA-256 checksums, exact source identity, complete consistent Apache-2.0 terms,
+and clearer contribution/support routes. Start with [downloads and verification](docs/releases.md).
+The workflow improvements below were introduced in the preceding 2026-09-09 update.
 
 - **Learning reaches the next operation:** native result capture and result-derived handoffs connect a useful correction to its next consumer during work.
 - **Skills carry their working parts:** complete-package candidates preserve scripts and resources; source-only helper loading avoids generated-cache interference.
@@ -51,6 +59,9 @@ Objective Integrity Framework connects each of those failure modes to an explici
 
 ## Quick Start
 
+New here? [Download a release](docs/releases.md#choose-one-download), verify its
+checksum and extract it. No package manager or global installation is required.
+
 Try the complete workflow in a new or empty sandbox, then install only into a separate destination you choose.
 
 1. Run the synthetic demonstration outside this checkout:
@@ -90,16 +101,15 @@ Learning happens in retained knowledge, reusable skills, and changed next action
 
 ## Repository Checks
 
-Contributors can inspect the repository with the included structural, privacy, schema, and fixture checks:
+Contributors can run the complete static check entrypoint:
 
 ```bash
-python tools/privacy_scan.py .
-python tools/history_scan.py .
-python tools/no_drop_check.py .
-python tools/validate_schemas.py
-python tools/eval_runner.py .
-python tools/exact_action_check.py --command "Get-ChildItem | Select-Object -First 1"
+python -B tools/check.py
 ```
+
+For runtime tests and isolated consumers, use `python -B tools/check.py --runtime
+--temp-root <existing-separate-temp-directory>`. See [Contributing](CONTRIBUTING.md)
+for prerequisites, platform coverage and focused-development guidance.
 
 These checks report the bounded claims they inspect. Runtime and external outcomes use their own evidence routes; see [Evidence Model](docs/evidence-model.md).
 
@@ -158,6 +168,9 @@ The repository distinguishes evidence that a record is well formed from evidence
 
 ## Repository Guide
 
+- [Releases, Downloads and Verification](docs/releases.md)
+- [Measured Query-Response Size](docs/measurements.md)
+- [Help and Feedback](docs/support.md)
 - [Philosophy](docs/philosophy.md)
 - [Architecture](docs/architecture.md)
 - [Adoption Guide](docs/adoption.md)

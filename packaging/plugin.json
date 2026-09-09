@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "objective-integrity",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Keep long tasks faithful to their objectives and turn useful lessons into better next actions.",
   "author": {
     "name": "Objective Integrity Framework",
@@ -9,7 +9,7 @@
   },
   "homepage": "https://github.com/Chisiki1/objective-integrity-framework/blob/main/docs/plugin.md",
   "repository": "https://github.com/Chisiki1/objective-integrity-framework",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "keywords": ["objectives", "task-continuity", "self-improvement", "agent-skills"],
   "extensions": {
     "com.openai": {

@@ -1,0 +1,170 @@
+{
+  "cases": {
+    "duplicate-rich": {
+      "all_matching_origins_and_ancestor_edges_preserved": true,
+      "compact_all_content_bytes": 1646,
+      "compact_content_and_provenance_bytes": 7979,
+      "compact_content_response_count": 1,
+      "compact_first_content_complete": true,
+      "compact_first_response_bytes": 1646,
+      "compact_provenance_response_count": 1,
+      "compact_separate_provenance_bytes": 6333,
+      "exact_content_preserved": true,
+      "first_response_reduction_percent": 91.34,
+      "full_retrieval_reduction_percent": 58.01,
+      "legacy_content_and_provenance_bytes": 19004,
+      "legacy_first_content_complete": true,
+      "legacy_first_response_bytes": 19004,
+      "legacy_response_count": 1,
+      "matching_text_bytes_with_repetition": 8530,
+      "root_path_characters": 140,
+      "source_occurrences": 10,
+      "source_path_characters": [
+        151,
+        154,
+        155
+      ],
+      "status": "verified",
+      "stderr_bytes": 0,
+      "unique_exact_sections": 1,
+      "unique_text_bytes": 853
+    },
+    "near-contradictions": {
+      "all_matching_origins_and_ancestor_edges_preserved": true,
+      "compact_all_content_bytes": 1451,
+      "compact_content_and_provenance_bytes": 6117,
+      "compact_content_response_count": 1,
+      "compact_first_content_complete": true,
+      "compact_first_response_bytes": 1451,
+      "compact_provenance_response_count": 3,
+      "compact_separate_provenance_bytes": 4666,
+      "exact_content_preserved": true,
+      "first_response_reduction_percent": 56.82,
+      "full_retrieval_reduction_percent": -82.05,
+      "legacy_content_and_provenance_bytes": 3360,
+      "legacy_first_content_complete": true,
+      "legacy_first_response_bytes": 3360,
+      "legacy_response_count": 1,
+      "matching_text_bytes_with_repetition": 221,
+      "root_path_characters": 145,
+      "source_occurrences": 3,
+      "source_path_characters": [
+        159,
+        160
+      ],
+      "status": "verified",
+      "stderr_bytes": 0,
+      "unique_exact_sections": 3,
+      "unique_text_bytes": 221
+    },
+    "no-duplicates": {
+      "all_matching_origins_and_ancestor_edges_preserved": true,
+      "compact_all_content_bytes": 11437,
+      "compact_content_and_provenance_bytes": 42785,
+      "compact_content_response_count": 1,
+      "compact_first_content_complete": true,
+      "compact_first_response_bytes": 11437,
+      "compact_provenance_response_count": 10,
+      "compact_separate_provenance_bytes": 31348,
+      "exact_content_preserved": true,
+      "first_response_reduction_percent": 39.73,
+      "full_retrieval_reduction_percent": -125.47,
+      "legacy_content_and_provenance_bytes": 18976,
+      "legacy_first_content_complete": true,
+      "legacy_first_response_bytes": 18976,
+      "legacy_response_count": 1,
+      "matching_text_bytes_with_repetition": 8530,
+      "root_path_characters": 139,
+      "source_occurrences": 10,
+      "source_path_characters": [
+        150,
+        153,
+        154
+      ],
+      "status": "verified",
+      "stderr_bytes": 0,
+      "unique_exact_sections": 10,
+      "unique_text_bytes": 8530
+    },
+    "no-match": {
+      "all_matching_origins_and_ancestor_edges_preserved": true,
+      "compact_all_content_bytes": 557,
+      "compact_content_and_provenance_bytes": 557,
+      "compact_content_response_count": 1,
+      "compact_first_content_complete": true,
+      "compact_first_response_bytes": 557,
+      "compact_provenance_response_count": 0,
+      "compact_separate_provenance_bytes": 0,
+      "exact_content_preserved": true,
+      "first_response_reduction_percent": -2.58,
+      "full_retrieval_reduction_percent": -2.58,
+      "legacy_content_and_provenance_bytes": 543,
+      "legacy_first_content_complete": true,
+      "legacy_first_response_bytes": 543,
+      "legacy_response_count": 1,
+      "matching_text_bytes_with_repetition": 0,
+      "root_path_characters": 134,
+      "source_occurrences": 0,
+      "source_path_characters": [
+        145,
+        148,
+        149
+      ],
+      "status": "verified",
+      "stderr_bytes": 0,
+      "unique_exact_sections": 0,
+      "unique_text_bytes": 0
+    },
+    "stale-source": {
+      "checks": {
+        "compact": {
+          "exit_code": 2,
+          "response_bytes": 191,
+          "stale_source_rejected": true,
+          "stderr_bytes": 0
+        },
+        "legacy": {
+          "exit_code": 2,
+          "response_bytes": 256,
+          "stale_source_rejected": true,
+          "stderr_bytes": 0
+        }
+      },
+      "same_length_source_mutation": true,
+      "status": "verified-negative-control"
+    }
+  },
+  "first_fault": null,
+  "method": {
+    "budget_argument": 12000,
+    "budget_semantics": {
+      "compact": "serialized response bytes",
+      "legacy": "selected text characters"
+    },
+    "excluded_metrics": [
+      "tokens",
+      "elapsed time",
+      "task completion",
+      "quality",
+      "rework",
+      "general productivity"
+    ],
+    "fixed_fixture_design": "8 history nodes and 2 live roots, 9 edges; equal-width tags toggle exact duplication",
+    "grouping": "exact section bytes only; no fuzzy or semantic merging",
+    "metric": "actual CLI stdout bytes, including JSON metadata, escaping, and newline",
+    "negative_reduction_means": "candidate response overhead, not an improvement",
+    "path_dependence": "raw byte totals vary with absolute synthetic source-path length; no path normalization or redaction before counting",
+    "provenance_accounting": "legacy inline on every content page; compact all origin pages fetched separately for every returned group",
+    "raw_evidence": "all actual subprocess stdout, stderr and exit metadata retained in explicitly owned scratch",
+    "same_input_per_comparison": true
+  },
+  "runtime": {
+    "master_index_sha256": "D19712707538D8A3B5E0798FE24D035DD9BB7794B031D543FB98AB968C6024DB",
+    "master_index_unchanged": true,
+    "platform": "win32",
+    "python": "3.12.2"
+  },
+  "schema": "oif-master-query-benchmark-v1",
+  "status": "verified",
+  "measurement_benchmark_sha256": "1F0D572F01AB5853840BA4BECF337611836D0612773C5826D2E2BE19AFBEA179"
+}
