@@ -1,3 +1,5 @@
+![Objective Integrity Framework — Keep the objective intact.](docs/assets/oif-header.png)
+
 # Objective Integrity Framework
 
 Keep the objective intact. Turn experience into better next actions.

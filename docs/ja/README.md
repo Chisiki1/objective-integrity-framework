@@ -1,3 +1,5 @@
+![Objective Integrity Framework — Keep the objective intact.](../assets/oif-header.png)
+
 # Objective Integrity Framework — 日本語ガイド
 
 主目的を保ち、経験を次の行動の改善につなげる。
