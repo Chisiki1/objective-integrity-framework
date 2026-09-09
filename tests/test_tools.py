@@ -127,6 +127,39 @@ class ToolTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("missing HEAD", result.stdout)
 
+    def test_history_scan_binary_blobs_and_historical_residue(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+
+            def git(*args: str) -> None:
+                subprocess.run(["git", *args], cwd=target, check=True, capture_output=True)
+
+            def scan() -> subprocess.CompletedProcess[str]:
+                return self.run_tool("tools/history_scan.py", str(target))
+
+            git("init", "-b", "main")
+            git("config", "user.name", "Fixture")
+            git("config", "user.email", "fixture" + "@" + "example.invalid")
+            asset = target / "asset.png"
+            asset.write_bytes(b"\x89PNG\r\n\x1a\n\xff\x00")
+            git("add", ".")
+            git("commit", "-m", "Add binary fixture")
+            clean = scan()
+            self.assertEqual(clean.returncode, 0, clean.stdout + clean.stderr)
+            self.assertEqual(clean.stderr, "")
+
+            marker = b"ghp" + b"_" + b"x" * 24
+            asset.write_bytes(asset.read_bytes() + marker + b"\x00\xff")
+            git("add", ".")
+            git("commit", "-m", "Add residue fixture")
+            asset.unlink()
+            git("add", "-u")
+            git("commit", "-m", "Remove current asset")
+            historical = scan()
+            self.assertEqual(historical.returncode, 1, historical.stdout + historical.stderr)
+            self.assertIn("asset.png: token:", historical.stdout)
+            self.assertEqual(historical.stderr, "")
+
     def test_link_check_passes_repository(self) -> None:
         result = self.run_tool("tools/link_check.py", ".")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

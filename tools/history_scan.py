@@ -16,7 +16,10 @@ PATTERNS = {
 
 
 def git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(["git", *args], cwd=root, text=True, encoding="utf-8", capture_output=True)
+    # Blobs can contain arbitrary bytes. Preserve undecodable bytes without
+    # dropping the blob or hiding ASCII residue embedded in binary assets.
+    return subprocess.run(["git", *args], cwd=root, text=True, encoding="utf-8",
+                          errors="surrogateescape", capture_output=True)
 
 
 def main(argv: list[str] | None = None) -> int:
