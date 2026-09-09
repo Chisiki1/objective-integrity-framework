@@ -6,7 +6,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from public_identifiers import PublicIdentifiers
+from public_identifiers import PublicIdentifiers, free_text
 
 
 DEFAULT_EXCLUDES = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "work"}
@@ -73,6 +73,13 @@ def main(argv: list[str] | None = None) -> int:
         for literal in args.extra_literal:
             if literal and literal in text:
                 findings.append(f"{rel}: extra_literal: {literal}")
+        for prose in free_text(rel, raw):
+            for label, pattern in patterns.items():
+                for match in pattern.finditer(prose):
+                    findings.append(f"{rel}: declaration_{label}: {match.group(0)[:80]}")
+            for literal in args.extra_literal:
+                if literal and literal in prose:
+                    findings.append(f"{rel}: declaration_extra_literal: {literal}")
 
     if findings:
         print("\n".join(findings))

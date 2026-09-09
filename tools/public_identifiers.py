@@ -54,6 +54,13 @@ def parse(raw):
     return entries
 
 
+def free_text(path, raw):
+    """Decoded review prose is never an identifier declaration or exemption."""
+    if path != DECLARATIONS:
+        return []
+    return [row[key] for row in parse(raw) for key in ("reason", "provenance")]
+
+
 class PublicIdentifiers:
     def __init__(self, root: Path):
         path = root / DECLARATIONS

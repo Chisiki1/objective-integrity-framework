@@ -104,6 +104,25 @@ class PublicIdentifierBoundaries(unittest.TestCase):
         with self.assertRaises(ValueError):
             parse(b'{"schema":"one","schema":"two","entries":[]}')
 
+    def test_decoded_free_text_is_not_an_exemption_in_tree_or_history(self):
+        self.git("init", "--quiet")
+        self.git("config", "core.autocrlf", "false")
+        self.commit()
+        self.scan("history_scan", 0)
+        private = "C:" + "\\Users\\" + "PrivateFixture\\data"
+        for field in ("reason", "provenance"):
+            for residue in (private, "ghp" + "_" + "x" * 24, self.value):
+                with self.subTest(field=field, residue=residue):
+                    self.declare([dict(self.row, **{field: residue})])
+                    self.scan("privacy_scan", 1)
+                    self.commit()
+                    self.scan("history_scan", 1)
+        self.declare([self.row])
+        self.commit()
+        self.scan("privacy_scan", 0)
+        # Removing escaped residue from the current tree cannot erase history.
+        self.assertIn(b"declaration_private_path", self.scan("history_scan", 1))
+
     def test_old_declarations_cannot_authorize_other_historical_blobs(self):
         self.git("init", "--quiet")
         self.git("config", "core.autocrlf", "false")

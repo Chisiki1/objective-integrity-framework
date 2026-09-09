@@ -5,7 +5,7 @@ import argparse
 import re
 import subprocess
 from pathlib import Path
-from public_identifiers import PublicIdentifiers
+from public_identifiers import PublicIdentifiers, free_text
 
 
 PATTERNS = {
@@ -85,6 +85,10 @@ def main(argv: list[str] | None = None) -> int:
                     if public.permits(rel, show.stdout, label, match.group(0)):
                         continue
                     findings.append(f"{commit}:{rel}: {label}: {match.group(0)[:80]}")
+            for prose in free_text(rel, show.stdout):
+                for label, pattern in PATTERNS.items():
+                    for match in pattern.finditer(prose):
+                        findings.append(f"{commit}:{rel}: declaration_{label}: {match.group(0)[:80]}")
 
     if findings:
         print("\n".join(findings))
