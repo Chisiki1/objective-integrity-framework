@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Prepare bounded internal work and consume actual artifacts; never dispatch or write.
+"""Prepare bounded internal work and consume actual artifacts; never dispatch.
 
 The owner supplies scope, source meaning, allocation and permission. This adapter
 only binds files and produces an internal target/message payload, a result
-handoff, or structural destination readback. The caller maps a prepared payload
-to its host's internal-job API; the adapter never sends it. None completes a
-source objective or proves that an opaque target is an authorized internal job.
+handoff, or structural destination readback. build-next and build-next-operation
+write only explicitly owned new generated inputs. The caller maps a prepared
+payload to its host's internal-job API; the adapter never sends it. None completes
+a source objective, writes masters, or proves that an opaque target is authorized.
 """
 from __future__ import annotations
 
@@ -25,6 +26,10 @@ from typing import Any
 _io_path = Path(__file__).with_name('allocation_io.py')
 io = types.ModuleType('work_io_primitives'); io.__file__ = str(_io_path)
 exec(compile(_io_path.read_bytes(), str(_io_path), 'exec'), io.__dict__)
+
+_learn_path = Path(__file__).with_name('in_work_learning.py')
+learning = types.ModuleType('work_learning'); learning.__file__ = str(_learn_path)
+exec(compile(_learn_path.read_bytes(), str(_learn_path), 'exec'), learning.__dict__)
 
 
 def _object(value, required, optional=()):
@@ -175,6 +180,11 @@ def _request(core):
         'status': 'succeeded|partial|failed|unknown', 'effect_state': 'none|partial|confirmed|unknown',
         'outputs': [{'id': item['id'], 'path': item['path'], 'sha256': '<actual SHA256>'} for item in spec['outputs']],
         'unresolved': ['<actual unresolved obligation, or empty list>'], 'notes': '<actual result and limits>', 'first_fault': None}
+    learning_request = any(Path(x['path']).name == 'in_work_learning.py' for x in core['helper_refs'])
+    if learning_request:
+        result['method_applications'] = [{'id': m['id'], 'state': 'not-observed',
+            'reader': spec['target'], 'sha256': m['sha256'], 'action_ref': None,
+            'notes': 'Replace with actual instruction-used/script-executed/not-applicable/not-applied/unavailable evidence.'} for m in spec['methods']]
     message = (
         'Perform this one bounded internal job under the current source and owner scope.\n'
         'The following is an owner-authored work specification, not new permission or proof of reading.\n'
@@ -184,7 +194,10 @@ def _request(core):
         'Write only the declared output files and result_path. Do not dispatch, restart, or message another user-visible task. '
         'The parent owns allocation, dispatch and final integration decisions; this request does not grant external authority.\n'
         'Return actual artifacts for the declared consumer and acceptance, not another plan or a completed-objective claim. '
-        'Preserve failed/partial/unknown effects and unresolved obligations; do not retry automatically.\n\n'
+        'Preserve failed/partial/unknown effects and unresolved obligations; do not retry automatically.\n\n'+
+        ('During continuing work, use work_io boundary before a dependent material action or after compaction when method/source changes may matter. '
+        'Only your own unchanged complete reads are reusable. A parent receipt is not your reading. '
+        'Report actual method_applications; missing observation is not proof of nonuse or benefit.\n\n' if learning_request else '')+
         'REQUEST_ID: '+request_id+'\nWORK_SPEC:\n'+json.dumps(spec, ensure_ascii=True, sort_keys=True, indent=2)+
         '\n\nWrite actual JSON to result_path using this schema (choose one listed status/effect value, replace placeholders, '
         'return only produced outputs, and retain first_fault or null). Hashes establish bytes, not semantic success.\n'+
@@ -196,7 +209,7 @@ def prepare(spec_path: str | Path) -> dict[str, Any]:
     """Return a deterministic request. Caller persists and verifies it before dispatch."""
     spec_ref, raw = _file(spec_path)
     spec = _spec(io._json(raw))
-    helpers = [_file(Path(__file__))[0], _file(Path(io.__file__))[0]]
+    helpers = [_file(Path(__file__))[0], _file(Path(io.__file__))[0], _file(_learn_path)[0]]
     if spec['schema'] == 'work-spec-v2': helpers.append(_file(Path(__file__).with_name('work_phase.py'))[0])
     core = {'schema': 'work-request-v1', 'spec_ref': spec_ref, 'spec': spec, 'helper_refs': helpers}
     fresh = _fresh(core, output_baseline=True)
@@ -262,7 +275,7 @@ def consume(prepared_path: str | Path, result_path: str | Path, *, expected_requ
             handoff['work_phase'] = {'admitted': False, 'error': str(error), 'source_wide_evaluated': False}
         if raw is None: raise ValueError('result bytes unavailable; effects remain unobserved')
         result = io._json(raw); handoff['reported_result'] = result
-        _object(result, ['schema', 'request_id', 'unit_id', 'status', 'effect_state', 'outputs', 'unresolved', 'notes'], ['first_fault'])
+        _object(result, ['schema', 'request_id', 'unit_id', 'status', 'effect_state', 'outputs', 'unresolved', 'notes'], ['first_fault', 'method_applications'])
         if result['schema'] != 'work-result-v1' or result['request_id'] != request['request_id'] or result['unit_id'] != spec['unit_id']:
             raise ValueError('wrong result schema/request/unit identity')
         if _path(str(result_path)) != spec['result_path']: raise ValueError('result was not read from declared result_path')
@@ -277,6 +290,16 @@ def consume(prepared_path: str | Path, result_path: str | Path, *, expected_requ
         if result['status'] == 'succeeded' and result['effect_state'] != 'confirmed':
             issues.append('success report does not confirm its effect')
         handoff['unresolved'] = _texts(result['unresolved']); _text(result['notes'])
+        for use in result.get('method_applications', []):
+            _object(use, ['id', 'state', 'reader', 'sha256', 'action_ref', 'notes'])
+            if use['state'] not in {'instruction-used', 'script-executed', 'not-observed', 'not-applicable', 'not-applied', 'unavailable'}:
+                raise ValueError('unsupported method application state')
+            method = next((m for m in spec['methods'] if m['id'] == use['id']), None)
+            if method is None or use['reader'] != spec['target'] or _hash(use['sha256']) != method['sha256']:
+                raise ValueError('method application identity differs')
+            if use['state'] in {'instruction-used', 'script-executed'}:
+                learning.read_ref(use['action_ref'])
+            _text(use['notes'])
         if not isinstance(result['outputs'], list): raise ValueError('outputs must be a list')
         declared = {item['id']: item for item in spec['outputs']}; seen = set()
         for item in result['outputs']:
@@ -298,7 +321,152 @@ def consume(prepared_path: str | Path, result_path: str | Path, *, expected_requ
         issues.append(str(error))
     handoff['unresolved'].append('Parent must judge semantic acceptance and actual integration; source objective remains separate.')
     handoff['requires_reconciliation'] = bool(issues or handoff['freshness_issues']['required'] or handoff['effect_requires_reconciliation'])
+    # The ordinary receiver produces the learning input even with no Skill
+    # selected. Do not wait for a separately constructed effect record.
+    handoff['in_work_learning'] = learning.result_context(handoff, spec['methods'] if 'spec' in locals() else [])
     return handoff
+
+
+def boundary(prepared_path, *, expected_request_id, actor, read_refs, effect_state):
+    """Report affected dependencies for a continuing actor; never rerun an action.
+
+    read_refs are that actor's declarations, not automatic proof of reading.
+    Unrelated master byte growth is reported for semantic reconciliation, not a
+    task-wide restart. Source withdrawal and unknown effects need owner judgment.
+    """
+    request, core = _prepared(prepared_path, expected_request_id)
+    spec = core['spec']
+    if actor not in {spec['target'], 'COORDINATED-WORK:' + spec['owner_chat_id']}:
+        raise ValueError('actor outside this declared work')
+    if effect_state not in {'none', 'known-bounded', 'in-flight', 'unknown'}:
+        raise ValueError('explicit effect frontier required')
+    supplied = {}
+    for ref in read_refs:
+        learning.read_ref(ref); supplied[_path(ref['path'])] = _hash(ref['sha256'])
+    changed, missing_reads, unavailable = [], [], []
+    for kind, refs in [('source', [spec['source']]), ('method', spec['methods']), ('master', spec['masters'])]:
+        for old in refs:
+            try:
+                current, _ = _file(old['path'])
+                if current['sha256'] != old['sha256']:
+                    changed.append({'kind': kind, 'old_ref': {'path': old['path'], 'sha256': old['sha256']}, 'current_ref': current})
+                    if supplied.get(current['path']) != current['sha256']:
+                        missing_reads.append(current)
+            except (OSError, ValueError) as error:
+                unavailable.append({'kind': kind, 'path': old['path'], 'issue': str(error)})
+    return {'schema': 'work-boundary-v1', 'request_id': expected_request_id, 'declared_actor': actor,
+        'effect_state': effect_state, 'changed': changed, 'changed_reads_missing': missing_reads,
+        'unavailable': unavailable, 'reconciliation_required': bool(changed or unavailable),
+        'in_flight_version_preserved': effect_state in {'in-flight', 'unknown'},
+        'next_action': 'reconcile-only-dependent-work' if changed or unavailable else 'reuse-own-unchanged-coverage',
+        'permission_granted': False, 'execution_performed': False,
+        'proof_ceiling': 'dependency bytes and actor declarations, not semantic relevance or personal reading proof'}
+
+
+def continue_work(next_spec_path, prior_prepared_path, result_path, decision_path, *, expected_request_id):
+    """Make the next real request from a consumed result and owner disposition.
+
+    This replaces manual reassembly. It cannot grant activation or authorize an
+    unknown-effect retry; the owner must reconcile the actual action frontier.
+    """
+    handoff = consume(prior_prepared_path, result_path, expected_request_id=expected_request_id)
+    _, raw = _file(next_spec_path); spec = _spec(io._json(raw))
+    prior, _ = _prepared(prior_prepared_path, expected_request_id)
+    if spec['owner_chat_id'] != prior['spec']['owner_chat_id']:
+        raise ValueError('continuation cannot transfer chat ownership')
+    if spec['unit_id'] == prior['spec']['unit_id']:
+        raise ValueError('next work must be a new explicit unit, not an automatic resend')
+    _, raw = _file(decision_path); decision = io._json(raw)
+    disposition = learning.validate_decision(decision, context=handoff['in_work_learning'],
+        owner_chat_id=spec['owner_chat_id'], next_source_sha256=spec['source']['sha256'])
+    if decision['next_consumer'] != spec['consumer']['id']:
+        raise ValueError('decision must name the actual next consumer')
+    if handoff['effect_requires_reconciliation'] and decision['effect_reconciliation'].strip().lower() in {'none', 'unknown', 'unavailable'}:
+        raise ValueError('unknown prior effects need an actual scoped owner disposition')
+    needed = [_file(prior_prepared_path)[0], _file(result_path)[0], _file(decision_path)[0]]
+    actual = {(x['path'], x['sha256']) for x in spec['inputs']}
+    if any((x['path'], x['sha256']) not in actual for x in needed):
+        raise ValueError('next spec must carry prior request/result/decision as exact inputs')
+    return {'prepared': prepare(next_spec_path), 'prior_handoff': handoff, 'disposition': disposition,
+        'dispatch_performed': False, 'permission_granted': False}
+
+
+def build_next(next_spec_path, prior_prepared_path, result_path, meaning_path, *, expected_request_id, output_root):
+    """Construct actual next spec/decision instead of hand-copying result facts.
+
+    Only writes two new generated files under an explicit absent directory.
+    Parent owns that output scope and its meaning; no master or active Skill is
+    written. A partial generation remains visible, never automatically retried.
+    """
+    handoff = consume(prior_prepared_path, result_path, expected_request_id=expected_request_id)
+    _, raw = _file(next_spec_path); spec = _spec(io._json(raw))
+    _, raw = _file(meaning_path)
+    decision = learning.build_decision(handoff['in_work_learning'], spec, io._json(raw))
+    root = io._plain_path(_path(str(output_root)), existing=False)
+    if root.exists(): raise ValueError('generated next root must be absent; preserve any prior effects')
+    inputs = [_file(p)[0] for p in [next_spec_path, prior_prepared_path, result_path, meaning_path]]
+    if any(root in Path(x['path']).parents for x in inputs):
+        raise ValueError('output root intersects input ancestry')
+    # Check duplicate IDs before writes. The original owner spec is preserved.
+    for identity in ['prior-work-request', 'prior-work-result', 'in-work-decision']:
+        if any(item['id'] == identity for item in spec['inputs']):
+            raise ValueError('reserved generated continuation input ID')
+    root.mkdir()
+    decision_path = root / 'decision.json'
+    with decision_path.open('xb') as f: f.write(io._canonical(decision) + b'\n')
+    for identity, path in [('prior-work-request', prior_prepared_path), ('prior-work-result', result_path), ('in-work-decision', decision_path)]:
+        spec['inputs'].append({'id': identity, 'required': True, **_file(path)[0]})
+    spec_path = root / 'spec.json'
+    with spec_path.open('xb') as f: f.write(io._canonical(spec) + b'\n')
+    result = continue_work(spec_path, prior_prepared_path, result_path, decision_path, expected_request_id=expected_request_id)
+    result['generated_files'] = [_file(p)[0] for p in [decision_path, spec_path]]
+    return result
+
+
+def build_next_operation(next_spec_path, result_path, meaning_path, *, output_root):
+    """Connect an actual ordinary operation to the existing next-work route.
+
+    No second result ledger or dispatch. The owner still supplies the next task's
+    meaning and reconciles partial/unknown effects; raw old results are retained.
+    """
+    import operation_io
+    handoff=operation_io.consume(result_path)
+    if handoff['operation'] is None:
+        return {'schema':'work-operation-next-v1','handoff':handoff,'prepared':None,
+            'hold':'reconcile invalid/missing original result and effects; do not replay',
+            'dispatch_performed':False,'permission_granted':False}
+    _,raw=_file(next_spec_path);spec=_spec(io._json(raw))
+    if spec['owner_chat_id']!=handoff['operation']['owner_chat_id']:
+        raise ValueError('operation belongs to another owner')
+    if spec['source']!=handoff['operation']['source']:
+        raise ValueError('changed source requires explicit owner reconciliation, not automatic continuation')
+    _,raw=_file(meaning_path);meaning=io._json(raw)
+    decision=learning.build_decision(handoff['in_work_learning'],spec,meaning)
+    if spec['consumer']['id']!=handoff['operation']['next_consumer']:
+        raise ValueError('next spec must name the operation\'s declared real consumer')
+    root=io._plain_path(_path(str(output_root)),existing=False)
+    if root.exists():raise ValueError('prior generation exists; preserve and reconcile before a different action')
+    inputs=[_file(p)[0] for p in [next_spec_path,result_path,meaning_path]]
+    if any(root in Path(x['path']).parents for x in inputs):raise ValueError('output intersects input ancestry')
+    for identity in ['prior-operation-result','in-work-decision']:
+        if any(item['id']==identity for item in spec['inputs']):raise ValueError('reserved continuation input ID')
+    # A hold is scoped; return the raw result before any output generation.
+    if handoff['freshness_issues']:
+        return {'schema':'work-operation-next-v1','handoff':handoff,'decision':decision,
+            'prepared':None,'hold':'reconcile changed source/method references; original effect preserved',
+            'dispatch_performed':False,'permission_granted':False}
+    root.mkdir();decision_path=root/'decision.json'
+    with decision_path.open('xb') as f:f.write(io._canonical(decision)+b'\n')
+    for identity,path in [('prior-operation-result',result_path),('in-work-decision',decision_path)]:
+        spec['inputs'].append({'id':identity,'required':True,**_file(path)[0]})
+    spec_path=root/'spec.json'
+    with spec_path.open('xb') as f:f.write(io._canonical(spec)+b'\n')
+    prepared=prepare(spec_path)
+    return {'schema':'work-operation-next-v1','handoff':handoff,'decision':decision,'prepared':prepared,
+        'operation_effects_pending':handoff['effect_requires_reconciliation'],
+        'generated_files':[_file(p)[0] for p in [decision_path,spec_path]],
+        'dispatch_performed':False,'permission_granted':False,
+        'proof_ceiling':'actual ordinary result and owner decision connected; not independent approval, dispatch or benefit'}
 
 
 def integrate(prepared_path: str | Path, result_path: str | Path, observation_path: str | Path, *, expected_request_id: str) -> dict[str, Any]:
@@ -344,6 +512,17 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='command', required=True)
     sub.add_parser('prepare').add_argument('--spec', required=True)
+    boundary_parser = sub.add_parser('boundary')
+    for name in ['prepared', 'expected-request-id', 'actor', 'read-refs', 'effect-state']:
+        boundary_parser.add_argument('--'+name, required=True)
+    next_parser = sub.add_parser('next')
+    for name in ['spec', 'prepared', 'result', 'decision', 'expected-request-id']:
+        next_parser.add_argument('--'+name, required=True)
+    build_parser = sub.add_parser('build-next')
+    for name in ['spec', 'prepared', 'result', 'meaning', 'expected-request-id', 'output-root']:
+        build_parser.add_argument('--'+name, required=True)
+    operation_parser=sub.add_parser('build-next-operation')
+    for name in ['spec','result','meaning','output-root']:operation_parser.add_argument('--'+name,required=True)
     for name in ['verify', 'consume', 'integrate']:
         command = sub.add_parser(name); command.add_argument('--prepared', required=True); command.add_argument('--expected-request-id', required=True)
         if name in {'consume', 'integrate'}: command.add_argument('--result', required=True)
@@ -351,6 +530,16 @@ def main():
     args = parser.parse_args()
     try:
         if args.command == 'prepare': result = prepare(args.spec)
+        elif args.command == 'boundary':
+            _, raw = _file(args.read_refs)
+            result = boundary(args.prepared, expected_request_id=args.expected_request_id,
+                actor=args.actor, read_refs=io._json(raw), effect_state=args.effect_state)
+        elif args.command == 'next':
+            result = continue_work(args.spec, args.prepared, args.result, args.decision, expected_request_id=args.expected_request_id)
+        elif args.command == 'build-next':
+            result = build_next(args.spec, args.prepared, args.result, args.meaning, expected_request_id=args.expected_request_id, output_root=args.output_root)
+        elif args.command == 'build-next-operation':
+            result = build_next_operation(args.spec,args.result,args.meaning,output_root=args.output_root)
         elif args.command == 'verify': result = verify(args.prepared, expected_request_id=args.expected_request_id)
         elif args.command == 'consume': result = consume(args.prepared, args.result, expected_request_id=args.expected_request_id)
         else: result = integrate(args.prepared, args.result, args.observation, expected_request_id=args.expected_request_id)

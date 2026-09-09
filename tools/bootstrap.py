@@ -124,7 +124,7 @@ def planned_files(adapter: str, mode: str = "minimal") -> dict[str, Path]:
     else:
         raise ValueError(f"Unknown adapter: {adapter}")
     if mode == "complete":
-        for directory in ("runtime", "tools", "docs", "framework", "profiles", "templates", "schemas", "examples", "adapters", ".agents", "tests", "evals"):
+        for directory in ("runtime", "tools", "docs", "framework", "profiles", "templates", "schemas", "examples", "adapters", ".agents", "tests", "evals", "packaging"):
             base = ROOT / directory
             if not base.is_dir():
                 raise ValueError(f"Incomplete distribution: missing {directory}")

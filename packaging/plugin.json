@@ -1,0 +1,37 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "objective-integrity",
+  "version": "0.1.0",
+  "description": "Keep long tasks faithful to their objectives and turn useful lessons into better next actions.",
+  "author": {
+    "name": "Objective Integrity Framework",
+    "url": "https://github.com/Chisiki1/objective-integrity-framework"
+  },
+  "homepage": "https://github.com/Chisiki1/objective-integrity-framework/blob/main/docs/plugin.md",
+  "repository": "https://github.com/Chisiki1/objective-integrity-framework",
+  "license": "MIT",
+  "keywords": ["objectives", "task-continuity", "self-improvement", "agent-skills"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Objective Integrity",
+        "shortDescription": "Keep long tasks on track",
+        "longDescription": "Keep the requested outcome, active requirements and unfinished deliverables visible as work evolves. Objective Integrity helps an agent resume the right work, distinguish evidence from completion, and carry useful lessons into the next applicable action. Use it for long tasks, changing requirements, interrupted work and recurring mistakes. Start with the included instructions and task-local records; add the optional OIF runtime when executable ledgers and checks are useful. The skill works with the host's existing tools and permissions and does not add a server, account connection or background service.",
+        "developerName": "Objective Integrity Framework",
+        "category": "Productivity",
+        "capabilities": ["Preserve task requirements", "Apply reusable improvements"],
+        "websiteURL": "https://github.com/Chisiki1/objective-integrity-framework",
+        "privacyPolicyURL": "https://github.com/Chisiki1/objective-integrity-framework/blob/main/PRIVACY.md",
+        "termsOfServiceURL": "https://github.com/Chisiki1/objective-integrity-framework/blob/main/LICENSE",
+        "defaultPrompt": [
+          "Help me finish this long task while keeping every active requirement.",
+          "Resume this project and identify what still needs to be completed.",
+          "Review this result and apply a useful improvement to the next matching action."
+        ],
+        "brandColor": "#2458A6",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/icon.png"
+      }
+    }
+  }
+}

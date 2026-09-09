@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # Public behavior descriptors, not copies of private events or registry records.
 SPECS = [
     ("master-guided-skill-resolver", "1.6.0", "blind_safe_mechanical", [{"job": ["skill-resolution", "workflow-skill-resolution"]}]),
-    ("master-guided-skill-lifecycle", "1.10.0", "post-blind-semantic", [{"job": ["skill-effect-record", "skill-lifecycle-transition", "master-knowledge-retrieval", "learning-next-use", "workflow-condition-review", "stage-resource-allocation", "completion-work-handoff", "workflow-capability-assessment", "source-wide-work-selection"]}]),
+    ("master-guided-skill-lifecycle", "1.13.0", "post-blind-semantic", [{"job": ["skill-effect-record", "skill-lifecycle-transition", "master-knowledge-retrieval", "learning-next-use", "workflow-condition-review", "stage-resource-allocation", "completion-work-handoff", "workflow-capability-assessment", "source-wide-work-selection"]}]),
     ("powershell-exact-action", "1.0.0", "blind_safe_mechanical", [
         {"action": ["execute-powershell"], "tool": ["powershell"]},
         {"job": ["command-preflight"], "tool": ["powershell"]},

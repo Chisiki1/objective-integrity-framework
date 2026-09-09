@@ -31,6 +31,9 @@ python tools/oif.py <command> --help
 | `resolve`, `registry-check`, `skill-inventory`, `master-inventory` | Skill selection, registry structure, and bounded inventory. |
 | `apply-skill` | Identity-bound selected-script preparation, execution, and effect. |
 | `learning`, `index`, `lifecycle` | Candidate queue, source index, and effect transitions. |
+| `operation` | Retain a native operation's status and raw streams, consume its result, or derive complete inactive candidate input. |
+| `reconcile` | Inventory, propose and read back an owner-authored whole-current master reconciliation. |
+| `artifact` | Exact manifest member reads, bounded diffs and JSON-pointer views without fallback to a guessed version. |
 | `allocate`, `candidate`, `adopt`, `governance` | Stage allocation, isolated candidate/adoption, and condition governance. |
 | `allocation-io` | Typed allocation state preparation and fresh allocator-result consumption. |
 | `capabilities` | Pure bounded assessment of supplied host capability metadata. |
@@ -38,8 +41,17 @@ python tools/oif.py <command> --help
 | `legacy-status` | Explicit legacy split-task recovery. |
 | `catalog` | Generate a public eight-skill distribution catalog to stdout or an explicit new file. |
 | `demo`, `bootstrap` | Synthetic walkthrough and project-local installation. |
+| `plugin` | Preview/build a portable skills-only package or validate its local structure; no host installation or submission. |
 
 The dispatcher adds no implicit destinations or permissions. Each subcommand retains the underlying implementation's required explicit inputs and dry-run behavior.
+
+`work` also supports result-derived next requests and per-actor safe-boundary
+checks. `operation` is a runner, not a sandbox: the underlying argv still needs
+the user's authority and an explicit effect scope. `reconcile` creates a proposal
+and verifies readback; it does not itself publish a master. Read the linked
+[learning contracts](governance-self-improvement.md) before adopting these routes.
+The artifact helper is an independently usable generic Skill; it does not expand
+the specialized eight-entry distribution catalog.
 
 ## Objective Ledger
 

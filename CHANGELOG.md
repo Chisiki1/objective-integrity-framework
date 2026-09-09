@@ -1,6 +1,25 @@
 # Changelog
 
-## Unreleased
+## 2026-09-09
+
+### Added
+
+- A self-contained, skills-only plugin package builder with preview, source-bound approval, deterministic ZIP output, readback, and protected existing destinations. It does not install a plugin or submit it to a directory.
+- Eight known plugin scenarios covering active requirements, corrections, failure recovery, resume, learning, quoted data, cancellation, and inappropriate activation. These are reproducible inputs and expected outcomes, not model evaluation results.
+- `operation`, `reconcile`, `artifact`, and `plugin` command routes; a plugin guide and aligned Japanese onboarding.
+
+### Strengthened
+
+- In-work learning now connects original operation results to the next request or a complete inactive Skill package, including required scripts and resources. Continuing actors can reconcile their own method coverage at a safe boundary.
+- Skill packaging and adoption use source-only loading on the affected import paths, preserving generated-cache isolation and version identity.
+- Master stewardship can inventory and reconcile all current sections while retaining complete history. Search returns bounded unique-content groups with separately paged provenance; `--legacy-output` preserves the earlier CLI shape.
+- Complete installations include the new runtime resources and plugin build sources. Privacy and support guidance distinguish task-owned records, installed files, and host data processing.
+
+### Preserved
+
+- Existing objective continuity, source-wide completion, condition governance, explicit adoption and rollback, branding, sponsor acknowledgments, and binary-safe Git-history scanning.
+
+## Earlier foundation
 
 ### Added
 

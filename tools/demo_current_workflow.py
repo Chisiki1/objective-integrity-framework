@@ -290,7 +290,7 @@ def run_current_workflow(
     require(archive.read_bytes() == before_raw, "The complete history backing did not read back")
     write_bytes(master, replacement)
     after_index = cli("index-after", "index", "build", "--master", str(master), "--cache", str(root / "cache-after"))
-    retrieved = cli("history-query", "index", "query", "--index", after_index["index"], "--term", "shared-display-name")
+    retrieved = cli("history-query", "index", "query", "--index", after_index["index"], "--term", "shared-display-name", "--legacy-output")
     require(retrieved["complete_for_explicit_query"] and any(item["source_role"] == "history" for item in retrieved["items"]),
             "The completed episode was not retrievable through its actual current/history reader")
     return {

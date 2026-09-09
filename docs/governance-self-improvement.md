@@ -31,6 +31,32 @@ Once standing authority, preserved conditions, representative normal-path eviden
 
 ## Skill Book Feedback
 
+### Use the result while work is still in progress
+
+Internal jobs feed `work consume` and `work build-next`. Recurring native
+operations use `operation run` to retain the actual exit status, stdout, stderr
+and first fault, then `work build-next-operation` derives the next request from
+that result and the owner's disposition. Replace the corresponding invocation;
+do not wrap every ordinary file read or run both the wrapper and original call.
+
+When creating or revising a reusable Skill is worthwhile, carry its complete
+instructions, scripts, references and assets together. The full-resource
+materializer and isolated adoption path retain exact members, partial effects and
+recovery. Ordinary generic Skills can use native discovery; they do not all need
+the specialized workflow registry. Supported lifecycle callers load sibling
+source without producing or consuming executable bytecode caches in registered
+trees. Strict extra/missing/changed-resource validation remains intact.
+
+At a relevant change or compaction boundary, each continuing actor reads its own
+affected methods and applies them before the next safe dependent action. Preserve
+in-flight old versions and uncertain effects instead of automatically replaying.
+See [Learning during work](../runtime/skills/master-guided-skill-lifecycle/references/in-work.md)
+and [Ordinary operations](../runtime/skills/master-guided-skill-lifecycle/references/operations.md).
+
+These paths support procedural learning through retained knowledge and changed
+actions, not model-weight retraining. Selection, invocation and record counts are
+not outcome benefit.
+
 When reusable guidance is selected, keep these states distinct:
 
 1. source and action facts compiled;

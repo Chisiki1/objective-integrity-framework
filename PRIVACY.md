@@ -2,6 +2,28 @@
 
 Objective Integrity Framework is designed for public, project-local adoption.
 
+## Package Data Practices
+
+OIF operates no hosted service, account system or automatic telemetry endpoint.
+The skills-only plugin contains instructions and static resources; it does not
+send task content to OIF maintainers or connect an external account. The host
+processes conversation content under its own settings and policies, and its
+tools retain their normal permissions.
+
+Optional runtime tools write task source, objective history, operation streams,
+learning records and recovery material only through the explicitly configured or
+supplied paths. Those records may contain information from the user's task. Keep
+them outside installed plugin/Skill files and public repositories. Capture only
+what the task needs; never supply credentials, unrelated chat histories or
+sensitive personal records for examples or diagnostics.
+
+Local records remain until their owner deliberately removes them; OIF has no
+remote copy or automatic retention service. The owner controls access, location,
+export and deletion using their environment's controls. Preserve needed recovery
+and unresolved effects before deleting working history. Uninstalling a plugin
+does not imply deletion of separately owned task records. Sending a reproduction
+to the public issue tracker is a separate voluntary disclosure: sanitize it first.
+
 ## What This Repository Excludes
 
 - Private operational logs.

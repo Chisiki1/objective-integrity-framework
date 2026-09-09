@@ -24,19 +24,37 @@ python tools/oif.py index build --master <global-master> --master <project-maste
 python tools/oif.py index query --index <index-file> --term <relevant-family>
 ```
 
-Masters can link exact immutable backing through `master-history-v1`. The index follows those links, checks their hashes and rejects missing, changed or cyclic backing. Ordinary queries search current and historical text; `--controls` selects current live-root control sections. Follow returned cursors to finish a query. Searching only a compact master with a text tool does not establish complete historical coverage.
+Masters can link exact immutable backing through `master-history-v1`. The index follows those links, checks their hashes and rejects missing, changed or cyclic backing. Ordinary queries search current and historical text; `--controls` includes current live-root control sections, and any supplied terms also include their matching sections. Follow returned cursors to finish a query. Searching only a compact master with a text tool does not establish complete historical coverage.
+
+The default query returns each exact text group once within the complete response
+budget. Changed wording remains a separate group. To retrieve all origins of a
+group, repeat the same terms and `--controls` setting and add
+`--origins <group-id>`; follow that mode's own cursor. Text coverage and provenance
+coverage are separate. Existing programmatic consumers and `--legacy-output`
+retain the earlier response shape.
 
 An index is a retrieval projection. It does not decide that two rules mean the same thing, supersede a condition, change a master or certify that a relevant lesson was applied.
 
 ## Organize at a Useful Decision
 
-Use the existing owner record to identify obsolete current sections and their exact source dependencies. Then inspect the proposal command:
+Use the existing owner record to identify every affected current location, not
+only the newest event. Include control headers, indexes, related families and
+cross-links. Reuse existing objective/work/registry sources for volatile state.
+Then inspect the whole-view proposal command:
 
 ```bash
-python tools/oif.py index propose-organization --help
+python tools/oif.py reconcile --help
 ```
 
-It requires the master, planned history path, selected section IDs and expected master hash. The result contains complete old backing and proposed current text; the command writes neither. Review the selected sections and every preserved obligation, independently challenge the change when material, publish backing first, and replace the current view only if its expected hash still matches. Keep the old bytes and rollback route.
+Inventory the exact master, then supply an owner-authored plan assigning every
+section once to `keep`, `replace` or `archive`. Keep means preserving its actual
+occurrence, ancestry and current/history role, not finding the same sentence
+elsewhere. The proposal contains full old backing and one reviewed replacement;
+it writes neither. Publish backing first, then compare-and-swap the current view
+and read back actual transitive history. Preserve unknown effects and rollback.
+The [reconciliation contract](../runtime/skills/master-guided-skill-lifecycle/references/master-reconciliation.md)
+defines the exact inputs. The earlier `index propose-organization` route remains
+available for its narrower selected-section use; it is not whole-current review.
 
 Replace an affected family's current entry and link its earlier evidence. Do not keep adding competing current instructions. Do not edit another task's current control or rewrite a frozen backup just to attach a later result; update the owning current pointer instead.
 

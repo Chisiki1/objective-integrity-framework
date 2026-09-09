@@ -1,0 +1,6 @@
+interface:
+  display_name: "Artifact Access"
+  short_description: "Read exact versioned artifacts without guessing paths"
+  default_prompt: "Use $artifact-access to locate and read the exact generated evidence needed for this task."
+policy:
+  allow_implicit_invocation: true

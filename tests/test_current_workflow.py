@@ -138,7 +138,7 @@ class CurrentWorkflowConsumerTest(unittest.TestCase):
         self.assertNotIn(b"Both consumers repaired together", current)
         self.assertIn(b"Both consumers repaired together", backing)
         index = self.output("current-index-after")["index"]
-        query = self.cli("index", "query", "--index", index, "--term", "shared-display-name")
+        query = self.cli("index", "query", "--index", index, "--term", "shared-display-name", "--legacy-output")
         self.assertTrue(query["complete_for_explicit_query"])
         self.assertTrue(any(item["source_role"] == "history" for item in query["items"]))
 

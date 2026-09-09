@@ -66,12 +66,22 @@ class NativePowerShell(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             source = Path(temporary) / "members.json"
             source.write_text(json.dumps({"members": members}), encoding="utf-8")
+            wrapper = Path(temporary) / "capture-utf8.ps1"
+            wrapper.write_text(
+                "param([string]$ScriptPath, [string]$InputPath)\n"
+                "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)\n"
+                "& $ScriptPath -InputJsonPath $InputPath\n"
+                "exit $LASTEXITCODE\n", encoding="utf-8")
             for host in hosts:
                 with self.subTest(host=Path(host).name):
-                    result = subprocess.run([host, "-NoProfile", "-File", str(SCRIPT), "-InputJsonPath", str(source)],
-                                            text=True, capture_output=True, check=False)
-                    self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
-                    receipt = json.loads(result.stdout)
+                    result = subprocess.run([host, "-NoProfile", "-File", str(wrapper), "-ScriptPath", str(SCRIPT), "-InputPath", str(source)],
+                                            capture_output=True, check=False)
+                    original = {"exit_code": result.returncode, "stdout": result.stdout, "stderr": result.stderr}
+                    self.assertEqual(result.returncode, 2, original)
+                    try:
+                        receipt = json.loads(result.stdout.decode("utf-8-sig"))
+                    except (UnicodeError, ValueError) as error:
+                        self.fail(f"Native output contract failed: {error}; original={original!r}")
                     self.assertEqual([member["decision"] for member in receipt["members"]], expected)
                     self.assertFalse(receipt["prevented_claim_eligible"])
 

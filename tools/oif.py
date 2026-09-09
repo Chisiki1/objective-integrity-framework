@@ -20,6 +20,9 @@ COMMANDS = {
     "apply-skill": SKILLS / "master-guided-skill-resolver/scripts/skill_application_bridge.py",
     "learning": SKILLS / "master-guided-skill-lifecycle/scripts/learning_queue.py",
     "index": SKILLS / "master-guided-skill-lifecycle/scripts/master_index.py",
+    "reconcile": SKILLS / "master-guided-skill-lifecycle/scripts/master_reconcile.py",
+    "operation": SKILLS / "master-guided-skill-lifecycle/scripts/operation_io.py",
+    "artifact": SKILLS / "artifact-access/scripts/artifact_access.py",
     "lifecycle": SKILLS / "master-guided-skill-lifecycle/scripts/skill_lifecycle.py",
     "allocate": SKILLS / "master-guided-skill-lifecycle/scripts/stage_allocation.py",
     "allocation-io": SKILLS / "master-guided-skill-lifecycle/scripts/allocation_io.py",
@@ -36,6 +39,7 @@ COMMANDS = {
     "catalog": ROOT / "tools/catalog.py",
     "demo": ROOT / "tools/demo.py",
     "bootstrap": ROOT / "tools/bootstrap.py",
+    "plugin": ROOT / "tools/plugin.py",
 }
 
 

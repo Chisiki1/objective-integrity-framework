@@ -1,6 +1,6 @@
 # Completion work entrypoint
 
-Use `scripts/work_io.py` when a needed internal assignment or artifact handoff benefits from one bound request and result-consumption route. It turns owner-supplied facts into a `{target, message}` internal-job payload and reads the actual result and consumer destination. Map that payload to your host's internal-job API; the helper does not dispatch it. For source-wide implementation, v2 applies the shared phase selector before preparing/verifying a job and when consuming its result. It does not allocate a model, dispatch, copy artifacts, write records, grant permission, or judge semantic completion.
+Use `scripts/work_io.py` when a needed assignment or handoff benefits from one bound request and result-consumption route. It generates an internal target/message payload and reads returned artifacts/destinations; the caller maps that payload to its actual host API. V2 retains source-wide phase selection. The in-work `build-next` and `build-next-operation` operations each write only two new generated inputs in an explicit absent owned directory, replacing repeated manual result/decision assembly. It never allocates, dispatches, copies delivered artifacts, writes masters, grants permission or judges semantic completion.
 
 ## Select the useful unit
 
@@ -10,7 +10,7 @@ The parent supplies the current source, scope, prohibitions, model/reasoning all
 
 ## Prepare and verify the exact request
 
-Use inventoried absolute paths and actual file hashes. Inputs must be regular files without link/reparse components. The helper also binds its own bytes and the sibling `allocation_io.py`. Source-wide implementation uses `work-spec-v2`: all v1 fields below plus `objective_id` and `work_phase`, the same binding used by the parent, as defined in [source-wide-execution.md](source-wide-execution.md). The v2 helper also binds `work_phase.py`; it rejects a job whose exact current state does not permit that action. A child's `scope` describes its write boundary, never a replacement completion scope. The v1 example remains usable for ordinary non-product work and historical handoffs but explicitly reports that source-wide selection was not evaluated. Do not claim a legacy input exercised the new protection. Replace all example facts and full SHA256 placeholders before use.
+Use inventoried absolute paths and actual file hashes. Inputs must be regular files without link/reparse components. The helper also binds its own bytes and the sibling `allocation_io.py` and `in_work_learning.py`. Source-wide implementation uses `work-spec-v2`: all v1 fields below plus `objective_id` and `work_phase`, the same binding used by the parent, as defined in [source-wide-execution.md](source-wide-execution.md). The v2 helper also binds `work_phase.py`; it rejects a job whose exact current state does not permit that action. A child's `scope` describes its write boundary, never a replacement completion scope. The v1 example remains usable for ordinary non-product work and historical handoffs but explicitly reports that source-wide selection was not evaluated. Do not claim a legacy input exercised the new protection. Replace all example facts and full SHA256 placeholders before use.
 
 ```json
 {
@@ -61,7 +61,14 @@ Run `verify` immediately before sending. It rechecks the prepared request, requi
 
 ## Parent dispatch and actual result
 
-After the existing allocation and authority checks, the parent sends the returned `dispatch` object unchanged as the actual internal-job API arguments (for a compatible Codex target, `collaboration.followup_task`). The target must identify an existing internal recipient such as `internal:document-worker`; portable `internal:<id>` targets and compatible `/root/...` targets are supported. This route neither creates agents nor addresses another user-visible task. Preserve the actual dispatch response in the existing work evidence. The helper has no background process, host interception, retry queue, or dispatch history.
+For an ongoing next unit, use [in-work.md](in-work.md) and `work_io build-next` to
+generate the source/result/decision bindings from the actual prior result. The
+ordinary `consume` path emits the learning input even with no selected Skill.
+Use `boundary` for relevant continuing-actor updates; it is not an automatic
+restart or a certificate of another person's reading. The original v1 result and
+prepared-request lineage remain consumable.
+
+After the existing allocation and authority checks, the parent sends the returned `dispatch` object unchanged through a compatible internal-job API, or preserves an explicit host mapping of its target/message fields. Portable targets use `internal:document-worker`; compatible `/root/...` canonical internal-agent targets remain accepted. The actual recipient must already exist and be authorized; an identifier is not authority. This route neither creates agents nor addresses another user-visible task. Preserve the actual host response in the existing work evidence. The helper has no background process, host interception, retry queue, or dispatch history.
 
 The generated message includes the spec, exact request ID, reading/APPLY boundaries, and result shape. The worker writes only produced outputs and an actual result file, for example:
 
@@ -117,7 +124,7 @@ python -B "<skill>/scripts/work_io.py" integrate --prepared "C:/work/prepared.js
 - Changed source, input, method, master, or helper: `verify` rejects an affected new send; `consume` still retains the old result and reports required freshness issues. Preserve that history and reconcile applicability before dependent integration. Do not discard old effects or stop unrelated work.
 - Changed whole-scope state or an out-of-phase returned job: v2 reports phase/freshness issues without discarding raw result bytes, produced artifacts or partial/unknown effects. Reconcile the already performed work; a new hold is not evidence that the old action never ran.
 - Repeated sends or reads: the deterministic request ID is not an execution lock. An unchanged baseline does not prove that an earlier send never ran. Inspect actual dispatch/worker/effect evidence before deciding to send again. Repeated `consume` calls are read-only and do not prove exactly-once execution or once-only business effects.
-- CLI outcomes: all commands emit JSON and perform no dispatch or file writes. A rejection exits 2; `consume`/`integrate` also exit 2 for validation issues. Exit 0 alone does not clear `requires_reconciliation`, required freshness issues, partial effects, or pending semantic acceptance. Inspect the returned fields.
+- CLI outcomes: all commands emit JSON and perform no dispatch. Only `build-next` and `build-next-operation` write their two generated inputs under a new owned output root; the other commands are read-only. A rejection exits 2; `consume`/`integrate` also exit 2 for validation issues. Exit 0 alone does not clear `requires_reconciliation`, required freshness issues, partial effects, or pending semantic acceptance. Inspect the returned fields.
 
 ## Evaluate the real use
 

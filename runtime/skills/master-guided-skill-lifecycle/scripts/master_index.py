@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import re
 import stat
+import sys
 import tempfile
 
 SCHEMA = 'master-retrieval-index-v1'
@@ -399,6 +400,287 @@ def query(index_path, terms, cursor=None, page_chars=12000, controls=False):
             'all_knowledge_semantics_accounted': False, 'proof_ceiling': CEILING}
 
 
+
+def _query_options(terms, controls, page_chars):
+    if type(page_chars) is not int or not 256 <= page_chars <= 50000:
+        raise ValueError('page_chars outside256..50000')
+    if type(controls) is not bool:
+        raise ValueError('controls must be boolean')
+    if not isinstance(terms, (list, tuple)) or any(type(t) is not str or not t.strip() for t in terms):
+        raise ValueError('query terms must be an array of nonempty strings')
+    if not terms and not controls:
+        raise ValueError('explicit query terms or controls required')
+    return tuple(sorted(set(t.casefold() for t in terms)))
+
+
+def _validated_query_sources(index_path):
+    """The compact reader retains all legacy source/coverage/lineage checks.
+
+    No mtime-only shortcut: each invocation/page reloads the live history graph
+    and hashes every exact cache backing. The legacy query API is unchanged.
+    """
+    idx = strict_json(read_plain(Path(index_path).absolute()))
+    if type(idx) is not dict or idx.get('schema') not in {SCHEMA, ARCHIVE_SCHEMA}:
+        raise ValueError('unsupported index schema')
+    digest = sha(canonical(idx))
+    if Path(index_path).name != 'index-' + digest + '.json':
+        raise ValueError('index identity mismatch')
+    masters = idx.get('masters')
+    if type(masters) is not list or not masters or any(type(m) is not dict for m in masters):
+        raise ValueError('malformed index masters')
+    for master in masters:
+        if (any(type(master.get(k)) is not str for k in ('path', 'backing', 'sha256'))
+                or type(master.get('bytes')) is not int or master['bytes'] < 0
+                or any(type(master.get(k)) is not list for k in ('sections', 'id_occurrences'))):
+            raise ValueError('malformed index source')
+        _hash(master['sha256'])
+    archive = idx['schema'] == ARCHIVE_SCHEMA
+    roots = idx.get('roots') if archive else [m['path'] for m in masters]
+    if type(roots) is not list or not roots or any(type(r) is not str for r in roots):
+        raise ValueError('malformed index roots')
+    if archive and type(idx.get('history_edges')) is not list:
+        raise ValueError('malformed index history edges')
+    try:
+        graph = load_sources(roots)
+    except ValueError as error:
+        raise ValueError('STALE_SOURCE or invalid history: ' + str(error)) from error
+    if not archive and graph['history_edges']:
+        raise ValueError('v1 index does not cover archived history; rebuild dependent index')
+    if archive and canonical(graph['history_edges']) != canonical(idx['history_edges']):
+        raise ValueError('STALE_SOURCE: history graph changed')
+    if [s['path'] for s in graph['sources']] != [m['path'] for m in masters]:
+        raise ValueError('index source coverage mismatch')
+    validated = []
+    for master, source in zip(masters, graph['sources']):
+        raw = read_plain(master['backing'])
+        if sha(raw) != master['sha256'] or len(raw) != master['bytes']:
+            raise ValueError('backing identity mismatch')
+        if source['sha256'] != master['sha256']:
+            raise ValueError('STALE_SOURCE: rebuild dependent index')
+        if archive and (source['role'] != master.get('role')
+                        or source['parent_refs'] != master.get('parent_refs')):
+            raise ValueError('index live/history role or lineage mismatch')
+        _separate_output(Path(master['backing']), graph['sources'])
+        sections, occurrences = source['sections'], source['id_occurrences']
+        if not archive and (canonical(sections) != canonical(master['sections'])
+                            or canonical(occurrences) != canonical(master['id_occurrences'])):
+            sections, occurrences = scan(raw, markdown_fences=False)
+        if (canonical(sections) != canonical(master['sections'])
+                or canonical(occurrences) != canonical(master['id_occurrences'])):
+            raise ValueError('index coverage mismatch')
+        validated.append((source, raw, sections))
+    return digest, graph, validated
+
+
+def _compact_data(index_path, terms, controls):
+    digest, graph, sources = _validated_query_sources(index_path)
+    binding = sha(canonical(['master-query-compact-v1', digest, terms, controls]))
+    # Raw bytes are the grouping key, not a hash alone, title, ID, normalized
+    # line ending, fuzzy match or inferred semantic equivalence.
+    by_bytes, ids = {}, {}
+    for source_number, (source, raw, sections) in enumerate(sources):
+        for section in sections:
+            content = raw[section['start']:section['end']]
+            text = content.decode('utf8')
+            selected = ((controls and source['role'] == 'live' and section['current_control_region'])
+                        or any(term in text.casefold() for term in terms))
+            group = by_bytes.get(content)
+            if group is None:
+                group_id = sha(content)
+                if group_id in ids and ids[group_id] != content:
+                    raise ValueError('section hash collision; exact groups cannot share an ID')
+                ids[group_id] = content
+                group = {'group_id': group_id, 'text': text, 'bytes': len(content),
+                         'origins': [], 'selected': False}
+                by_bytes[content] = group
+            group['selected'] |= selected
+            group['origins'].append({'source': source_number, 'section_id': section['section_id'],
+                'line': section['line'], 'byte_start': section['start'], 'byte_end': section['end'],
+                'current_control_region': section['current_control_region'],
+                'matched_by_query': bool(selected)})
+    # Include every exact origin of a selected group. A controls-only match can
+    # therefore disclose historical copies as origins, never as live controls.
+    groups = [group for group in by_bytes.values() if group['selected']]
+    return digest, binding, graph, groups
+
+
+def serialize_page(page):
+    """Exact compact CLI wire bytes, including one LF; budget uses this form.
+
+    ASCII escaping makes wire bytes == serialized characters on every host.
+    A caller that pretty-prints the returned dict must budget its own formatter.
+    """
+    return (json.dumps(page, ensure_ascii=True, allow_nan=False, separators=(',', ':')) + '\n').encode('ascii')
+
+
+def _position(cursor, prefix, binding, count):
+    if cursor is None:
+        return (0,) * count
+    if type(cursor) is not str:
+        raise ValueError('cursor must be text')
+    parts = cursor.split(':')
+    if len(parts) != count + 2 or parts[:2] != [prefix, binding]:
+        raise ValueError('cursor/query/mode identity mismatch')
+    numbers = parts[2:]
+    if any(len(n) > 20 or re.fullmatch(r'0|[1-9][0-9]*', n) is None for n in numbers):
+        raise ValueError('cursor position is not canonical')
+    return tuple(map(int, numbers))
+
+
+def _fit_text(text, offset, budget, make_page):
+    """Fit the complete envelope; never return a successful zero-progress page."""
+    remaining = len(text) - offset
+    # Completion can remove a cursor and shrink metadata, so test that boundary
+    # separately before the monotone search over strictly partial fragments.
+    if remaining <= budget:
+        whole = make_page(text[offset:], remaining)
+        if len(serialize_page(whole)) <= budget:
+            return whole, remaining
+    low, high, best = 1, min(budget, remaining - 1), None
+    while low <= high:
+        middle = (low + high) // 2
+        page = make_page(text[offset:offset + middle], middle)
+        if len(serialize_page(page)) <= budget:
+            best = (page, middle)
+            low = middle + 1
+        else:
+            high = middle - 1
+    return best if best is not None else (None, 0)
+
+
+def query_compact(index_path, terms, cursor=None, page_chars=12000, controls=False):
+    """Page unique exact section text; query() remains the legacy Python API.
+
+    C1 cursors bind the exact validated index and normalized explicit query.
+    page_chars budgets serialize_page(result), including metadata and LF; it
+    may change between pages. Reassemble text per group_id/character_offset.
+    origins_complete is false: use query_origins for complete provenance.
+    """
+    terms = _query_options(terms, controls, page_chars)
+    digest, binding, graph, groups = _compact_data(index_path, terms, controls)
+    number, offset = _position(cursor, 'C1', binding, 2)
+    if number > len(groups) or (number == len(groups) and offset != 0):
+        raise ValueError('cursor past result frontier')
+    if number < len(groups) and offset >= len(groups[number]['text']):
+        raise ValueError('cursor past group text frontier')
+    items = []
+
+    def envelope(values, next_number, next_offset):
+        complete = next_number == len(groups)
+        return {'schema': 'master-query-compact-v1', 'index_sha256': digest,
+                'query_binding': binding, 'items': values, 'total_groups': len(groups),
+                'remaining_groups': len(groups) - next_number,
+                'next_cursor': None if complete else 'C1:%s:%d:%d' % (binding, next_number, next_offset),
+                'complete_for_explicit_query': complete, 'origins_complete': False,
+                'all_knowledge_semantics_accounted': False, 'proof_ceiling': CEILING}
+
+    result = envelope(items, number, offset)
+    while number < len(groups):
+        group = groups[number]
+        text = group['text']
+
+        def candidate(fragment, length):
+            end = offset + length
+            finished = end == len(text)
+            item = {'group_id': group['group_id'], 'section_bytes': group['bytes'],
+                    'section_characters': len(text), 'character_offset': offset, 'text': fragment,
+                    'section_complete': finished, 'origin_count': len(group['origins']),
+                    'matching_origin_count': sum(o['matched_by_query'] for o in group['origins'])}
+            return envelope(items + [item], number + 1 if finished else number, 0 if finished else end)
+
+        fitted, consumed = _fit_text(text, offset, page_chars, candidate)
+        if fitted is None:
+            if items:
+                break
+            minimum = len(serialize_page(candidate(text[offset:offset + 1], 1)))
+            raise ValueError('page_chars too small for progress; next fragment requires at least %d serialized characters' % minimum)
+        result = fitted
+        items = result['items']
+        offset += consumed
+        if offset != len(text):
+            break
+        number += 1
+        offset = 0
+    if len(serialize_page(result)) > page_chars:
+        raise ValueError('page_chars too small for the complete empty-result envelope')
+    return result
+
+
+def _origin_document(graph, group):
+    # Sources and graph edges occur once in this document, not parent_refs
+    # repeated on every text fragment or every section occurrence.
+    positions = {source['path']: i for i, source in enumerate(graph['sources'])}
+    included = {origin['source'] for origin in group['origins']}
+    incoming = {}
+    for edge in graph['history_edges']:
+        incoming.setdefault(positions[edge['path']], []).append(positions[edge['parent_path']])
+    pending = list(included)
+    while pending:
+        child = pending.pop()
+        for parent in incoming.get(child, []):
+            if parent not in included:
+                included.add(parent)
+                pending.append(parent)
+    sources = [{'source': i, **{k: s[k] for k in ('path', 'sha256', 'bytes', 'role')}}
+               for i, s in enumerate(graph['sources']) if i in included]
+    edges = [{'parent': positions[e['parent_path']], 'source': positions[e['path']],
+              'marker_line': e['line'], 'marker_start': e['start'], 'marker_end': e['end']}
+             for e in graph['history_edges'] if positions[e['path']] in included]
+    return {'schema': 'master-query-origin-document-v1', 'group_id': group['group_id'],
+            'origins': group['origins'], 'sources': sources, 'history_edges': edges}
+
+
+def query_origins(index_path, terms, group_id, cursor=None, page_chars=12000, controls=False):
+    """Independently page exact provenance for one selected group.
+
+    Concatenate origin_json at character_offset, then JSON-decode once complete.
+    Its document includes exact source identities/roles, every occurrence and
+    the relevant ancestor graph with no duplicated per-occurrence parent_refs.
+    Arbitrarily long paths are paginated as data, never unbounded metadata.
+    O1 cursors cannot be used for text, a different group, query or index.
+    """
+    terms = _query_options(terms, controls, page_chars)
+    group_id = _hash(group_id)
+    digest, binding, graph, groups = _compact_data(index_path, terms, controls)
+    group = next((g for g in groups if g['group_id'] == group_id), None)
+    if group is None:
+        raise ValueError('group is not in the explicit query')
+    origin_binding = sha(canonical([binding, group_id]))
+    offset, = _position(cursor, 'O1', origin_binding, 1)
+    document = canonical(_origin_document(graph, group)).decode('utf8')
+    if offset >= len(document):
+        raise ValueError('cursor past origin document frontier')
+
+    def candidate(fragment, consumed):
+        end = offset + consumed
+        complete = end == len(document)
+        return {'schema': 'master-query-origins-v1', 'index_sha256': digest,
+                'query_binding': binding, 'group_id': group_id, 'origin_count': len(group['origins']),
+                'character_offset': offset, 'total_characters': len(document), 'origin_json': fragment,
+                'next_cursor': None if complete else 'O1:%s:%d' % (origin_binding, end),
+                'origins_complete': complete, 'content_included': False, 'proof_ceiling': CEILING}
+
+    page, consumed = _fit_text(document, offset, page_chars, candidate)
+    if page is None:
+        minimum = len(serialize_page(candidate(document[offset:offset + 1], 1)))
+        raise ValueError('page_chars too small for progress; next origin fragment requires at least %d serialized characters' % minimum)
+    return page
+
+
+def _compact_error(error, budget):
+    # An oversized missing path or malformed input must not defeat the output
+    # bound. Preserve the exact message hash/length and an explicitly partial
+    # excerpt; this error never claims a complete successful retrieval.
+    message = str(error)
+    digest = sha(message.encode('utf8', errors='surrogatepass'))
+    def candidate(fragment, count):
+        return {'status': 'ERROR', 'error': fragment, 'error_sha256': digest,
+                'error_characters': len(message), 'error_complete': count == len(message)}
+    page, _ = _fit_text(message, 0, budget, candidate) if message else (candidate('', 0), 0)
+    return page if page is not None else {'status': 'ERROR', 'error_sha256': digest}
+
+
+
 def propose_organization(master_path, history_path, section_ids, expected_sha256):
     """Pure byte proposal for explicitly owner-selected complete heading bodies.
 
@@ -484,7 +766,9 @@ def main():
     q.add_argument('--term', action='append', default=[])
     q.add_argument('--controls', action='store_true')
     q.add_argument('--cursor')
-    q.add_argument('--page-chars', type=int, default=12000)
+    q.add_argument('--page-chars', type=int, default=12000, help='compact serialized output budget, including metadata and LF')
+    q.add_argument('--legacy-output', action='store_true', help='retain the legacy repeated-segment CLI output and text-only budget')
+    q.add_argument('--origins', metavar='GROUP_ID', help='separate paged provenance for an exact compact-query group')
     organize = sub.add_parser('propose-organization')
     organize.add_argument('--master', required=True)
     organize.add_argument('--history', required=True)
@@ -495,12 +779,26 @@ def main():
         if args.kind == 'build':
             result = build(args.master, args.cache)
         elif args.kind == 'query':
-            result = query(args.index, args.term, args.cursor, args.page_chars, args.controls)
+            if args.legacy_output:
+                if args.origins is not None:
+                    raise ValueError('--origins is not a legacy-output mode')
+                result = query(args.index, args.term, args.cursor, args.page_chars, args.controls)
+            elif args.origins is not None:
+                result = query_origins(args.index, args.term, args.origins, args.cursor, args.page_chars, args.controls)
+            else:
+                result = query_compact(args.index, args.term, args.cursor, args.page_chars, args.controls)
         else:
             result = propose_organization(args.master, args.history, args.section_id, args.expected_sha256)
-        print(json.dumps(result, ensure_ascii=True))
+        if args.kind == 'query' and not args.legacy_output:
+            sys.stdout.buffer.write(serialize_page(result))
+        else:
+            print(json.dumps(result, ensure_ascii=True))
     except (OSError, ValueError, KeyError, TypeError) as exc:
-        print(json.dumps({'status': 'ERROR', 'error': str(exc), 'proof_ceiling': CEILING}))
+        if args.kind == 'query' and not args.legacy_output:
+            budget = args.page_chars if 256 <= args.page_chars <= 50000 else 12000
+            sys.stdout.buffer.write(serialize_page(_compact_error(exc, budget)))
+        else:
+            print(json.dumps({'status': 'ERROR', 'error': str(exc), 'proof_ceiling': CEILING}))
         return 2
     return 0
 

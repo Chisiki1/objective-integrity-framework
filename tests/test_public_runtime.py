@@ -387,7 +387,8 @@ class PublicRuntimeConsumerTest(unittest.TestCase):
 
     def assert_installed_skill_reference_walk(self, skill_path: Path) -> None:
         text = skill_path.read_text(encoding="utf-8")
-        references = sorted(set(re.findall(r"`(references/[^`]+\.md)`", text)))
+        references = sorted(set(re.findall(r"`(references/[^`]+\.md)`", text))
+                            | set(re.findall(r"\]\((references/[^)]+\.md)\)", text)))
         self.assertTrue(references, f"no local references declared by {skill_path}")
         for reference in references:
             self.assertTrue((skill_path.parent / reference).is_file(), f"missing installed Skill reference: {reference}")

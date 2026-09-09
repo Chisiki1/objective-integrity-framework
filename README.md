@@ -4,11 +4,18 @@
 
 Keep the objective intact. Turn experience into better next actions.
 
-Documentation edition: 2026-09-08. [Japanese guide](docs/ja/README.md).
+Documentation edition: 2026-09-09. [Japanese guide](docs/ja/README.md).
 
 Objective Integrity Framework is an open operating framework for agentic work that must stay faithful to the requested outcome across long tasks, corrections, handoffs, reviews, and external actions. It gives an agent a durable objective, a proportionate evidence model, and a practical learning loop without turning process artifacts into the goal.
 
-Use it as a five-minute review discipline, project-local guidance, a reusable agent skill, or a higher-assurance runtime. The core is platform-neutral. Product-specific integrations live in `adapters/` and remain optional.
+Use it as a five-minute review discipline, project-local guidance, a reusable agent skill, a skills-only plugin package, or a higher-assurance runtime. The core is platform-neutral. Product-specific integrations live in `adapters/` and remain optional.
+
+## What's New
+
+- **Learning reaches the next operation:** native result capture and result-derived handoffs connect a useful correction to its next consumer during work.
+- **Skills carry their working parts:** complete-package candidates preserve scripts and resources; source-only helper loading avoids generated-cache interference.
+- **Organization covers the whole current view:** reconcile affected headers, indexes and families together, with exact history retained and bounded text/provenance queries.
+- **A portable plugin package:** build a self-contained, no-server skill package with an existing project icon, supporting references and eight synthetic practice cases. See the [plugin guide](docs/plugin.md).
 
 ## Why It Exists
 
@@ -37,6 +44,8 @@ Objective Integrity Framework connects each of those failure modes to an explici
 | Provenance-bound skill selection and exact application chain | `runtime/skills/master-guided-skill-resolver/`, `docs/skill-book.md` |
 | Action-linked learning queue, source index, and lifecycle decisions | `runtime/skills/master-guided-skill-lifecycle/`, `docs/governance-self-improvement.md` |
 | Compact current knowledge with complete retrievable history | `docs/knowledge-stewardship.md`, `runtime/skills/master-guided-skill-lifecycle/` |
+| Exact, bounded access to versioned artifacts | `runtime/skills/artifact-access/`, `tools/oif.py artifact` |
+| Self-contained skills-only plugin packaging | `tools/plugin.py`, `docs/plugin.md` |
 | Project-local preview, installation, settings-preserving update, and rollback | `tools/bootstrap.py`, `docs/adoption.md` |
 | Optional runtime integrations | `adapters/` |
 
@@ -137,6 +146,7 @@ flowchart TD
 - **Read-only:** Apply the core loop without changing configuration.
 - **Project-local:** Install the complete generic package into an explicit project destination.
 - **Skill:** Use `.agents/skills/objective-integrity` for progressive agent guidance.
+- **Plugin:** Build the self-contained skills-only package for a compatible host; see [Plugin Packaging and Use](docs/plugin.md). Installation remains an explicit host action.
 - **Adapter:** Add only the integration for the runtime you intentionally use.
 - **Advanced:** Adopt the Skill Book, learning queue, native preflight, or legacy recovery adapter when the work needs them.
 
@@ -153,6 +163,7 @@ The repository distinguishes evidence that a record is well formed from evidence
 - [Adoption Guide](docs/adoption.md)
 - [Objective Continuity](docs/objective-continuity.md)
 - [Runtime Reference](docs/runtime-reference.md)
+- [Plugin Packaging and Use](docs/plugin.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Privacy](PRIVACY.md)
 - [Provenance](PROVENANCE.md)
