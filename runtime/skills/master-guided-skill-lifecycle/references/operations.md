@@ -15,6 +15,15 @@ claim. Scope is asserted, not an OS sandbox. Keep secrets out of argv/evidence.
 An existing caller may construct this ordinary input with the Python API; do not
 hand-copy source/result metadata into subsequent stages:
 
+Select `python_executable` before freezing the request: `argv[0]` must be an
+absolute, plain single-link file with no symlink or reparse-point ancestors.
+For a known test interpreter, `str(Path(sys.executable).resolve(strict=True))`
+names its resolved file; an unqualified `sys.executable` may name a Linux alias.
+Inspect that selection and its intended environment first: resolving a virtual
+environment launcher can change its environment. The runner does not rewrite
+argv or relax path checks. Sources, methods and evidence keep their own existing
+path and identity checks.
+
 ```python
 spec = {
     "schema": "work-operation-v1", "operation_id": "required-artifact-read",

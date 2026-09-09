@@ -11,6 +11,7 @@ import tempfile
 import unittest
 
 S = Path(__file__).resolve().parents[1] / 'scripts'
+PYTHON = str(Path(sys.executable).resolve(strict=True))
 
 
 class BytecodeIsolation(unittest.TestCase):
@@ -35,8 +36,18 @@ class BytecodeIsolation(unittest.TestCase):
         cp = subprocess.run([sys.executable, str(self.s / script), *map(str, args)],
                             cwd=self.root, env=self.env, capture_output=True, timeout=15)
         if good:
-            self.assertEqual(cp.returncode, 0, cp.stderr.decode('utf8', 'replace'))
+            self.assertEqual(cp.returncode, 0,
+                             f'exit={cp.returncode}; stdout={cp.stdout!r}; stderr={cp.stderr!r}')
         return cp
+
+    def test_invalid_cli_diagnostics_keep_status_and_both_streams(self):
+        request=self.root/'invalid.json';request.write_text('{}')
+        with self.assertRaises(AssertionError) as failure:
+            self.call('operation_io.py','run','--input',request,'--output-root',self.root/'operation')
+        message=str(failure.exception)
+        for part in ('exit=2','stdout=','"status": "ERROR"','operation specification fields differ','stderr='):
+            self.assertIn(part,message)
+        self.assertFalse((self.root/'operation').exists())
 
     def test_cold_and_repeated_cli_do_not_change_registered_tree(self):
         before = self.members()
@@ -50,7 +61,7 @@ class BytecodeIsolation(unittest.TestCase):
         source = self.root / 'source.txt'; source.write_text('authorized isolated operation')
         source_ref = dict(path=str(source), sha256=hashlib.sha256(source.read_bytes()).hexdigest().upper())
         spec = dict(schema='work-operation-v1', operation_id='bytecode-case', owner_chat_id='test', source=source_ref,
-                    purpose='Preserve actual status and streams', argv=[sys.executable, '-c', 'print("actual"); raise SystemExit(7)'],
+                    purpose='Preserve actual status and streams', argv=[PYTHON, '-c', 'print("actual"); raise SystemExit(7)'],
                     cwd=str(self.root), timeout_seconds=5, accepted_exit_codes=[7], methods=[],
                     next_consumer='test-review', effect_scope='read-only')
         request = self.root / 'request.json'; request.write_text(json.dumps(spec))

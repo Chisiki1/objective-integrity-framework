@@ -19,6 +19,11 @@
 
 - Existing objective continuity, source-wide completion, condition governance, explicit adoption and rollback, branding, sponsor acknowledgments, and binary-safe Git-history scanning.
 
+### Fixed
+
+- Strict operation tests now select the real interpreter path on systems with linked Python launchers. Runtime path guards remain unchanged; a linked-executable counterexample protects that boundary.
+- Default-Python regression failures retain both output streams and exit status, including structured errors emitted on stdout.
+
 ## Earlier foundation
 
 ### Added

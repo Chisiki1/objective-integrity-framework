@@ -12,17 +12,20 @@ import operation_io as o
 import in_work_hooks as h
 import work_io as w
 
+# Strict operation specs name the selected file, not an interpreter alias.
+PYTHON = str(Path(sys.executable).resolve(strict=True))
+
 
 class Operations(unittest.TestCase):
     def setUp(self):
         self.t=tempfile.TemporaryDirectory();self.r=Path(self.t.name)
         for name in ['source','method','global','project']:(self.r/name).write_text(name)
         self.spec=dict(schema='work-operation-v1',operation_id='one',owner_chat_id='chat',source=o.ref(self.r/'source'),
-            purpose='Necessary local operation',argv=[sys.executable,'-c','print("actual")'],cwd=str(self.r),timeout_seconds=5,
+            purpose='Necessary local operation',argv=[PYTHON,'-c','print("actual")'],cwd=str(self.r),timeout_seconds=5,
             accepted_exit_codes=[0],methods=[dict(id='method',**o.ref(self.r/'method'))],next_consumer='review',effect_scope='read-only')
     def tearDown(self):self.t.cleanup()
     def execute(self,code=None):
-        if code is not None:self.spec['argv']=[sys.executable,'-c',code]
+        if code is not None:self.spec['argv']=[PYTHON,'-c',code]
         o.put(self.r/'spec.json',self.spec);o.execute(self.r/'spec.json',self.r/'operation')
         return o.consume(self.r/'operation/result.json')
     def next_spec(self):
@@ -42,6 +45,16 @@ class Operations(unittest.TestCase):
         self.spec.update(accepted_exit_codes=[7],methods=[])
         value=self.execute('raise SystemExit(7)');self.assertEqual(value['operation']['status'],'succeeded')
         self.assertIn('no-selected-skill-does-not-exclude-a-useful-new-operation',value['in_work_learning']['signals'])
+        self.assertEqual(json.loads((self.r/'operation/request.json').read_bytes())['argv'][0],PYTHON)
+    def test_unresolved_executable_link_rejects_before_effect(self):
+        alias=self.r/'python-alias'
+        try:alias.symlink_to(PYTHON)
+        except (OSError,NotImplementedError) as error:self.skipTest('Host cannot create a test symlink: '+str(error))
+        self.spec['argv'][0]=str(alias)
+        o.put(self.r/'spec.json',self.spec)
+        with self.assertRaisesRegex(ValueError,'linked/reparse'):
+            o.execute(self.r/'spec.json',self.r/'operation')
+        self.assertFalse((self.r/'operation').exists())
     def test_timeout_then_method_retirement_keeps_effect_and_raw_result(self):
         self.spec['timeout_seconds']=.04
         self.execute('import time; time.sleep(1)')
