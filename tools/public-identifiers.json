@@ -1,0 +1,37 @@
+{
+  "schema": "oif-public-identifiers-v1",
+  "entries": [
+    {
+      "path": "docs/benchmarks/query-response-0.1.1.json",
+      "blob_sha256": "AD6876E9E7B5A32AEEF1D18B8490DA815CE5F2433774CE7BCD29450D3AEBBCAF",
+      "kind": "long_hex_identifier",
+      "value": "D19712707538D8A3B5E0798FE24D035DD9BB7794B031D543FB98AB968C6024DB",
+      "reason": "Identifies the public master-index implementation used by the synthetic benchmark.",
+      "provenance": "SHA-256 of runtime/skills/master-guided-skill-lifecycle/scripts/master_index.py; see docs/measurements.md."
+    },
+    {
+      "path": "docs/benchmarks/query-response-0.1.1.json",
+      "blob_sha256": "AD6876E9E7B5A32AEEF1D18B8490DA815CE5F2433774CE7BCD29450D3AEBBCAF",
+      "kind": "long_hex_identifier",
+      "value": "1F0D572F01AB5853840BA4BECF337611836D0612773C5826D2E2BE19AFBEA179",
+      "reason": "Identifies the original synthetic measurement harness, not a user or task.",
+      "provenance": "Original measurement artifact; the portable tools/benchmark_query.py retains its fixture, oracle and counting logic. Differences are documented in docs/measurements.md."
+    },
+    {
+      "path": "tools/plugin.py",
+      "blob_sha256": "D6091BE419456B1E434E416E3776032946DB7D0F775C6B132715C5DCBE3DB12D",
+      "kind": "long_hex_identifier",
+      "value": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "reason": "Validates the complete unchanged Apache License 2.0 text.",
+      "provenance": "https://www.apache.org/licenses/LICENSE-2.0.txt; SHA-256 after LF normalization, matching LICENSE."
+    },
+    {
+      "path": "tests/test_release.py",
+      "blob_sha256": "572CAEA985565192F391180C361FEAD816B54483B2E757EBC939781D9AD2E3F4",
+      "kind": "email",
+      "value": "test@example.invalid",
+      "reason": "Synthetic identity used exclusively in a disposable local Git test repository.",
+      "provenance": "ReleaseAssets.git in tests/test_release.py; the address is not a maintainer contact."
+    }
+  ]
+}

@@ -53,3 +53,13 @@ python tools/privacy_scan.py .
 ```
 
 Also inspect generated public examples, archives, Git history, and configuration output before publication. A clean tracked-tree scan does not automatically cover those separate surfaces.
+
+The tree and history checks share `tools/public-identifiers.json`: a small,
+reviewed list of public provenance/license digests and synthetic test identities.
+Each occurrence is bound to its exact relative file, complete file SHA-256,
+pattern and literal, with its purpose and source. Changed or moved files need a
+fresh review; unrelated identifiers and secrets remain findings. The declaration
+file is scanned too. This is a transparent review record, not proof that an
+arbitrary identifier is safe. Retain prior reviewed bindings when they are still
+needed to inspect reachable history; historical declarations cannot authorize
+other historical content on their own.

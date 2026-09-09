@@ -6,6 +6,7 @@ import os
 import re
 import sys
 from pathlib import Path
+from public_identifiers import PublicIdentifiers
 
 
 DEFAULT_EXCLUDES = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "work"}
@@ -39,6 +40,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     root = Path(args.path).resolve()
+    try:
+        public = PublicIdentifiers(root)
+    except (OSError, ValueError) as error:
+        print(f"privacy_scan: FAIL: {error}")
+        return 1
     findings: list[str] = []
     patterns = dict(GENERIC_PATTERNS)
     if args.allow_email:
@@ -53,13 +59,16 @@ def main(argv: list[str] | None = None) -> int:
             if literal and literal in rel:
                 findings.append(f"{rel}: path_extra_literal: {literal}")
         try:
-            text = path.read_text(encoding="utf-8")
+            raw = path.read_bytes()
+            text = raw.decode("utf-8")
         except UnicodeDecodeError:
             continue
         for label, pattern in patterns.items():
             if label == "japanese_text" and rel in JAPANESE_EXPLANATIONS:
                 continue
             for match in pattern.finditer(text):
+                if public.permits(rel, raw, label, match.group(0)):
+                    continue
                 findings.append(f"{rel}: {label}: {match.group(0)[:80]}")
         for literal in args.extra_literal:
             if literal and literal in text:

@@ -5,6 +5,7 @@ import argparse
 import re
 import subprocess
 from pathlib import Path
+from public_identifiers import PublicIdentifiers
 
 
 PATTERNS = {
@@ -15,11 +16,11 @@ PATTERNS = {
 }
 
 
-def git(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+def git(root: Path, *args: str, raw=False):
     # Blobs can contain arbitrary bytes. Preserve undecodable bytes without
     # dropping the blob or hiding ASCII residue embedded in binary assets.
-    return subprocess.run(["git", *args], cwd=root, text=True, encoding="utf-8",
-                          errors="surrogateescape", capture_output=True)
+    options = {} if raw else dict(text=True, encoding="utf-8", errors="surrogateescape")
+    return subprocess.run(["git", *args], cwd=root, capture_output=True, **options)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -27,6 +28,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("path", nargs="?", default=".")
     args = parser.parse_args(argv)
     root = Path(args.path).resolve()
+    try:
+        public = PublicIdentifiers(root)
+    except (OSError, ValueError) as error:
+        print(f"history_scan: FAIL: {error}")
+        return 1
 
     if not (root / ".git").exists():
         print("history_scan: SKIP (not a Git repository)")
@@ -53,18 +59,31 @@ def main(argv: list[str] | None = None) -> int:
         print("history_scan: FAIL")
         print(commits.stderr.strip() or "git rev-list failed")
         return 1
+    seen = set()
     for commit in [line for line in commits.stdout.splitlines() if line]:
-        files = git(root, "ls-tree", "-r", "--name-only", commit)
+        files = git(root, "ls-tree", "-rz", commit)
         if files.returncode != 0:
             findings.append(f"{commit}: tree cannot be listed")
             continue
-        for rel in [line for line in files.stdout.splitlines() if line]:
-            show = git(root, "show", f"{commit}:{rel}")
+        for entry in filter(None, files.stdout.split("\0")):
+            header, rel = entry.split("\t", 1)
+            _, kind, blob = header.split()
+            # Reuse only identical bytes at the identical path. Every distinct
+            # historical blob remains scanned, including deleted binary assets.
+            if (rel, blob) in seen:
+                continue
+            seen.add((rel, blob))
+            if kind != "blob":
+                findings.append(f"{commit}:{rel}: non-blob tracked entry")
+                continue
+            show = git(root, "show", f"{commit}:{rel}", raw=True)
             if show.returncode != 0:
                 findings.append(f"{commit}:{rel}: tracked file cannot be read")
                 continue
             for label, pattern in PATTERNS.items():
-                for match in pattern.finditer(show.stdout):
+                for match in pattern.finditer(show.stdout.decode("utf8", errors="surrogateescape")):
+                    if public.permits(rel, show.stdout, label, match.group(0)):
+                        continue
                     findings.append(f"{commit}:{rel}: {label}: {match.group(0)[:80]}")
 
     if findings:
