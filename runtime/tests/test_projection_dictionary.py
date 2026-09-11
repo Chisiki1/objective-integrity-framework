@@ -24,21 +24,26 @@ class ProjectionTest(unittest.TestCase):
         state=self.state();before=copy.deepcopy(state)
         rendered=r.render_projection(state)
         self.assertEqual(state,before)
+        index_serialized=r.human_json(r.build_evidence_index(state))
         for clause in state['contracts']['C']['clauses']:
             for key in ('clause_id','locator','source_event_id','source_ref','source_sha256'):
-                self.assertIn(clause[key],rendered)
-        self.assertEqual(rendered.count('sources/A.txt'),1)
-        self.assertIn('- C51 | S1 | locator=exact line 51',rendered)
-        self.assertIn('- LAST | S2 | locator=other full source',rendered)
-        for value in ['No target operation','- O | OPEN','- ACT | UNKNOWN','- GAP | OPEN','- SRC3 |','complete required connection','journal.jsonl']:
+                self.assertIn(clause[key],index_serialized)
+        for value in ['CHAT OBJECTIVE CARD v2','SOURCE RECONCILIATION REQUIRED',
+                      'authority_summary: No target operation',
+                      'current machine state: current.json','append-only history: journal.jsonl',
+                      'full evidence index: EVIDENCE-INDEX.json','- O | OPEN',
+                      'unclassified_sources: ["SRC3"]','unresolved_capture_gaps: ["GAP"]',
+                      'unknown_or_pending_actions: ["ACT"]']:
             self.assertIn(value,rendered)
         self.assertNotIn('- DONE |',rendered)
+        self.assertNotIn('sources/A.txt',rendered)
 
     def test_no_contract_does_not_hide_frontiers(self):
         state=self.state();state['current_contract_id']=None
         rendered=r.render_projection(state)
         self.assertIn('UNCLASSIFIED OR WITHDRAWN',rendered)
-        self.assertIn('- ACT | UNKNOWN',rendered)
-        self.assertIn('- SRC3 |',rendered)
+        self.assertIn('unknown_or_pending_actions: ["ACT"]',rendered)
+        self.assertIn('unclassified_sources: ["SRC3"]',rendered)
+        self.assertIn('unresolved_capture_gaps: ["GAP"]',rendered)
 
 if __name__=='__main__':unittest.main()

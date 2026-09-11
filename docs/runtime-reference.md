@@ -67,6 +67,7 @@ Entrypoint: `runtime/objective_ledger.py`
 | `action-start` | Bind a material planned action to the current objective head. |
 | `action-outcome` | Record the observed action result without erasing partial or unknown effects. |
 | `action-reconcile` | Resolve a prior partial or unknown effect from new evidence. |
+| `action-method-supplement` | Align a late method record with an exact hash-bound update; the original omission stays visible. |
 | `verify` | Replay and verify journal, source, projection, and head relationships. |
 | `recover-lock` | Recover only the expected abandoned lock identity. |
 | `status` | Replay current state and refresh replaceable projections without changing objective semantics. |
@@ -77,7 +78,7 @@ Start with the demonstration unless you are integrating the API directly.
 
 `status`, host start, and compact recovery are semantically read-only but may write bounded repair metadata inside the configured ledger root. They can acquire its lock, preserve a partial tail, and rebuild `current.json` and `objective.txt`; they do not classify source, change objective meaning, or authorize an action.
 
-`objective-input` retains the native ledger's validation and expected-head checks; it is not another objective store. The human projection factors repeated source triples into aliases without dropping source clauses or outcomes. Current progress references can change while immutable outcome history remains available.
+`objective-input` retains the native ledger's validation and expected-head checks; it is not another objective store. The bounded human Objective Card keeps counts, pointers and continuity frontiers; full authority, source bindings, outcome catalog and action history remain in the same-ledger `EVIDENCE-INDEX.json`. The projection filename is configurable via `projection_filename`, and host session binding via `host_binding` (`session_env`, `bindings_dir`); both are absent by default. Current progress references can change while immutable outcome history remains available.
 
 ## Whole-Scope Work
 

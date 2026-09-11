@@ -6,6 +6,7 @@ import argparse
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -223,6 +224,30 @@ class LedgerInputTests(unittest.TestCase):
             "--input", "-", "--event-id", "CLI-CONSUMER"], input=result.stdout, capture_output=True)
         self.assertEqual(0, applied.returncode, applied.stdout + applied.stderr)
         self.assertEqual("owner normal result", self.state()["latest_progress"]["notes"])
+
+
+    def test_response_check_returns_disposition_dict(self):
+        # Regression: the CLI prints json.dumps(response_check(...)); a dropped
+        # return would silently emit "null" (audit finding 0.2.0-high-1).
+        binding_dir = self.root / "bindings"; binding_dir.mkdir()
+        config = json.loads(self.config_path.read_text(encoding="utf-8"))
+        config["host_binding"] = {"session_env": "FIXTURE_SESSION", "bindings_dir": "bindings"}
+        self.config_path.write_text(json.dumps(config), encoding="utf-8")
+        (binding_dir / (hashlib.sha256(b"fixture-chat").hexdigest() + ".json")).write_text(
+            json.dumps({"role": "root", "session_id": "fixture-chat"}), encoding="utf-8")
+        os.environ["FIXTURE_SESSION"] = "fixture-chat"
+        self.addCleanup(os.environ.pop, "FIXTURE_SESSION", None)
+        result = self.context().response_check(request_outcome_ids=["O1", "O2"], excluded_active={},
+            source_clause_ids=["C1"], purpose="completion",
+            next_action={"eligible": False, "description": "fixture: no further eligible work",
+                         "evidence_refs": ["fixture evidence"]})
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result.get("schema"), "ledger-response-disposition-v1")
+        self.assertIn("decision", result)
+        self.assertIn("final_allowed", result)
+        self.assertEqual(result.get("request_outcome_ids"), ["O1", "O2"])
+        self.assertFalse(result.get("permission_granted"))
+        self.assertNotEqual(json.dumps(result, ensure_ascii=True), "null")
 
 
 if __name__ == "__main__":

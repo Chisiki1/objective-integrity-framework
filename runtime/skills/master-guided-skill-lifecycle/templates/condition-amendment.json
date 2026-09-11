@@ -1,0 +1,22 @@
+{
+  "schema_version": "workflow-governance-v1",
+  "as_of": "2026-09-07T00:00:00+09:00",
+  "effect_state": "NONE",
+  "current_conditions": [{"id":"COND-EXAMPLE","tier":"USER_CONDITION","text_ref":{"path":"REPLACE_WITH_ABSOLUTE_CURRENT_TEXT_PATH","sha256":"REPLACE_WITH_64_HEX_SHA256"}}],
+  "proposal": {
+    "id":"REPLACE_WITH_PROPOSAL_ID",
+    "version":"1",
+    "owner":"REPLACE_WITH_EXACT_PRIMARY_OWNER_AND_LEASE",
+    "scope":"REPLACE_WITH_PRECISE_SCOPE_CONSUMERS_AND_DURATION_OR_EXPIRY",
+    "changes":[{"condition_id":"COND-EXAMPLE","before_sha256":"REPLACE_WITH_64_HEX_SHA256","after_text":"REPLACE_WITH_EXACT_NEW_TEXT_AND_EXPLICIT_SUPERSESSION"}],
+    "dependency_ids":["COND-EXAMPLE"],
+    "source_refs":[{"path":"REPLACE_WITH_ABSOLUTE_USER_SOURCE_PATH","sha256":"REPLACE_WITH_64_HEX_SHA256"}],
+    "rationale":"REPLACE_WITH_OBJECTIVE_DEFICIT_NARROWER_ALTERNATIVE_COMPARISON_BENEFIT_COST_RISK_LOST_GUARANTEES",
+    "evaluation_ref":{"path":"REPLACE_WITH_ABSOLUTE_FROZEN_COMPARISON_AND_NORMAL_COUNTEREXAMPLES_PATH","sha256":"REPLACE_WITH_64_HEX_SHA256"},
+    "independent_ref":{"path":"REPLACE_WITH_ABSOLUTE_INDEPENDENT_CHALLENGE_PATH","sha256":"REPLACE_WITH_64_HEX_SHA256"},
+    "rollback_ref":{"path":"REPLACE_WITH_ABSOLUTE_SCOPED_ROLLBACK_PATH","sha256":"REPLACE_WITH_64_HEX_SHA256"},
+    "next_consumer":"REPLACE_WITH_NEXT_REAL_USE",
+    "return_step":"REPLACE_WITH_ORIGINAL_OBJECTIVE_RETURN"
+  },
+  "approval": null
+}

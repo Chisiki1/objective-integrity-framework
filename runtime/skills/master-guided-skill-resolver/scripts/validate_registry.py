@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import runpy
 import sys
 from collections import Counter
 from pathlib import Path
@@ -45,7 +46,12 @@ def main() -> int:
         "user": Path(args.user_root).resolve(strict=True),
         "project": Path(args.project_root).resolve(strict=True),
     }
-    master_text = "\n".join(Path(item).read_text(encoding="utf-8") for item in args.master)
+    # Masters may import historical episodes through exact `master-history-v1`
+    # archive edges; use the sibling lifecycle's archive-aware reader so
+    # archived IDs remain valid. A root-only text read misses them.
+    archive_reader = Path(__file__).resolve().parents[2] / "master-guided-skill-lifecycle" / "scripts" / "master_index.py"
+    graph = runpy.run_path(str(archive_reader))["load_sources"](args.master)
+    master_text = "\n".join(item["raw"].decode("utf-8") for item in graph["sources"])
     entries = registry.get("entries", []) if isinstance(registry, dict) else []
     errors: list[str] = []
     warnings: list[str] = []

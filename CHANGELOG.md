@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.2.0 — 2026-09-11
+
+The framework and plugin share version 0.2.0. Existing task records continue to
+work; no migration step is required, and record schemas keep their own versions.
+
+### Added
+
+- Bounded objective card v2 with a same-ledger `EVIDENCE-INDEX.json`: the human
+  projection keeps counts, pointers and continuity frontiers; full authority,
+  source bindings, outcome catalog and action history stay machine-readable.
+- `action-method-supplement`: align a late method record with an exact, hash-bound
+  update without rewriting history or hiding the original omission.
+- Explicit host configuration: `projection_filename` and `host_binding`
+  (`session_env`, `bindings_dir`) express host wiring as configuration instead of
+  a fork; `adapters/hermes/` documents one optional binding end to end.
+- Skill updates across the distributed packages, including the chat
+  execution-route reference and condition-amendment / write-request templates.
+
+### Changed
+
+- Public positioning states the framework's goal explicitly: quality compounds
+  with every pass, and a fast model that follows the framework can out-iterate
+  heavier, costlier models. See README and `docs/philosophy.md`.
+
 ## 0.1.1 — 2026-09-09
 
 ### Added

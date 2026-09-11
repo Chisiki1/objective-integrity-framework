@@ -4,26 +4,27 @@
 
 Keep the objective intact. Turn experience into better next actions.
 
-Version **0.1.1** · [Download](https://github.com/Chisiki1/objective-integrity-framework/releases/latest) · [Changelog](CHANGELOG.md) · [Japanese guide](docs/ja/README.md).
+Version **0.2.0** · [Download](https://github.com/Chisiki1/objective-integrity-framework/releases/latest) · [Changelog](CHANGELOG.md) · [Japanese guide](docs/ja/README.md).
 
 [![CI](https://github.com/Chisiki1/objective-integrity-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/Chisiki1/objective-integrity-framework/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 Objective Integrity Framework is an open operating framework for agentic work that must stay faithful to the requested outcome across long tasks, corrections, handoffs, reviews, and external actions. It gives an agent a durable objective, a proportionate evidence model, and a practical learning loop without turning process artifacts into the goal.
 
+> **Quality compounds with every pass.** A fast model that follows the framework keeps improving — out-iterating heavier, costlier models. That is the goal the framework is built around — *iterate, don't escalate*.
+
 Use it as a five-minute review discipline, project-local guidance, a reusable agent skill, a skills-only plugin package, or a higher-assurance runtime. The core is platform-neutral. Product-specific integrations live in `adapters/` and remain optional.
 
 ## What's New
 
-**0.1.1 release packaging:** versioned full-framework and skills-only ZIPs,
-SHA-256 checksums, exact source identity, complete consistent Apache-2.0 terms,
-and clearer contribution/support routes. Start with [downloads and verification](docs/releases.md).
-The workflow improvements below were introduced in the preceding 2026-09-09 update.
+**0.2.0 update (2026-09-11):** the human objective card is now a bounded, reconciliation-led view with a
+machine-readable `EVIDENCE-INDEX.json` beside it; host wiring is explicit configuration;
+and the shipped skills carry the latest same-chat workflows.
 
-- **Learning reaches the next operation:** native result capture and result-derived handoffs connect a useful correction to its next consumer during work.
-- **Skills carry their working parts:** complete-package candidates preserve scripts and resources; source-only helper loading avoids generated-cache interference.
-- **Organization covers the whole current view:** reconcile affected headers, indexes and families together, with exact history retained and bounded text/provenance queries.
-- **A portable plugin package:** build a self-contained, no-server skill package with an existing project icon, supporting references and eight synthetic practice cases. See the [plugin guide](docs/plugin.md).
+- **Quality compounds with every pass:** each pass through the objective, action, observation, evidence and correction loop catches and fixes more than the last — the framework's goal is that a fast model which follows it can out-iterate heavier, costlier models.
+- **A bounded card, a complete index:** the card keeps counts, pointers and continuity frontiers; full authority, source bindings, outcomes and action history stay in `EVIDENCE-INDEX.json`.
+- **Explicit host bindings:** `host_binding` and `projection_filename` configuration make host-specific wiring a documented interface instead of a fork. See `adapters/hermes/` for one optional binding.
+- **Late records, no rewritten history:** `action-method-supplement` aligns a late method record without hiding the original omission.
 
 ## Why It Exists
 

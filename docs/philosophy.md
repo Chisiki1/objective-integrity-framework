@@ -16,6 +16,14 @@ Reliability is not obtained by making the agent timid. The framework is designed
 
 Evidence has a ceiling. A passing static check does not prove runtime behavior. A component test does not prove the final consumer result unless the relational claims are recomposed. A polished audit does not prove empirical improvement. The framework makes those ceilings visible.
 
+## Iteration Advantage
+
+Quality is expected to compound during work, not only after it. Each pass through the
+objective, action, observation, evidence and correction loop catches and fixes more than
+the last, and the post-work loop carries what was learned into the next matching action.
+A fast model that follows the framework can keep improving with every pass and
+out-iterate heavier, costlier models — that is the goal the framework is built around.
+
 ## Progressive Disclosure
 
 Small tasks should not carry the whole weight of a high-assurance release process. The same invariants can be applied in compact, standard, and high-assurance profiles. The profile changes the evidence cost; it does not change the basic obligation to preserve the requested outcome.

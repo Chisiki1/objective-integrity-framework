@@ -622,9 +622,11 @@ class LedgerCliTest(unittest.TestCase):
         boot = self.bootstrap()
         self.classify_initial(boot["source_event_id"])
         projection = next(self.data.rglob("objective.txt")).read_text(encoding="utf-8")
-        self.assertIn("CURRENT POLICY / ACCEPTANCE / AUTHORITY", projection)
-        self.assertIn("mandatory_acceptance", projection)
-        self.assertIn("prohibited_substitutes", projection)
+        self.assertIn("CHAT OBJECTIVE CARD v2", projection)
+        self.assertIn("CURRENT AUTHORITY / ACCEPTANCE SUMMARY", projection)
+        self.assertIn("mandatory_acceptance_count", projection)
+        self.assertIn("prohibited_substitutes_count", projection)
+        self.assertIn("full evidence index: EVIDENCE-INDEX.json", projection)
         self.assertIn("current machine state: current.json", projection)
         self.assertIn("append-only history: journal.jsonl", projection)
         self.assertNotIn("MACHINE SNAPSHOT", projection)
@@ -704,10 +706,10 @@ class LedgerCliTest(unittest.TestCase):
         self.assertIn("Next work 🙂", projection)
         self.assertNotIn("\\u00e9", projection)
         self.assertNotIn("\\ud83d\\ude42", projection)
-        constraints_line = next(line for line in projection.splitlines() if line.startswith("- constraints: "))
+        constraints_line = next(line for line in projection.splitlines() if line.startswith("- constraints_summary: "))
         next_line = next(line for line in projection.splitlines() if line.startswith("- next_eligible_work: "))
-        self.assertEqual(json.loads(constraints_line.split(": ", 1)[1]), [policy_value])
-        self.assertEqual(json.loads(next_line.split(": ", 1)[1]), next_value)
+        self.assertIn('"display":"Unicode café 🙂"', constraints_line)
+        self.assertIn("Next work 🙂", next_line)
         self.assertIn("\\ud800", constraints_line)
         self.assertIn("\\udfff", next_line)
         rebuilt = self.cli("status")["state"]
@@ -822,7 +824,8 @@ class LedgerCliTest(unittest.TestCase):
             self.cli("hook", "--event", "UserPromptSubmit", stdin={"session_id": ROOT_SESSION, "turn_id": f"long-id-{index}-" + "x" * 80, "prompt": f"source {index}"})
         result = self.cli("hook", "--event", "SessionStart", stdin={"session_id": ROOT_SESSION, "source": "compact"})
         context = result["hookSpecificOutput"]["additionalContext"]
-        self.assertTrue(context.startswith("READ FIRST:"))
+        # Pending unclassified sources lead the recovery context in card v2.
+        self.assertTrue(context.startswith("RECONCILE SOURCE FIRST:"))
         self.assertLessEqual(len(context.encode("utf-8")), 600)
 
     def test_new_session_is_distinct_until_explicit_same_chat_binding(self) -> None:

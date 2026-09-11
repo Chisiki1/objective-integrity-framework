@@ -56,14 +56,18 @@ def ref(path):
     p=plain(path);return {'path':str(p),'sha256':sha(p.read_bytes())}
 
 
-def load(path):
+def parse(raw):
     def unique(rows):
         out={}
         for k,v in rows:
             if k in out:raise ValueError('duplicate JSON key')
             out[k]=v
         return out
-    return json.loads(plain(path).read_bytes(),object_pairs_hook=unique,parse_constant=lambda _: (_ for _ in ()).throw(ValueError('non-finite JSON')))
+    return json.loads(raw,object_pairs_hook=unique,parse_constant=lambda _: (_ for _ in ()).throw(ValueError('non-finite JSON')))
+
+
+def load(path):
+    return parse(plain(path).read_bytes())
 
 
 def put(path,value):
@@ -122,8 +126,15 @@ def validate(spec, *, current=True):
     return spec
 
 
-def execute(spec_path,output_root):
-    spec=validate(load(spec_path));spec_ref=ref(spec_path)
+def execute(spec_path,output_root,expected_spec_sha256=None):
+    path=plain(spec_path);raw=path.read_bytes()
+    spec_ref={'path':str(path),'sha256':sha(raw)}
+    if expected_spec_sha256 is not None:
+        if not isinstance(expected_spec_sha256,str) or not re.fullmatch('[A-F0-9]{64}',expected_spec_sha256):
+            raise ValueError('explicit uppercase expected spec SHA256 required')
+        if spec_ref['sha256'] != expected_spec_sha256:
+            raise ValueError('operation spec differs from bound caller bytes; no process started')
+    spec=validate(parse(raw))
     root=plain(output_root,kind='dir',absent=True)
     if root.exists():raise ValueError('operation evidence already exists; inspect it, never replay')
     source_paths=[Path(spec_ref['path']),Path(spec['source']['path']),*[Path(x['path']) for x in spec['methods']]]

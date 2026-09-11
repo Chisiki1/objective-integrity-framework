@@ -34,6 +34,10 @@ Use `adapters/powershell/` when a finalized action is PowerShell and native pars
 
 The portable Python checker remains a useful conservative screen. Its pass is not promoted to native PowerShell parse success. Neither checker decides semantic safety, authority, or final consumer outcome.
 
+## Optional Hermes Adapter
+
+Use `adapters/hermes/` only when that runtime is intentionally selected. It binds the ledger to the host's stable session identity, uses explicit `host_binding` / `projection_filename` configuration, connects prompt capture and recovery injection through the host's supported hooks, and documents host-side exact-action screening for that host's tool payloads. It is optional packaging, not the framework identity; delivered context, trust and tool coverage remain host-specific and must be checked at the event-consumer boundary.
+
 ## Legacy Split-Task Compatibility
 
 The durable status package under `runtime/skills/durable-supervisor-status/` supports recovery of an explicitly existing split-task lease. New work should use the same-conversation objective ledger. Legacy status does not create action authority or an independent review key.

@@ -1,0 +1,58 @@
+{
+  "schema_version":"durable-supervisor-status-write-request-v2",
+  "expected_previous_status_id":null,
+  "expected_previous_record_sha256":null,
+  "objective":{
+    "objective_id":"OBJ-EXAMPLE-001",
+    "source":"worker-local-source-contract.json",
+    "source_sha256":"REPLACE_WITH_64_HEX_SHA256",
+    "supervisor_task_id":"SUPERVISOR-TASK-001"
+  },
+  "worker":{"task_id":"WORKER-TASK-001","turn_id":"WORKER-TURN-001","lease_id":"WORKER-LEASE-001"},
+  "candidate_identity":{"identity_id":"CANDIDATE-001","sha256":"REPLACE_WITH_64_HEX_SHA256"},
+  "evidence_identity":{"identity_id":"EVIDENCE-001","sha256":"REPLACE_WITH_64_HEX_SHA256"},
+  "active_step":"Freeze a decision-bearing status before ending the Worker turn.",
+  "actual_evidence_delta":["Host projection was empty at the decision boundary."],
+  "pending_decision":{
+    "state":"NEEDS_SUPERVISOR",
+    "decision_id":"DECISION-001",
+    "reason":"The dependent transition requires Supervisor correction or authorization.",
+    "requested_transition_id":"TRANSITION-001"
+  },
+  "next_proposed_action":{
+    "transition_id":"TRANSITION-001",
+    "description":"Perform only the exact transition named by a later matching Supervisor prompt.",
+    "effect":"MATERIAL_OR_EXTERNAL"
+  },
+  "allowed_effects":["READ_ONLY_EVIDENCE","STATUS_WRITE"],
+  "prohibited_effects":["ACTIVE_WRITE","EXTERNAL_ACTION","WORKER_TO_SUPERVISOR_PUSH"],
+  "open_deliverables":[
+    {"deliverable_id":"DELIVERABLE-001","state":"BLOCKED","summary":"Await exact later Supervisor transition message."}
+  ],
+  "state":"WORK_NEEDS_ATTENTION",
+  "transition_effect":"STATUS_ONLY",
+  "supervisor_message":null,
+  "supervision_context":{
+    "stage":"Decision-bearing Worker stage.",
+    "action_or_wait_owner":"Worker owns the current action; Supervisor owns only the later pull decision.",
+    "last_decision_delta":"Projection evidence changed the next eligible decision.",
+    "next_decision_condition":"A matching Supervisor pull and exact later transition message is observed.",
+    "held_transition":"TRANSITION-001",
+    "expected_value":"Preserve decision visibility without Worker-to-Supervisor push.",
+    "elapsed":"Elapsed time is unavailable from this template.",
+    "metric_availability":{"elapsed":"UNAVAILABLE","tokens":"UNAVAILABLE","cost":"UNAVAILABLE","rework":"UNAVAILABLE"},
+    "decision_window":{
+      "owner":"Supervisor pull owner",
+      "dependency":"Exact Worker-local status identity",
+      "last_decision_delta":"Projection evidence became empty, contradictory, or stale",
+      "predicted_next_event":"Supervisor consumes the exact durable status once",
+      "predicted_window":"Event-driven; no fixed polling interval",
+      "wait_cost":"One bounded status write and one pull",
+      "replacement_integration_cost":"Must be measured before replacement",
+      "maximum_harm":"Dependent transition remains held",
+      "alternate_route":"Continue unrelated read-only work"
+    },
+    "no_push":true
+  },
+  "proof_ceiling":"Worker-local durable status structure only; host prompt provenance and action authority remain unproven."
+}

@@ -4,9 +4,11 @@
 
 主目的を保ち、経験を次の行動の改善につなげる。
 
-対応版: **0.1.1**。[English](../../README.md) · [ダウンロード](https://github.com/Chisiki1/objective-integrity-framework/releases/latest) · [変更履歴](../../CHANGELOG.md)
+**反復は、格上げに勝る。** 通すたびに品質が積み上がる — OIFを守れる高速なモデルは、高コスト・高推論のモデルを上回っていける。それがOIFの目標です。
 
-今回の0.1.1では、フル構成とSkillのみのZIP、SHA-256チェックサム、対応コミット情報を備えたリリース配布を追加しました。Apache 2.0の全文とプラグイン表記を揃え、問い合わせ・貢献手順も整備しています。以下の作業中の改善機能は、直前の2026-09-09更新で追加・補強したものです。
+対応版: **0.2.0**。[English](../../README.md) · [ダウンロード](https://github.com/Chisiki1/objective-integrity-framework/releases/latest) · [変更履歴](../../CHANGELOG.md)
+
+今回の0.2.0（2026-09-11）では、人間用カードを限定表示（Objective Card v2）とし、完全な機械可読索引`EVIDENCE-INDEX.json`を併置しました。ホスト結線（`host_binding`）と投影ファイル名（`projection_filename`）を明示設定化し、配布Skill群と補助フロー（遅延して届いた記録の整合 `action-method-supplement` など）を最新化、任意のHermesアダプタを追加しています。既存のタスク記録はそのまま使え、移行は不要です。
 
 Objective Integrity Framework は、AIエージェントが長い作業や修正を進める際に、依頼された成果を見失わず、得られた知見を実際の次の行動へ反映するためのオープンな運用フレームワークです。主目的の記録、必要な証拠、改善の採用と効果確認を結び付けます。記録や監査を増やすこと自体は目的にしません。
 
@@ -16,15 +18,15 @@ Objective Integrity Framework は、AIエージェントが長い作業や修正
 
 [Releaseページ](https://github.com/Chisiki1/objective-integrity-framework/releases/latest)で目的に応じて選び、同じ版の`SHA256SUMS.txt`も保存してください。
 
-- `objective-integrity-framework-0.1.1.zip`：説明・例・実行機能を含む全体。実行にはPython 3.10以降と標準ライブラリの`sqlite3`を使います。
-- `objective-integrity-0.1.1.zip`：Skillと必要な参照資料のパッケージ。対応ホストを使い、Python・APIキー・サーバーは不要です。
+- `objective-integrity-framework-0.2.0.zip`：説明・例・実行機能を含む全体。実行にはPython 3.10以降と標準ライブラリの`sqlite3`を使います。
+- `objective-integrity-0.2.0.zip`：Skillと必要な参照資料のパッケージ。対応ホストを使い、Python・APIキー・サーバーは不要です。
 - `release.json`：元のコミット、配布ファイルのサイズ・ハッシュ、ビルダー識別情報。
 
-PowerShellでは`Get-FileHash .\objective-integrity-framework-0.1.1.zip -Algorithm SHA256`で表示した値を、チェックサムの同名行と比較します。Linuxで両ZIP・`release.json`を保存した場合は`sha256sum -c SHA256SUMS.txt`、macOSでは`shasum -a 256 -c SHA256SUMS.txt`で確認できます。一部だけ保存した場合は個別に比較してください。不一致なら使用せず同じReleaseから取得し直します。
+PowerShellでは`Get-FileHash .\objective-integrity-framework-0.2.0.zip -Algorithm SHA256`で表示した値を、チェックサムの同名行と比較します。Linuxで両ZIP・`release.json`を保存した場合は`sha256sum -c SHA256SUMS.txt`、macOSでは`shasum -a 256 -c SHA256SUMS.txt`で確認できます。一部だけ保存した場合は個別に比較してください。不一致なら使用せず同じReleaseから取得し直します。
 
 ZIPは新しいフォルダーへ展開します。フル構成はこのガイドのデモ・導入手順へ、Skillのみは対応ホストの通常のプラグイン導入へ進んでください。取得だけでインストールや公式ディレクトリ登録は行いません。旧版とバックアップは保持し、更新では明示した同じ導入先へ`--update`のプレビューを行い、復旧は保存済みマニフェストを使います。タスク記録はプラグインの外に置きます。
 
-フレームワークとプラグインは版番号を揃え、タグは`v0.1.1`形式です。今回が最初のタグで、先に配布した未タグの0.1.0を区別します。0.1.1でタスク記録や実行スキーマの移行はありません。0.xの間はマイナー更新で互換性が変わる可能性があるため、変更履歴を確認してください。CIはWindows／Linux、Python 3.10／CI時点の最新安定版を対象にします。
+フレームワークとプラグインは版番号を揃え、タグは`v0.2.0`形式です。最初のタグは`v0.1.1`で、先に配布した未タグの0.1.0を区別します。0.2.0でタスク記録の移行は不要です。0.xの間はマイナー更新で互換性が変わる可能性があるため、変更履歴を確認してください。CIはWindows／Linux、Python 3.10／CI時点の最新安定版を対象にします。
 
 ローカルで配布物を再生成する場合は、GitとPythonを用意し、対象タグの変更のないチェックアウトで`python -B tools/release.py --destination ../oif-release`を実行します。表示された`plan_sha256`を確認後、同じコマンドに`--expect-plan <plan-sha256> --apply`を付けます。保存先は既存の親の下の未作成・分離ディレクトリとし、既存ファイルは上書きしません。同一Git／Python／圧縮環境で再現でき、公開・導入・設定変更は行いません。詳しくは[リリース案内](../releases.md)、問い合わせは[サポート](../support.md)を参照してください。
 
@@ -72,7 +74,7 @@ python tools/plugin.py build --destination ../oif-plugin --expect-plan <plan-sha
 python tools/plugin.py validate --directory ../oif-plugin/objective-integrity
 ```
 
-最初のコマンドは書込みをせず、対象と`plan_sha256`を表示します。その値を2つ目のコマンドへ入れると、`objective-integrity/`フォルダー、`objective-integrity-0.1.1.zip`、`build.json`を生成します。元ファイルの変更、既存保存先、プランの不一致があれば上書きしません。同じ元ファイルからは同じZIPバイト列を生成します。
+最初のコマンドは書込みをせず、対象と`plan_sha256`を表示します。その値を2つ目のコマンドへ入れると、`objective-integrity/`フォルダー、`objective-integrity-0.2.0.zip`、`build.json`を生成します。元ファイルの変更、既存保存先、プランの不一致があれば上書きしません。同じ元ファイルからは同じZIPバイト列を生成します。
 
 対応ホストの通常のプラグイン導入手順で読み込んでください。ローカルのマーケットプレイスを使う場合、この出力例ではルートが`oif-plugin`、参照先が`./objective-integrity`になります。[英語のプラグインガイド](../plugin.md)と、そこからリンクする公式の現行手順を参照してください。生成だけでインストール・公開・フック有効化は行いません。
 

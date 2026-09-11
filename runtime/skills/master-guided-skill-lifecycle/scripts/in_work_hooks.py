@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Narrow Codex hook adapter; observational context is never task authority.
+"""Narrow host hook adapter; observational context is never task authority.
 
 No shell execution, user-source classification, Skill creation, tool rewriting,
 master mutation, background work or Stop continuation occurs here. The sole

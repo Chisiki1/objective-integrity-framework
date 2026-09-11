@@ -14,7 +14,7 @@ The runtime keeps three complementary views under an explicit project-local ledg
 
 - `journal.jsonl`: append-only source, progress, action, reconciliation, and recovery events.
 - `current.json`: machine-readable replayed state for the current head.
-- `objective.txt`: concise human projection of the active objective, open outcomes, blockers, effects, and next eligible work.
+- `objective.txt`: bounded human projection (Objective Card v2) of the active objective, open outcomes, blockers, effects, and next eligible work; the full authority, source bindings, outcome catalog and action history live in `EVIDENCE-INDEX.json`. The filename is configurable (`projection_filename`).
 
 The exact source event remains immutable. The human projection is a view, not a replacement source.
 
@@ -62,7 +62,7 @@ python runtime/objective_ledger.py bootstrap --config <explicit-config> --sessio
 
 That command is for a source checkout. In a complete installed destination, use `.oif/runtime/objective_ledger.py`. A minimal Skill installation intentionally omits the runtime; keep exact source events, the objective and open outcomes, action starts and results, and unknown-effect reconciliation in project-owned files until complete mode is useful.
 
-Use an explicit configuration, ledger root, logical identifier, and source file. The portable runtime also exposes `classify-source`, `progress`, `action-start`, `action-outcome`, `action-reconcile`, `verify`, `status`, `preflight`, and `hook`. Exact arguments and event contracts are summarized in [Runtime Reference](runtime-reference.md).
+Use an explicit configuration, ledger root, logical identifier, and source file. The portable runtime also exposes `classify-source`, `progress`, `action-start`, `action-outcome`, `action-reconcile`, `action-method-supplement`, `verify`, `status`, `preflight`, and `hook`. Exact arguments and event contracts are summarized in [Runtime Reference](runtime-reference.md).
 
 ## Consumer Check
 

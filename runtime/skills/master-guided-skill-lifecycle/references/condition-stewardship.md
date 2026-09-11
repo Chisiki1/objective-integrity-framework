@@ -1,54 +1,56 @@
-# Operating-Condition Stewardship
+# Operating-condition stewardship
 
-Use this route only for a real improvement opportunity or concrete condition blocker. If there is no candidate, continue ordinary work. The primary owner manages the route within the current source, workflow, higher-priority instructions, and task authority.
+For a method-only implementation that does not change conditions, resolve the existing exact document with `scripts/workflow_governance.py --current-conditions <absolute-index.json>`; the index is caller-supplied (`workflow-condition-index-v1`) and no fixed condition count is required. Reuse its verified document/version; do not copy all prior supplements and append a new method chapter merely because the implementation changed. Keep current implementation details in the existing Skill/current master, replacing the affected guidance. A real approved condition delta follows the full route below with a consolidated current document and exact old/new/source map; old version bytes remain history, not parallel current authority. This resolver checks identities, not whether a semantic delta is authorized.
 
-For a method-only change, reuse the exact existing condition document rather than append a new conditions chapter. `scripts/workflow_governance.py --current-conditions <absolute-index.json>` verifies an explicitly supplied `workflow-condition-index-v1` index, its document/version and complete numbered-body inventory. Each condition binds a unique ID, numbered locator and body hash; no fixed project-specific condition count is required. Read `--help` and `scripts/test_current_conditions.py` for the exact synthetic format. Missing backing needs exact recovery or current source resolution, not deletion of obligations. A true approved condition delta produces one consolidated current document with old/new/source lineage; implementation detail belongs in the affected current Skill or master.
+Use only for a real improvement opportunity or concrete condition blocker. No candidate: continue ordinary work. The primary owner manages this route without waiting for a repeated user prompt; it remains subordinate to the current source, full workflow, higher-priority instructions and task authority. The supplied condition index names the current numbered condition bodies and separately links new source clauses; it is not permission or a complete workflow inventory. Its exact durable-local source path is not an installed-member guarantee. If unavailable, restore the hash-bound document using its recovery-relative path or resolve current authoritative sources; do not treat an unavailable projection as deleted obligations.
 
-## Find the Useful Change
+## Find the useful change
 
-Locate the failed link: retrieval, presentation, application, result, later consumer effect, or invalidation. Preserve raw project evidence and keep any shared reusable record sanitized. Another reminder does not repair a missing final-action application unless it changes that boundary. A successful but unnecessarily expensive route is also evidence.
+Locate the actual failed link: retrieval, presentation, application, result, later consumer effect, or invalidation. Preserve raw Project evidence and use a sanitized Global family/link. A missing application is not solved by another reminder unless the final-action boundary actually changes. A successful but expensive route is also evidence. Compare applying an existing invariant, revising/merging/narrowing/retiring a method, and adding a new one; choose by outcome, mandatory quality and total cost, not Skill or rule count.
 
-Compare using an existing invariant, revising, merging, narrowing, or retiring a method, and adding a new method. Choose by objective outcome, mandatory quality, and total cost rather than by rule or Skill count. Use the existing learning-queue candidate and artifact references. Preserve authority and objective history; removing stale retrieval eligibility does not erase evidence. Route unforeseen cases through the generic invariants before creating a permanent rule.
+Use the existing `learning_queue.py` candidate ID and artifact/evidence references. Inventory only decision-sensitive changed families, while preserving the full source/ID inventory and unresolved records. Keep authority/objective history immutable; retiring stale retrieval eligibility does not delete evidence. An unforeseen case goes through generic invariants before a new permanent rule is considered.
 
-## Classify the Condition
+## Classify the condition, not its convenience
 
-Record a stable condition ID, exact source and old text, revision, owner, scope and consumers, dependencies, status, rationale, next-use trigger, and rollback. Distinguish these routes:
+Record stable ID, exact source/old text, revision, owner, scope/consumers, dependencies, status, rationale, next-use trigger and rollback. Distinguish:
 
-| Authority | Route |
+| Tier | Route |
 |---|---|
-| Higher priority | Project governance cannot waive platform, tool, or other higher-priority restrictions. |
-| User condition | A semantic amendment requires exact later user source. Explicitly requested methods also stay on this route. |
-| Delegated method | A source-preserving implementation choice may improve through the existing gates. |
-| Unknown | Resolve only the dependent decision; unrelated work remains available. |
+| HIGHER_PRIORITY | User workflow approval cannot waive system/developer/tool restrictions. Route host/project/task authority separately. |
+| USER_CONDITION | Exact later user source is required for a semantic amendment. Explicitly requested methods also belong here. |
+| DELEGATED_METHOD | Source-preserving implementation choice may improve under standing authority and existing gates. |
+| UNKNOWN | Resolve only that dependency; do not hold unrelated work. |
 
-Classification requires source review. Never relabel a condition merely to make a proposal eligible. An index is not the full normative inventory; unlisted obligations remain binding when affected.
+This classification requires source review. Never change the tier merely to make a proposal eligible. The condition index does not list all detailed normative families: unlisted obligations remain binding and must be dispositioned when affected.
 
-## Prepare One Concrete Proposal
+## Prepare one concrete proposal
 
-Bind exact old and proposed text and meaning, proposal ID and version, source, the dependency-closed condition set, scope and consumers, and duration or expiry event. Explain the source-bound deficit, why a narrower unchanged-condition route is insufficient, expected benefit and total cost, risks and lost guarantees, preserved obligations, normal counterexamples, independent challenge, bounded activation, rollback, and next real use. Keep these in existing artifact and evidence files rather than creating another semantic database.
+Bind exact old/new text and meaning, proposal ID/version, source, dependency-closed condition set, scope/consumer and duration or expiry event. Explain the source-bound deficit, why a narrower unchanged-condition route is insufficient, expected benefit/total cost, risks/lost guarantees, preserved obligations, normal counterexamples and independent challenge. Include bounded activation, rollback and next real use. Keep these in the existing artifact/evidence files, not another semantic database.
 
-If the change preserves user conditions and fits standing authority, use the normal design, review, evaluation, and adoption gates. If it changes user semantics, request approval for the exact proposal. Defer only that candidate with an exact return trigger; safe inactive preparation and unrelated work may continue. Do not repeatedly ask while the proposal and evidence are unchanged. An ambiguous or partial reply authorizes only the semantically clear part whose dependency boundary is proven.
+If the change fits standing authority and preserves user conditions, carry it through existing design/review/evaluation/adoption gates without another prompt. If it changes user semantics, ask for approval of the exact proposal. Keep the dependent candidate deferred with `return_trigger` naming that exact approval source; ordinary work and safe inactive preparation continue. Do not repeatedly ask while the answer/proposal is unchanged. An ambiguous or partial reply authorizes only the semantically clear portion, if its dependency boundary is proven; otherwise clarify the missing decision.
 
-## Read-Only Structural Projection
+An appropriate short question is: "Change condition Cxx from current A to B, scoped only as specified. Lost guarantees: X; alternative checks: Y; recovery: Z. Do you approve this revision of the condition?" Present the actual text and evidence, not placeholders, when asking. A short approval may be sufficient if its referent is unique; do not require the user to type hashes or run commands.
 
-`python -B scripts/workflow_governance.py --input <absolute-request.json>` reads an explicitly prepared condition-amendment request. The input remains non-executable until placeholders are replaced by exact paths, hashes, text, and current evidence. Use an actual timezone-aware `as_of`; a timestamp alone does not prove freshness. The current-condition set is an action-relevant projection, not a duplicate source of truth.
+## Read-only structural projection
 
-The checker verifies bound files, identities, and exact changed and dependency sets. Its routing result is structural only: it cannot grant authority, authenticate approval, decide semantic fidelity, or waive a downstream action gate. Source meaning must close through exact current source where deterministic, or through the independent source/refutation route required by the workflow. A caller-authored approval-shaped file does not authenticate a user.
+`python -B scripts/workflow_governance.py --input <absolute-request.json>` consumes the schema in [condition-amendment.json](../templates/condition-amendment.json). The template is deliberately non-executable until exact paths/hashes/text and existing evidence replace its placeholders. Use actual timezone-aware `as_of`; an input timestamp is not proof that external state is still fresh. Proposal hash uses sorted-key compact UTF8 JSON. `current_conditions` is the current action-relevant projection, not a duplicate source of truth.
 
-`USER_DECISION`, stale baseline, unknown authority, and unavailable evidence hold only the dependent amendment. Unknown or partial effects require readback before retry. Preserve every reported reason and the first failed action; a later formatting error must not replace the initiating fault.
+The checker reads explicitly bound files, verifies identity and exact changed/dependency sets, and returns structural routing. `WITHIN_AUTHORITY_CANDIDATE` is not permission. `MATCHED_APPROVAL_REQUIRES_SOURCE_REVIEW` is not approval: the owner verifies the actual current user-source event/classification and binds meaning through strict deterministic exact-source closure, or an independent source/refutation key when meaning/scope is not deterministically closed. `semantic_review_ref` may bind either valid route; the independent key challenges the mapping, never grants or refuses user authority. Material reform evaluation still uses its applicable independent challenge. `authority_granted` is always false and semantic authority remains unproven by this tool. Hashing an assistant-authored “APPROVE” file cannot authenticate a user. The root's evidence and final action route supply the separate source and outcome keys.
 
-## Consume Approval and Activate
+`USER_DECISION`, stale baseline, unknown authority or unavailable evidence holds only the dependent amendment. `OUTSIDE_USER_AMENDMENT` cannot be bypassed by another “yes.” `RECONCILE_UNKNOWN_EFFECT` requires target readback before repeat. No proposal returns `NO_CHANGE`. Keep every reported reason and raw failed action; do not let a later formatting error hide the first fault.
 
-Preserve the real approval, rejection, or withdrawal source with proposal identity, condition IDs, scope, and effect. Silence, generic prior consent, copied chat text, queue state, or structural matching supplies no authority. Check later relevant sources for withdrawal, expiry, and scope changes before action.
+## Consume actual approval and activate
 
-After exact user approval, supersede only the approved user conditions within scope. Preserve old and new text, rationale, evidence, approval, and rollback lineage. Record a lost guarantee as changed rather than claiming it was preserved. All unaffected conditions and higher-priority restrictions remain binding.
+Preserve the real approval/rejection/withdrawal source with proposal hash/version, condition IDs, exact scope and effect. No silence, generic previous global consent, unrelated agreement, copied chat text or queue state supplies this authority. Review all later relevant sources for withdrawal, expiry or changed scope before action. The checker does not scan the inbox or prove this freshness.
 
-Use the existing transaction, comparison, backup, rollback, and readback route. Approval does not grant separate product, external, secret, irreversible, other-task, restart, or trust authority. A changed proposal, condition set, or scope requires reevaluation and renewed approval when its meaning changes. Partial or unknown effects require readback before recovery.
+After exact user approval, supersede only those user conditions within the approved scope. Preserve old/new text, rationale, evidence, approval and rollback lineage. Do not circularly require the old superseded criterion to remain active; apply the approved new criterion and explicitly retain the lost guarantee as changed, not PASS. All unaffected conditions and higher-priority restrictions remain binding. A radical multi-condition bundle can use one dependency-closed proposal/approval rather than an endless series of contradictory single changes.
 
-At measurement, bind the later action, result, independently identified observation, and typed metrics. The queue validates references, not permission; pending approval remains deferred with an exact return trigger rather than becoming active.
+Use the unchanged transaction/CAS/readback route; no helper here writes active policy. Approval does not grant separate product, external, secret, irreversible, other-task, restart or hook-trust authority. Changed proposal/current-condition/scope requires re-evaluation and, when its approved meaning changes, renewed approval. Partial/unknown effects require readback before recovery; post-application withdrawal is a new recovery event, not deletion of history. Preserve this state in the same chat ledger through compaction and handoff.
 
-## Measure, Simplify, and Return
+Queue linking: use proposal file/hash as `artifact_ref`; source, approval, review and structural projection as `evidence_refs`; semantic approval/action eligibility as `activation_source_authority_ref` only after real source review, and actual deployment as `activation_receipt_ref`. The queue validates references, not permission. At `measured`, bind the later action/result/independent observation and typed metrics. Its existing state machine is unchanged; pending approval uses deferred+exact return trigger, not a forged active state.
 
-Predeclare comparison with a simpler route under comparable task, information, and total budget. Challenge negative transfer when widening role, model, or scope and use only the coverage needed for the claim. Freeze oracles before results. Local benefit does not expand authority or prove population-wide superiority.
+## Measure, simplify, return
 
-At the next real consumer, observe the changed action, outcome, quality, rework, false holds, and available total cost. Missing data stays unavailable. Revise, merge, narrow, retire, or roll back when maintenance or harm outweighs benefit. Report what changed, where it was used, what was learned, and the observed limits, then return to the original objective.
+Predeclare comparison with a simpler existing route under comparable task, information and total budget. Separate discovery cases from relevant unseen cases and challenge negative transfer when widening role/model/scope; use only the coverage needed for the actual claim, not a fixed matrix quota. Freeze oracles before results. Local benefit cannot expand authority or establish population superiority.
+
+At the next real eligible consumer, observe changed action, outcome, quality, rework, false holds and available total cost. Missing data remains unavailable, not zero. Revise/merge/narrow/retire/rollback when maintenance or harm outweighs benefit; this stewardship helper is also removable by the same route. Report what was learned, what changed, where used and observed limits. Return to the original objective, not an open-ended governance project or background daemon.

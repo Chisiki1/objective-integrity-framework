@@ -51,7 +51,7 @@ section once to `keep`, `replace` or `archive`. Keep means preserving its actual
 occurrence, ancestry and current/history role, not finding the same sentence
 elsewhere. The proposal contains full old backing and one reviewed replacement;
 it writes neither. Publish backing first, then compare-and-swap the current view
-and read back actual transitive history. Preserve unknown effects and rollback.
+and read back actual transitive history. Preserve unknown effects and rollback. The distribution ships proposal validation and readback tooling but no live master writer: a deployment's scoped publisher performs the staged backing install, the compare-and-swap and the readback, so any host can implement the same contract.
 The [reconciliation contract](../runtime/skills/master-guided-skill-lifecycle/references/master-reconciliation.md)
 defines the exact inputs. The earlier `index propose-organization` route remains
 available for its narrower selected-section use; it is not whole-current review.

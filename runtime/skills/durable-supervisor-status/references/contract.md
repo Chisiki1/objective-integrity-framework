@@ -2,7 +2,7 @@
 
 ## Purpose and authority
 
-This protocol restores a pullable Worker-local observation and correction surface when Codex app task-body projection is empty, contradictory, or stale. It is not an external-action gate. Existing workflow policy remains the authority for objectives, action eligibility, external writes, releases, deployment, and completion.
+This protocol restores a pullable Worker-local observation and correction surface when a host task-body projection is empty, contradictory, or stale. It is not an external-action gate. Existing workflow policy remains the authority for objectives, action eligibility, external writes, releases, deployment, and completion.
 
 The Worker owns one status root at `<worker-root>/.oif-supervision-status`. `journal/event-<sequence>-<status-id>.json` is the append-only authority. `status.json` is an atomic full-record projection of the journal tail. The lock is an OS-released serialization mechanism, not authority.
 

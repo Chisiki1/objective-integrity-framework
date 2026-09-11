@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Durable, inactive candidate for one logical chat's primary-objective ledger.
 
-The journal is authoritative. ``objective.txt`` is the atomic, user-facing current projection.  Hooks
-capture facts only; they never derive objective semantics from prompt words.
+The journal is authoritative.  ``objective.txt`` is an atomic projection of
+the current state; its filename is configurable via ``projection_filename``.
+Hooks capture facts only; they never derive objective semantics from prompt words.
 """
 
 from __future__ import annotations
@@ -77,6 +78,7 @@ ACTION_START_KEYS = {
     "retry_of",
     "proof_ceiling",
     "notes",
+    "method",
 }
 ACTION_OUTCOME_KEYS = {
     "action_id",
@@ -92,7 +94,80 @@ ACTION_OUTCOME_KEYS = {
     "evidence_refs",
     "result_ref",
     "notes",
+    "effect",
 }
+
+METHOD_RECORD_KEYS = {"skill_id", "version", "selection", "application", "reason"}
+METHOD_APPLICATION_VALUES = {"applied", "not_applied", "no_skill", "unavailable"}
+EFFECT_RECORD_KEYS = {"state", "candidate_disposition", "return_trigger", "note"}
+EFFECT_STATE_VALUES = {"advanced", "no_effect", "recurred", "false_block", "unknown"}
+EFFECT_DISPOSITION_VALUES = {"reuse", "revise", "create", "merge", "narrow", "retire", "defer", "none"}
+ACTION_METHOD_SUPPLEMENT_KEYS = {"action_id", "method", "late_reason", "evidence_refs"}
+RESPONSE_CHECK_KEYS = {
+    "decision",
+    "final_allowed",
+    "incomplete_outcomes",
+    "next_action_eligible",
+    "boundary_kind",
+    "purpose",
+    "contract_id",
+    "checked_head_hash",
+    "request_outcome_ids",
+}
+
+
+def require_bounded_text(value: Any, label: str, limit: int = 400) -> str:
+    if not isinstance(value, str):
+        raise LedgerError(f"{label} must be a string")
+    text_value = value.strip()
+    if not text_value:
+        raise LedgerError(f"{label} must be non-empty")
+    if len(text_value) > limit:
+        raise LedgerError(f"{label} exceeds {limit} characters")
+    return text_value
+
+
+def validate_method_record(value: Any) -> dict[str, str]:
+    """Optional method/Skill declaration for an action (bounded, non-semantic)."""
+    if isinstance(value, str):
+        return {"note": require_bounded_text(value, "method")}
+    if not isinstance(value, dict):
+        raise LedgerError("method must be a string or an object")
+    unsupported = set(value) - METHOD_RECORD_KEYS
+    if unsupported:
+        raise LedgerError(f"method contains unsupported fields: {sorted(unsupported)}")
+    record: dict[str, str] = {}
+    for key in ("skill_id", "version", "selection", "application", "reason"):
+        if value.get(key) is not None:
+            record[key] = require_bounded_text(value[key], f"method.{key}")
+    application = record.get("application")
+    if application is not None and application not in METHOD_APPLICATION_VALUES:
+        raise LedgerError(f"method.application must be one of {sorted(METHOD_APPLICATION_VALUES)}")
+    if application in {"not_applied", "no_skill", "unavailable"} and "reason" not in record:
+        raise LedgerError("method.application requires a reason for non-applied states")
+    return record
+
+
+def validate_effect_record(value: Any) -> dict[str, str]:
+    """Optional effect/candidate record for an action outcome (bounded, non-semantic)."""
+    if isinstance(value, str):
+        return {"note": require_bounded_text(value, "effect")}
+    if not isinstance(value, dict):
+        raise LedgerError("effect must be a string or an object")
+    unsupported = set(value) - EFFECT_RECORD_KEYS
+    if unsupported:
+        raise LedgerError(f"effect contains unsupported fields: {sorted(unsupported)}")
+    record: dict[str, str] = {}
+    for key in ("state", "candidate_disposition", "return_trigger", "note"):
+        if value.get(key) is not None:
+            record[key] = require_bounded_text(value[key], f"effect.{key}")
+    state_value = record.get("state")
+    if state_value is not None and state_value not in EFFECT_STATE_VALUES:
+        raise LedgerError(f"effect.state must be one of {sorted(EFFECT_STATE_VALUES)}")
+    disposition = record.get("candidate_disposition")
+    if disposition is not None and disposition not in EFFECT_DISPOSITION_VALUES:
+        raise LedgerError(f"effect.candidate_disposition must be one of {sorted(EFFECT_DISPOSITION_VALUES)}")
+    return record
 ACTION_RECONCILE_KEYS = {
     "action_id",
     "resolution",
@@ -221,6 +296,67 @@ def sha256_bytes(value: bytes) -> str:
 
 def sha256_json(value: Any) -> str:
     return sha256_bytes(canonical_json(value).encode("utf-8"))
+
+
+def bounded_display(value: Any, limit: int) -> str:
+    """Human-card preview only; exact values remain in EVIDENCE-INDEX/current.json."""
+    if isinstance(value, str):
+        text = value
+    else:
+        text = human_json(value)
+    text = text.replace("\r", " ").replace("\n", " ").strip()
+    if len(text) <= limit:
+        return text
+    return text[: max(0, limit - 1)].rstrip() + "…"
+
+
+def source_binding_rows(contract: dict[str, Any] | None) -> list[dict[str, Any]]:
+    if not contract:
+        return []
+    rows: list[dict[str, Any]] = []
+    aliases: dict[tuple[Any, Any, Any], str] = {}
+    for clause in contract.get("clauses", []):
+        key = (clause.get("source_event_id"), clause.get("source_ref"), clause.get("source_sha256"))
+        if key not in aliases:
+            aliases[key] = "S" + str(len(aliases) + 1)
+        rows.append(
+            {
+                "clause_id": clause.get("clause_id"),
+                "alias": aliases[key],
+                "source_event_id": clause.get("source_event_id"),
+                "source_ref": clause.get("source_ref"),
+                "source_sha256": clause.get("source_sha256"),
+                "locator": clause.get("locator"),
+            }
+        )
+    return rows
+
+
+def build_evidence_index(state: dict[str, Any]) -> dict[str, Any]:
+    contract_id = state.get("current_contract_id")
+    contract = state["contracts"].get(contract_id or "")
+    return {
+        "schema": "chat-objective-evidence-index-v1",
+        "namespace": state["identity"]["namespace"],
+        "logical_chat_id": state["identity"]["logical_chat_id"],
+        "revision": state["revision"],
+        "head_hash": state["head_hash"],
+        "current_contract_id": contract_id,
+        "contract_sha256": sha256_json(contract) if contract is not None else None,
+        "contract": contract,
+        "source_bindings": source_binding_rows(contract),
+        "open_outcomes": state.get("open_outcomes", {}),
+        "outcome_catalog": state.get("outcome_catalog", {}),
+        "unknown_effect_action_ids": state.get("unknown_effect_action_ids", []),
+        "action_ids": sorted(state.get("actions", {})),
+        "unclassified_source_ids": state.get("unclassified_source_ids", []),
+        "unresolved_capture_gap_ids": state.get("unresolved_capture_gap_ids", []),
+        "capture_gaps": state.get("capture_gaps", {}),
+        "unproven_source_ids": state.get("unproven_source_ids", []),
+        "source_integrity": state.get("source_integrity", {}),
+        "latest_progress": state.get("latest_progress"),
+        "proof_ceiling": state.get("proof_ceiling"),
+    }
 
 
 def require_object(value: Any, label: str) -> dict[str, Any]:
@@ -721,6 +857,7 @@ def empty_state(config: dict[str, Any]) -> dict[str, Any]:
         "outcome_catalog": {},
         "actions": {},
         "action_reconciliations": {},
+        "action_method_supplements": {},
         "unknown_effect_action_ids": [],
         "latest_progress": None,
         "latest_lifecycle": None,
@@ -860,7 +997,8 @@ def validate_contract_event(payload: dict[str, Any], state: dict[str, Any]) -> d
         raise LedgerError(f"contract contains unsupported fields: {sorted(unsupported_contract)}")
     contract_id = require_safe_id(contract.get("contract_id"), "contract_id")
     if contract_id in state["contracts"]:
-        raise LedgerError(f"contract already exists: {contract_id}")
+        _existing = sorted(state["contracts"].keys())[-5:]
+        raise LedgerError(f"contract already exists: {contract_id}; existing: {_existing}; for a NEW source use the next id (OWN-CONTRACT-<n+1>) after checking view/pending sources.")
     if disposition == "INITIAL":
         if current_id is not None:
             raise LedgerError("INITIAL is valid only without a current contract")
@@ -1137,6 +1275,12 @@ def normalize_proposed_transition(
             raise LedgerError(f"action start contains unsupported fields: {sorted(unsupported)}")
         if state["current_contract_id"] is None:
             raise LedgerError("action start requires an active source-classified contract")
+        if source_reconciliation_pending(state):
+            raise LedgerError(
+                "SOURCE_RECONCILIATION_REQUIRED: review/classify or dispose pending sources, "
+                "and resolve source gaps before recording new material work; "
+                "read/recovery and existing action outcomes remain available"
+            )
         require_sources_available(state, current_contract_source_ids(state))
         contract_id = require_safe_id(payload.get("contract_id"), "action contract_id")
         if contract_id != state["current_contract_id"]:
@@ -1159,6 +1303,11 @@ def normalize_proposed_transition(
         description = payload.get("description")
         if not isinstance(description, str) or not description.strip():
             raise LedgerError("action start requires a non-empty description")
+        if payload.get("method") is not None:
+            _method_value = payload["method"]
+            normalized["method"] = (
+                _method_value if isinstance(_method_value, dict) else validate_method_record(_method_value)
+            )
         normalized["contract_id"] = contract_id
         normalized["outcome_ids"] = normalized_outcome_ids
         normalized["source_clause_ids"] = normalized_clause_ids
@@ -1166,10 +1315,22 @@ def normalize_proposed_transition(
         unsupported = set(payload) - ACTION_OUTCOME_KEYS
         if unsupported:
             raise LedgerError(f"action outcome contains unsupported fields: {sorted(unsupported)}")
+        if payload.get("effect") is not None:
+            normalized["effect"] = validate_effect_record(payload["effect"])
     elif event_type == "action_reconciled":
         unsupported = set(payload) - ACTION_RECONCILE_KEYS
         if unsupported:
             raise LedgerError(f"action reconciliation contains unsupported fields: {sorted(unsupported)}")
+    elif event_type == "action_method_supplemented":
+        unsupported = set(payload) - ACTION_METHOD_SUPPLEMENT_KEYS
+        if unsupported:
+            raise LedgerError(f"method supplement contains unsupported fields: {sorted(unsupported)}")
+        require_safe_id(payload.get("action_id"), "action_id")
+        normalized["method"] = validate_method_record(payload.get("method"))
+        normalized["late_reason"] = require_bounded_text(payload.get("late_reason"), "late_reason")
+        refs = payload.get("evidence_refs")
+        if not isinstance(refs, list) or not refs or not all(isinstance(item, str) and item.strip() for item in refs):
+            raise LedgerError("method supplement requires non-empty evidence_refs")
     elif event_type == "capture_gap_resolved":
         unsupported = set(payload) - CAPTURE_GAP_RESOLUTION_KEYS
         if unsupported:
@@ -1195,6 +1356,29 @@ def normalize_proposed_transition(
             raise LedgerError("OWNER_DISPOSITION cannot claim a recovered source")
         normalized["semantic_authority"] = False
         normalized["objective_changed"] = False
+    elif event_type == "response_check":
+        unsupported = set(payload) - RESPONSE_CHECK_KEYS
+        if unsupported:
+            raise LedgerError(f"response check receipt contains unsupported fields: {sorted(unsupported)}")
+        if payload.get("decision") not in {"CONTINUE_WORK", "REPORT_BOUNDARY", "REPORT_COMPLETION"}:
+            raise LedgerError("invalid response decision")
+        if type(payload.get("final_allowed")) is not bool or type(payload.get("next_action_eligible")) is not bool:
+            raise LedgerError("response receipt requires explicit booleans")
+        if payload.get("purpose") not in {"progress", "completion"}:
+            raise LedgerError("invalid response purpose")
+        boundary_kind = payload.get("boundary_kind")
+        if boundary_kind is not None and boundary_kind not in {"user_pause", "permission_required", "blocked", "host_limit"}:
+            raise LedgerError("invalid boundary kind")
+        if payload.get("contract_id") != state["current_contract_id"]:
+            raise LedgerError("response receipt must bind the current contract")
+        checked_head = payload.get("checked_head_hash")
+        if not isinstance(checked_head, str) or len(checked_head) != 64:
+            raise LedgerError("response receipt requires the checked head hash")
+        for label in ("incomplete_outcomes", "request_outcome_ids"):
+            values = payload.get(label)
+            if not isinstance(values, list) or any(not isinstance(value, str) for value in values):
+                raise LedgerError(f"response receipt {label} must be a list of ids")
+        normalized["decision"] = str(payload["decision"])
     else:
         raise LedgerError(f"unknown journal event type: {event_type}")
     return normalized
@@ -1373,6 +1557,20 @@ def replay(config: dict[str, Any], records: Iterable[dict[str, Any]]) -> dict[st
             item = dict(payload)
             item["event_id"] = record["event_id"]
             prior_reconciliations.append(item)
+        elif event_type == "action_method_supplemented":
+            action_id = require_safe_id(payload.get("action_id"), "action_id")
+            if action_id not in state["actions"]:
+                raise LedgerError("method supplement references unknown action")
+            action = state["actions"][action_id]
+            if isinstance(action.get("method"), dict):
+                raise LedgerError(f"action already has a method record: {action_id}")
+            _method = payload.get("method")
+            action["method"] = _method if isinstance(_method, dict) else validate_method_record(_method)
+            supplement_item = dict(payload)
+            supplement_item["event_id"] = record["event_id"]
+            supplement_item["late"] = True
+            state["action_method_supplements"].setdefault(action_id, []).append(supplement_item)
+            action["method_supplement"] = {"late": True, "event_id": record["event_id"], "late_reason": payload.get("late_reason")}
         elif event_type == "capture_gap_resolved":
             gap_id = require_safe_id(payload.get("gap_id"), "gap_id")
             if gap_id in state["capture_gap_resolutions"]:
@@ -1390,6 +1588,11 @@ def replay(config: dict[str, Any], records: Iterable[dict[str, Any]]) -> dict[st
             item = dict(payload)
             item["event_id"] = record["event_id"]
             state["capture_gap_resolutions"][gap_id] = item
+        elif event_type == "response_check":
+            item = dict(payload)
+            item["event_id"] = record["event_id"]
+            state["response_checks"] = [*state.get("response_checks", []), item][-10:]
+            state["latest_response_check"] = item
         elif event_type in {"lifecycle", "tool_observation"}:
             state["latest_lifecycle"] = dict(payload)
         else:
@@ -1409,133 +1612,253 @@ def replay(config: dict[str, Any], records: Iterable[dict[str, Any]]) -> dict[st
         )
         not in {"EFFECT_CONFIRMED_SUCCEEDED", "EFFECT_CONFIRMED_FAILED", "NO_EFFECT_CONFIRMED"}
     )
+    state["method_recorded_action_ids"] = sorted(
+        action_id for action_id, action in state["actions"].items() if isinstance(action.get("method"), dict)
+    )
+    state["missing_effect_records"] = sorted(
+        action_id
+        for action_id, action in state["actions"].items()
+        if action.get("status") in {"SUCCEEDED", "FAILED", "UNKNOWN_EFFECT"}
+        and not isinstance(action.get("effect"), dict)
+    )
+    state["missing_method_records"] = sorted(
+        action_id
+        for action_id, action in state["actions"].items()
+        if not isinstance(action.get("method"), dict)
+    )
+    state["learning_candidates"] = sorted(
+        (
+            {
+                "action_id": action_id,
+                "candidate_disposition": action["effect"].get("candidate_disposition"),
+                "return_trigger": action["effect"].get("return_trigger"),
+            }
+            for action_id, action in state["actions"].items()
+            if isinstance(action.get("effect"), dict)
+            and action["effect"].get("candidate_disposition")
+            in {"create", "revise", "merge", "narrow", "retire", "defer"}
+        ),
+        key=lambda item: item["action_id"],
+    )
     return state
 
 
-def render_projection(state: dict[str, Any]) -> str:
-    contract = state["contracts"].get(state["current_contract_id"] or "")
+def unproven_current_source_ids(state: dict[str, Any]) -> list[str]:
+    dependent = set(current_contract_source_ids(state)) | set(state.get("unclassified_source_ids", []))
+    return sorted(dependent.intersection(state.get("unproven_source_ids", [])))
+
+
+def source_reconciliation_pending(state: dict[str, Any]) -> bool:
+    """A freshness frontier, not semantic classification or new user authority."""
+    return bool(state.get("unclassified_source_ids") or state.get("unresolved_capture_gap_ids")
+                or unproven_current_source_ids(state))
+
+
+def source_reconciliation_notice(state: dict[str, Any]) -> list[str]:
+    if not source_reconciliation_pending(state):
+        return []
     lines = [
-        "CHAT OBJECTIVE CONTINUITY v1",
-        f"namespace: {state['identity']['namespace']}",
-        f"logical_chat_id: {state['identity']['logical_chat_id']}",
-        f"revision: {state['revision']}",
-        f"head_hash: {state['head_hash']}",
-        f"current_contract_id: {state['current_contract_id'] or 'NONE'}",
-        "",
-        "COMPLETE MACHINE/HISTORY POINTERS",
-        "- current machine state: current.json",
-        "- append-only history: journal.jsonl",
-        "- exact source bytes: sources/<SHA256>.txt",
-        "",
-        "PRIMARY OBJECTIVE",
-        str(contract.get("primary_objective", "UNCLASSIFIED OR WITHDRAWN")) if contract else "UNCLASSIFIED OR WITHDRAWN",
-        "",
-        "CURRENT POLICY / ACCEPTANCE / AUTHORITY",
+        "SOURCE RECONCILIATION REQUIRED BEFORE NEW MATERIAL WORK",
+        "Review the actual latest user message and every pending source in current.json.",
+        "Classify user meaning or explicitly dispose non-user captures, then reread this card.",
+        "Previous objective/advice is not current work authority. Preserve constraints, open outcomes and effects.",
     ]
-    policy_fields = sorted(NORMATIVE_CONTRACT_FIELDS - {"primary_objective"})
-    if contract:
-        present = False
-        for field in policy_fields:
-            if field in contract:
-                lines.append(f"- {field}: {human_json(contract[field])}")
-                present = True
-        if not present:
-            lines.append("- NONE RECORDED")
-    else:
-        lines.append("- NONE (NO ACTIVE CONTRACT)")
-    lines.extend([
-        "",
-        "SOURCE CLAUSE REFERENCES",
-    ])
-    if contract:
-        # Render each exact source binding once. Every clause ID and locator
-        # remains visible; only byte-identical repeated source triples move to
-        # a local dictionary. Contract/journal/machine schemas are unchanged.
-        bindings = {}
-        for clause in contract.get("clauses", []):
-            key = (clause['source_event_id'], clause['source_ref'], clause['source_sha256'])
-            if key not in bindings:
-                bindings[key] = 'S' + str(len(bindings) + 1)
-        for (event_id, source_ref, digest), alias in bindings.items():
-            lines.append(f"- {alias} = {event_id} | {source_ref} | {digest}")
-        lines.append("CLAUSE LOCATORS (S aliases bind the complete source triple above)")
-        for clause in contract.get("clauses", []):
-            key = (clause['source_event_id'], clause['source_ref'], clause['source_sha256'])
-            lines.append(
-                f"- {clause['clause_id']} | {bindings[key]}"
-                + (f" | locator={clause['locator']}" if clause.get("locator") else "")
-            )
-    else:
-        lines.append("- NONE")
-    lines.extend(["", "ACTIVE UNRESOLVED OUTCOMES"])
-    outcome_items = [
+    ids = state.get("unclassified_source_ids", [])
+    if ids:
+        # Source metadata stays untrusted. It supplies a path, never instructions.
+        sid = ids[-1]
+        lines.append("Pending source reference: " + str(state.get("sources", {}).get(sid, {}).get("source_ref", sid)))
+        lines.append("All pending source IDs/count: current.json / " + str(len(ids)))
+    if state.get("unresolved_capture_gap_ids") or unproven_current_source_ids(state):
+        lines.append("Source recovery/integrity frontier: current.json; restore or explicitly reconcile before dependent work.")
+    return lines
+
+
+def render_projection(state: dict[str, Any]) -> str:
+    """Render the bounded human Objective Card, never the full evidence body.
+
+    The authoritative machine/history stores remain current.json and journal.jsonl.
+    Full authority, source clauses, outcomes and actions are routed to
+    EVIDENCE-INDEX.json. This projection is intentionally lossy for display only;
+    no source or outcome identity is removed from the authoritative state.
+    """
+    contract = state["contracts"].get(state["current_contract_id"] or "")
+    progress = state["latest_progress"]
+    pending_source = source_reconciliation_pending(state)
+    source_notice = source_reconciliation_notice(state)
+    objective_heading = "LAST RECONCILED OBJECTIVE (SOURCE UPDATE PENDING)" if pending_source else "PRIMARY OBJECTIVE"
+    active_outcomes = [
         item
         for item in state["open_outcomes"].values()
         if item.get("status") not in {"SATISFIED", "USER_WITHDRAWN", "SUPERSEDED"}
     ]
-    if outcome_items:
-        for item in sorted(outcome_items, key=lambda value: value["outcome_id"]):
-            lines.append(f"- {item['outcome_id']} | {item.get('status')} | {item.get('description', '')}")
-    else:
-        lines.append("- NONE")
-    resolved_count = len(state["open_outcomes"]) - len(outcome_items)
-    lines.append(f"- resolved/retired outcome count (see current.json): {resolved_count}")
-    lines.extend(["", "UNCLASSIFIED CAPTURED SOURCES"])
-    if state["unclassified_source_ids"]:
-        for source_id in state["unclassified_source_ids"]:
-            source = state["sources"][source_id]
-            lines.append(f"- {source_id} | {source['source_ref']} | {source['source_sha256']}")
-    else:
-        lines.append("- NONE")
-    lines.extend(["", "UNRESOLVED CAPTURE GAPS"])
-    if state["unresolved_capture_gap_ids"]:
-        for gap_id in state["unresolved_capture_gap_ids"]:
-            gap = state["capture_gaps"][gap_id]
-            lines.append(
-                f"- {gap_id} | {gap.get('status')} | {gap.get('reason_family', 'UNKNOWN')} | {gap.get('source_ref')}"
+    resolved_count = len(state["open_outcomes"]) - len(active_outcomes)
+
+    def render(authority_limit: int, acceptance_limit: int, outcome_limit: int) -> str:
+        lines = [
+            "CHAT OBJECTIVE CARD v2",
+            f"namespace: {state['identity']['namespace']}",
+            f"logical_chat_id: {state['identity']['logical_chat_id']}",
+            f"revision: {state['revision']}",
+            f"head_hash: {state['head_hash']}",
+            f"current_contract_id: {state['current_contract_id'] or 'NONE'}",
+            "",
+            *source_notice,
+            "",
+            "OWNERSHIP: this logical_chat_id is the task identity; cwd is not ownership.",
+            "Other tasks are references only. Do not copy their objective into this task.",
+            "Update this task through the ledger CLI; do not edit this generated card.",
+            "MACHINE / HISTORY / EVIDENCE POINTERS",
+            "- current machine state: current.json",
+            "- append-only history: journal.jsonl",
+            "- full evidence index: EVIDENCE-INDEX.json",
+            "- exact source bytes: sources/<SHA256>.txt",
+            "",
+            objective_heading,
+            str(contract.get("primary_objective", "UNCLASSIFIED OR WITHDRAWN")) if contract else "UNCLASSIFIED OR WITHDRAWN",
+            "",
+            "LAST RECONCILED AUTHORITY / ACCEPTANCE SUMMARY" if pending_source else "CURRENT AUTHORITY / ACCEPTANCE SUMMARY",
+        ]
+        if contract:
+            authority = contract.get("authority")
+            acceptance = contract.get("mandatory_acceptance", [])
+            constraints = contract.get("constraints", [])
+            permissions = contract.get("permissions", [])
+            prohibited = contract.get("prohibited_substitutes", [])
+            lines.extend(
+                [
+                    f"- authority_sha256: {sha256_json(authority)}",
+                    f"- source_clause_count: {len(contract.get('clauses', []))} (full bindings: EVIDENCE-INDEX.json)",
+                    f"- mandatory_acceptance_count: {len(acceptance) if isinstance(acceptance, list) else 0}",
+                    f"- constraints_count: {len(constraints) if isinstance(constraints, list) else 0}",
+                    f"- permissions_count: {len(permissions) if isinstance(permissions, list) else 0}",
+                    f"- prohibited_substitutes_count: {len(prohibited) if isinstance(prohibited, list) else 0}",
+                    f"- authority_summary: {bounded_display(authority, authority_limit)}",
+                    f"- mandatory_acceptance_summary: {bounded_display(acceptance, acceptance_limit)}",
+                    f"- constraints_summary: {bounded_display(constraints, acceptance_limit)}",
+                    "- full_authority / full_acceptance / full_constraints / source_bindings: EVIDENCE-INDEX.json",
+                ]
             )
-        lines.append("- RECOVERY: recapture exact source, then resolve-capture-gap as SOURCE_RECOVERED; or use explicit owner disposition.")
-    else:
-        lines.append("- NONE")
-    if state["orphan_capture_gap_resolution_ids"]:
+        else:
+            lines.append("- NONE (NO ACTIVE CONTRACT)")
+        lines.extend(["", "ACTIVE UNRESOLVED OUTCOMES"])
+        if active_outcomes:
+            for item in sorted(active_outcomes, key=lambda value: value["outcome_id"]):
+                lines.append(
+                    f"- {item['outcome_id']} | {item.get('status')} | {bounded_display(item.get('description', ''), outcome_limit)}"
+                )
+        else:
+            lines.append("- NONE")
+        lines.append(f"- resolved/retired outcome count (full catalog: EVIDENCE-INDEX.json): {resolved_count}")
+
+        lines.extend(["", "NEXT ELIGIBLE WORK"])
+        if pending_source:
+            lines.append("- RECONCILE SOURCE FIRST; previous advice is retained only in current.json/history.")
+        elif progress and progress.get("contract_id") == state["current_contract_id"]:
+            lines.append(f"- next_eligible_work: {bounded_display(progress.get('next_eligible_work'), acceptance_limit)}")
+            lines.append(f"- blockers: {bounded_display(progress.get('blockers', []), acceptance_limit)}")
+            lines.append(f"- return_step: {bounded_display(progress.get('return_step'), acceptance_limit)}")
+            lines.append(f"- proof_ceiling: {bounded_display(progress.get('proof_ceiling'), acceptance_limit)}")
+        else:
+            lines.append("- NONE; record a progress event bound to the exact current_contract_id before relying on next-work advice.")
+
+        lines.extend(["", "CONTINUITY FRONTIERS"])
         lines.append(
-            "- ORPHAN RESOLUTION RECORDS (gap sidecar unavailable): "
-            + human_json(state["orphan_capture_gap_resolution_ids"])
+            "- unclassified_sources: "
+            + human_json(state["unclassified_source_ids"][:8])
+            + (f" (+{len(state['unclassified_source_ids']) - 8} more)" if len(state["unclassified_source_ids"]) > 8 else "")
         )
-    lines.extend(["", "UNKNOWN OR PENDING ACTION EFFECTS"])
-    if state["unknown_effect_action_ids"]:
-        for action_id in state["unknown_effect_action_ids"]:
-            action = state["actions"][action_id]
-            lines.append(f"- {action_id} | {action.get('status')} | {action.get('description', '')}")
-    else:
-        lines.append("- NONE")
-    progress = state["latest_progress"]
-    lines.extend(["", "CURRENT-CONTRACT NEXT ELIGIBLE WORK"])
-    if progress and progress.get("contract_id") == state["current_contract_id"]:
-        lines.append(f"- next_eligible_work: {human_json(progress.get('next_eligible_work'))}")
-        lines.append(f"- blockers: {human_json(progress.get('blockers', []))}")
-        lines.append(f"- return_step: {human_json(progress.get('return_step'))}")
-        lines.append(f"- proof_ceiling: {human_json(progress.get('proof_ceiling'))}")
-    else:
-        lines.append("- NONE; record a new progress event bound to the exact current_contract_id before relying on next-work advice.")
-    lines.extend(["", "UNPROVEN SOURCE INTEGRITY"])
-    if state["unproven_source_ids"]:
-        for source_id in state["unproven_source_ids"]:
+        lines.append(
+            "- unresolved_capture_gaps: "
+            + human_json(state["unresolved_capture_gap_ids"][:8])
+            + (f" (+{len(state['unresolved_capture_gap_ids']) - 8} more)" if len(state["unresolved_capture_gap_ids"]) > 8 else "")
+        )
+        lines.append(
+            "- unknown_or_pending_actions: "
+            + human_json(state["unknown_effect_action_ids"][:8])
+            + (f" (+{len(state['unknown_effect_action_ids']) - 8} more)" if len(state["unknown_effect_action_ids"]) > 8 else "")
+        )
+        lines.append(
+            "- unproven_source_integrity: "
+            + human_json(state["unproven_source_ids"][:8])
+            + (f" (+{len(state['unproven_source_ids']) - 8} more)" if len(state["unproven_source_ids"]) > 8 else "")
+        )
+        if state.get("method_recorded_action_ids"):
             lines.append(
-                f"- {source_id} | {state['source_integrity'][source_id]['status']} | {state['sources'][source_id]['source_ref']}"
+                "- method_recorded_actions: " + human_json(state["method_recorded_action_ids"][:8])
             )
-    else:
-        lines.append("- NONE")
-    lines.extend(["", "PROOF CEILING", state["proof_ceiling"], ""])
-    return "\n".join(lines)
+        if state.get("missing_effect_records"):
+            lines.append(
+                "- missing_effect_records: " + human_json(state["missing_effect_records"][:8])
+            )
+        if state.get("missing_method_records"):
+            lines.append(
+                "- missing_method_records: " + human_json(state["missing_method_records"][:8])
+            )
+        if state.get("learning_candidates"):
+            lines.append(
+                "- learning_candidates: "
+                + human_json(
+                    [
+                        f"{item['action_id']}:{item.get('candidate_disposition')}"
+                        for item in state["learning_candidates"][:8]
+                    ]
+                )
+            )
+        lines.extend(["", "PROOF CEILING", state["proof_ceiling"], ""])
+        return "\n".join(lines)
+
+    # Keep the human card bounded even as a long-lived chat accumulates source
+    # clauses and outcomes. Exact values remain available in the evidence index.
+    for limits in ((480, 320, 220), (320, 220, 160), (220, 140, 110), (140, 90, 80)):
+        rendered = render(*limits)
+        if len(rendered.encode("utf-8")) <= 4096:
+            return rendered
+    # Large objectives or many active outcomes need an explicitly routed view,
+    # not another unchecked rendering of every row.
+    def excerpt(value: Any, budget: int) -> str:
+        text = human_json(value)
+        raw = text.encode("utf-8")
+        return text if len(raw) <= budget else raw[:budget].decode("utf-8", errors="ignore") + " [excerpt; full value in EVIDENCE-INDEX.json]"
+
+    return "\n".join([
+        "CHAT OBJECTIVE CARD v2 (overflow view)",
+        "logical_chat_id: " + str(state["identity"]["logical_chat_id"]),
+        "OWNERSHIP: other task objectives are references only; no copied local objective.",
+        "revision: " + str(state["revision"]),
+        "head_hash: " + str(state["head_hash"]),
+        "current_contract_id: " + excerpt(state["current_contract_id"], 160),
+        *source_notice,
+        objective_heading,
+        excerpt(contract.get("primary_objective") if contract else "UNCLASSIFIED", 1000),
+        "Full authority, conditions, source bindings and outcome catalog: EVIDENCE-INDEX.json",
+        "Machine/history: current.json / journal.jsonl",
+        "Active outcomes: " + str(len(active_outcomes)) + "; all IDs and descriptions are in EVIDENCE-INDEX.json",
+        "Pending/unknown actions: " + str(len(state["unknown_effect_action_ids"])),
+        "Unclassified sources: " + str(len(state["unclassified_source_ids"])),
+        "Capture gaps: " + str(len(state["unresolved_capture_gap_ids"])),
+        "Unproven sources: " + str(len(state["unproven_source_ids"])),
+        "NEXT ELIGIBLE WORK",
+        "RECONCILE SOURCE FIRST; previous advice is retained only in current.json/history." if pending_source else excerpt(progress.get("next_eligible_work") if progress and progress.get("contract_id") == state["current_contract_id"] else None, 600),
+        "This display omits detail; read relevant same-revision evidence before decisions.",
+        "PROOF CEILING: projection only; no semantic or empirical success claim.",
+        "",
+    ])
+
+
+def projection_path(config: dict[str, Any]):
+    """Path of the configurable human projection file (default objective.txt)."""
+    return ledger_dir(config) / str(config.get("projection_filename", "objective.txt"))
 
 
 def write_projection(config: dict[str, Any], state: dict[str, Any]) -> None:
     root = ledger_dir(config)
     payload = (canonical_json(state) + "\n").encode("utf-8")
     atomic_write(root / "current.json", payload)
+    evidence_index = (canonical_json(build_evidence_index(state)) + "\n").encode("utf-8")
+    atomic_write(root / "EVIDENCE-INDEX.json", evidence_index)
     text = render_projection(state).encode("utf-8")
-    atomic_write(root / "objective.txt", text)
+    atomic_write(projection_path(config), text)
 
 
 def read_state(config: dict[str, Any], repair: bool = True) -> tuple[dict[str, Any], list[str]]:
@@ -1761,7 +2084,7 @@ def resolve_hook_ledger(
 ) -> tuple[dict[str, Any] | None, str, str]:
     """Resolve a session to one ledger, never to a semantic actor identity.
 
-    The optional host hook input reuses the parent ``session_id`` for subagent hooks
+    Host hook input may reuse the parent ``session_id`` for subagent hooks
     and does not expose ``agent_id`` on ordinary prompt/tool events.  This
     result can select one logical ledger, but cannot prove a root-agent caller.
     """
@@ -1964,58 +2287,64 @@ def recovery_context(config: dict[str, Any]) -> dict[str, Any]:
         "current_contract_id": state["current_contract_id"],
         "open_outcome_ids": sorted(state["open_outcomes"]),
         "unclassified_source_ids": state["unclassified_source_ids"],
+        "unproven_source_ids": unproven_current_source_ids(state),
         "unknown_effect_action_ids": state["unknown_effect_action_ids"],
+        "method_recorded_action_ids": state.get("method_recorded_action_ids", []),
+        "missing_effect_action_ids": state.get("missing_effect_records", []),
+        "missing_method_action_ids": state.get("missing_method_records", []),
+        "learning_candidate_ids": [
+            item["action_id"] for item in state.get("learning_candidates", [])
+        ],
         "unresolved_capture_gap_ids": state["unresolved_capture_gap_ids"],
-        "projection": str(ledger_dir(config) / "objective.txt"),
+        "projection": str(projection_path(config)),
+        "evidence_index": str(ledger_dir(config) / "EVIDENCE-INDEX.json"),
         "notes": notes,
     }
 
 
 def compact_context(result: dict[str, Any]) -> str:
-    def bounded(values: Any, limit: int = 4) -> dict[str, Any]:
-        items = list(values or [])
-        return {"count": len(items), "ids": items[:limit], "truncated": len(items) > limit}
-
-    fields = {
-        "head_hash": result.get("head_hash"),
-        "current_contract_id": result.get("current_contract_id"),
-        "open_outcomes": bounded(result.get("open_outcome_ids", [])),
-        "unclassified_sources": bounded(result.get("unclassified_source_ids", [])),
-        "unknown_effect_actions": bounded(result.get("unknown_effect_action_ids", [])),
-        "capture_gaps": bounded(result.get("unresolved_capture_gap_ids", [])),
-    }
     if result.get("status") == "capture_gap_before_ledger":
-        location = result.get("capture_gap_location")
-        prefix = f"RECOVER FIRST: inspect every *.json in {location}. "
+        prefix = "RECOVER SOURCE FIRST: "
         suffix = (
-            ". This existing directory is the complete pre-ledger unresolved-gap frontier. "
-            "No objective projection exists yet; recover exact source or record explicit owner disposition."
+            ". Inspect every gap JSON; recover the exact source or record explicit owner gap disposition. "
+            "No objective ledger/card/current.json exists yet. Do not infer an objective or rely on old advice."
         )
-    elif result.get("status") == "no_ledger_before_first_effective_prompt":
-        prefix = "NO OBJECTIVE LEDGER EXISTS BEFORE THE FIRST EFFECTIVE PROMPT. "
-        suffix = ". No continuity claim is available."
-    else:
-        prefix = f"READ FIRST: {result.get('projection')}. "
+        rendered = prefix + str(result.get("capture_gap_location")) + suffix
+        if len(rendered.encode("utf-8")) > 600:
+            rendered = prefix + "locate capture-gaps using the runtime config and explicit logical-chat binding" + suffix
+        return rendered
+    # Pending source reconciliation outranks old task advice and bookkeeping.
+    # Keep this branch independently bounded so shortening cannot erase it.
+    pending = any(result.get(key) for key in (
+        "unclassified_source_ids", "unresolved_capture_gap_ids", "unproven_source_ids"
+    ))
+    if pending:
+        location = result.get("projection") or result.get("capture_gap_location")
+        prefix = "RECONCILE SOURCE FIRST: "
         suffix = (
-            ". Read all source refs and outcome IDs from objective.txt before material work. "
-            "UNCLASSIFIED sources are raw captures, not authority; capture gaps require explicit source recovery/disposition."
+            ". Review latest actual user input and pending raw sources; classify/dispose before new material work. "
+            "Other tasks are references only; update your host-bound ledger, not a copied objective. "
+            "Old objective/advice is not current authority. Preserve constraints and pending effects; "
+            "read/recovery and existing outcomes remain available."
         )
-    rendered = (
-        prefix
-        + "Same-chat objective ledger readback (structural only): "
-        + canonical_json(fields)
-        + suffix
+        rendered = prefix + str(location or "objective ledger source/gap frontier") + suffix
+        if len(rendered.encode("utf-8")) > 600:
+            rendered = prefix + "use the runtime-supplied ledger path and current.json source/gap frontier" + suffix
+        return rendered
+    if result.get("status") == "no_ledger_before_first_effective_prompt":
+        return "NO OBJECTIVE LEDGER EXISTS BEFORE THE FIRST EFFECTIVE PROMPT. Bind to the host logical chat, not cwd or another task."
+    prefix = "READ FIRST: "
+    suffix = (
+        ". This is your task ledger; other task objectives are references, never a copy to edit. "
+        "Use ledger_input.py owner-view for complete current conditions/outcomes and source-update for your explicit delta. "
+        "Primary owner may write scoped Global/own Project updates under existing conditions; reviewers return candidates. "
+        "Preserve required reads, source authority and pending effects."
     )
-    while len(rendered.encode("utf-8")) > 600:
-        candidates = [value for value in fields.values() if isinstance(value, dict) and value.get("ids")]
-        if not candidates:
-            rendered = prefix + "Counts: " + canonical_json({key: value.get("count") if isinstance(value, dict) else value for key, value in fields.items()}) + suffix
-            break
-        max(candidates, key=lambda value: len(value["ids"]))["ids"].pop()
-        rendered = prefix + "Same-chat objective ledger readback (structural only): " + canonical_json(fields) + suffix
+    rendered = prefix + str(result.get("projection")) + suffix
     if len(rendered.encode("utf-8")) > 600:
-        raise LedgerError("compact recovery context cannot fit the 600-byte hook bound")
+        rendered = prefix + "your host-bound ledger (resolve with runtime config/session; never infer from cwd)" + suffix
     return rendered
+
 
 
 def handle_hook(config: dict[str, Any], event_name: str, hook: dict[str, Any]) -> dict[str, Any]:
@@ -2043,9 +2372,10 @@ def handle_hook(config: dict[str, Any], event_name: str, hook: dict[str, Any]) -
             "current_contract_id": state["current_contract_id"],
             "open_outcome_ids": sorted(state["open_outcomes"]),
             "unclassified_source_ids": state["unclassified_source_ids"],
+            "unproven_source_ids": unproven_current_source_ids(state),
             "unknown_effect_action_ids": state["unknown_effect_action_ids"],
             "unresolved_capture_gap_ids": state["unresolved_capture_gap_ids"],
-            "projection": str(ledger_dir(config) / "objective.txt"),
+            "projection": str(projection_path(config)),
             "semantic_authority": "UNCLASSIFIED_REQUIRES_ROOT_SOURCE_REVIEW",
         }
     if event_name in {"SessionStart", "PreCompact", "PostCompact"}:
@@ -2149,6 +2479,11 @@ def build_parser() -> argparse.ArgumentParser:
     reconcile.add_argument("--event-id", required=True)
     reconcile.add_argument("--expected-head")
 
+    supplement = with_config("action-method-supplement", "append a late method record for an action that omitted it; omission history is preserved")
+    supplement.add_argument("--input", required=True)
+    supplement.add_argument("--event-id", required=True)
+    supplement.add_argument("--expected-head")
+
     verify = with_config("verify", "read, optionally repair a partial final line, replay, and project")
     verify.add_argument("--no-repair", action="store_true")
 
@@ -2162,7 +2497,7 @@ def build_parser() -> argparse.ArgumentParser:
     pre.add_argument("--action-class", choices=["read_only", "mutating", "mixed", "unknown"])
     pre.add_argument("--depends-on-action", action="append", default=[])
 
-    hook = with_config("hook", "consume one optional host-hook JSON object from stdin")
+    hook = with_config("hook", "consume one host hook JSON object from stdin")
     hook.add_argument("--event", required=True, choices=["UserPromptSubmit", "SessionStart", "PreCompact", "PostCompact", "PreToolUse", "Stop"])
     return parser
 
@@ -2199,7 +2534,7 @@ def main(argv: list[str] | None = None) -> int:
             data = pathlib.Path(args.source_file).resolve().read_bytes()
             result = ingest_source(config, session_id, require_safe_id(args.delivery_id, "delivery_id"), data, "bootstrap_source", "manual_bootstrap")
             committed = result
-            output({"status": result["status"], "executed": True, "source_event_id": result["source_event_id"], "head_hash": result["state"]["head_hash"], "projection": str(ledger_dir(config) / "objective.txt")})
+            output({"status": result["status"], "executed": True, "source_event_id": result["source_event_id"], "head_hash": result["state"]["head_hash"], "projection": str(projection_path(config))})
         elif args.command == "classify-source":
             payload = read_input_arg(args.input, int(base_config.get("max_hook_input_bytes", MAX_DEFAULT_INPUT)))
             result = append_event(config, "source_classified", args.event_id, payload, "root", args.expected_head)
@@ -2220,12 +2555,13 @@ def main(argv: list[str] | None = None) -> int:
             result = append_event(config, "progress", args.event_id, payload, "root", args.expected_head)
             committed = result
             output({"status": result["status"], "executed": True, "head_hash": result["state"]["head_hash"]})
-        elif args.command in {"action-start", "action-outcome", "action-reconcile"}:
+        elif args.command in {"action-start", "action-outcome", "action-reconcile", "action-method-supplement"}:
             payload = read_input_arg(args.input, int(base_config.get("max_hook_input_bytes", MAX_DEFAULT_INPUT)))
             event_type = {
                 "action-start": "action_started",
                 "action-outcome": "action_outcome",
                 "action-reconcile": "action_reconciled",
+                "action-method-supplement": "action_method_supplemented",
             }[args.command]
             result = append_event(config, event_type, args.event_id, payload, "root", args.expected_head)
             committed = result
@@ -2247,7 +2583,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "status":
             state, notes = read_state(config, repair=True)
             committed = {"state": state, "effect": "READ_REPAIR_PROJECTION_COMPLETED"}
-            output({"status": "OK", "state": state, "notes": notes, "projection": str(ledger_dir(config) / "objective.txt")})
+            output({"status": "OK", "state": state, "notes": notes, "projection": str(projection_path(config))})
         elif args.command == "preflight":
             result = preflight(config, args.tool_name, args.action_class, args.depends_on_action)
             committed = {**result, "effect": "PREFLIGHT_READBACK_COMPLETED_METADATA_REPAIR_POSSIBLE"}

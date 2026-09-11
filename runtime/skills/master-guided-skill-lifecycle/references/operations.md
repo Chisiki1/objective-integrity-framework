@@ -47,6 +47,8 @@ python -B <skill>/scripts/operation_io.py run --input <spec.json> --output-root 
 python -B <skill>/scripts/operation_io.py consume --result <directory/result.json>
 ```
 
+A caller that has already reviewed a spec can use `execute(spec_path, output_root, expected_spec_sha256=...)`. The runner hashes the same buffer it parses and rejects a different expected hash before creating evidence or starting a process. The continuity run-operation caller supplies this binding after recording start; a subsequent rejection leaves that action pending for reconciliation. Default standalone calls remain supported; neither route locks arbitrary later filesystem effects.
+
 CLI exit 0 means capture succeeded, not that the operation/objective succeeded.
 Read structured `status`, `exit_code`, raw streams and effect state. Missing or
 invalid results retain a raw reference and scoped reconciliation need. Historical

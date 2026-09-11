@@ -51,7 +51,7 @@ oif-plugin/
     PRIVACY.md
     LICENSE
     NOTICE
-  objective-integrity-0.1.1.zip
+  objective-integrity-0.2.0.zip
   build.json
 ```
 

@@ -1,10 +1,10 @@
 # Workflow transition admission v3 with legacy read compatibility
 
-Source-wide implementation uses `workflow-transition-admission-v3`: every v2 field plus `work_phase`, as defined by the sibling lifecycle [source-wide execution contract](../../master-guided-skill-lifecycle/references/source-wide-execution.md). The canonical sibling engine checks objective/source/owner identity and carries eligible next actions into the result, before any lightweight bypass. `EDIT` requires `IMPLEMENT` or `REPAIR_FINDINGS`. Construction feedback cannot admit external apply, push, CI or binding regression correction. All authority, causal, allocation, first-fault, scenario and effect obligations remain.
+For source-wide implementation, `workflow-transition-admission-v3` contains every v2 field plus `work_phase`, the binding documented by the sibling lifecycle Skill in `references/source-wide-execution.md`. The script reads that common engine from its canonical sibling path, checks objective/source/owner-chat identity, and carries the decision and eligible next actions into its result. Whole-scope phase holds apply even when the caller labels its transition trivial. `EDIT` requires IMPLEMENT or REPAIR_FINDINGS. CONSTRUCTION_FEEDBACK does not admit external apply/push/CI or binding regression correction. Other v2 authority, known-cause, allocation, first-fault, scenario and effect obligations remain; the phase helper does not grant exceptions. V1/v2 results explicitly state no source-wide evaluation, preventing compatibility from becoming a false adoption claim.
 
-Use `workflow-transition-admission-v2` for ordinary same-conversation non-product boundaries. Read-only diagnosis, research and standalone documentation keep their original outcomes without manufacturing product phases. V1/v2 results explicitly state that source-wide selection was not evaluated. Reconcile the full original scope and current phase when adopting v3; a hash refresh or a child-only scope is not adoption.
+Pure diagnosis, documentation and other non-implementation work retain their ordinary outcome and v2 action gate without manufacturing a product BUILD/SWEEP state. Existing implementations adopting the new route reconcile their complete scope and current phase first; do not only refresh hashes or silently narrow old open deliverables.
 
-The paragraphs under **Legacy v1** describe old receipts only and do not impose a separate Worker on v2/v3.
+Use schema_version `workflow-transition-admission-v2` for unified work. The paragraphs under **Legacy v1** below describe old receipts only and do not impose a separate Worker on v2.
 
 V2 keeps the shared blocks of v1 and adds root job_id and job_shape_sha256, with these exact replacements/additions:
 
@@ -25,8 +25,8 @@ A trivial read-only action with `material_candidate_action=false` may take `ADMI
 
 Deterministic output proves structural admission and bounded cross-field consistency only. Semantic evidence remains under the normal workflow and independent review.
 
-## Legacy v1 topology; shared recomposition and consumer fields
+## Formal topology, recomposition and consumer fields
 
-Only a legacy v1 receipt declares whether a Supervisor-internal implementation lane exists, the implementing owner, the formal Worker task reference and the recovery mode. In v1, a Supervisor-internal implementer is a dependent topology hold and material EDIT requires FORMAL_WORKER ownership. V2/v3 instead use the same-conversation topology above; independent reviewers remain read-only in every version.
+Every receipt declares whether a Supervisor-internal implementation lane exists, the implementing owner, the formal Worker task reference and the recovery mode. A Supervisor-internal implementer is always a dependent topology hold; read-only auditors remain allowed. Material EDIT requires FORMAL_WORKER ownership.
 
 Material candidate transitions, including a finalized dependent action, commit/push, CI dispatch, or external apply, also bind one semantic-lock reference, all relational-claim IDs, a recomposition witness, any unresolved relation IDs, consumer outcome claim IDs, an oracle and the expected evidence delta. Non-empty unresolved relations hold that dependent transition. These are identity/no-drop checks only and cannot validate scenario truth, witness sufficiency or consumer success.
