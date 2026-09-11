@@ -17,6 +17,8 @@ Use neutral, project-local facts. Do not include credentials, private paths, pri
 |---|---|---|---|---|---|---|
 | S-001 | Outcome / state / contract / order / resource / recovery / boundary / workload |  |  |  |  | Open |
 
+When the per-family schema form is applied, add `consumer_oracle` and `recovery_oracle` per family (extra columns or the Interaction Closure section).
+
 ## Interaction Closure
 
 - Interaction component:

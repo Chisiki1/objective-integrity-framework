@@ -18,6 +18,8 @@
 
 **Exact-action preflight:** A bounded check over the exact finalized command, tool payload, or parallel member before execution. It can pass or block known mechanical families; it does not prove semantic correctness.
 
+**Evidence index:** The machine-readable companion file (`EVIDENCE-INDEX.json`) kept in the same ledger as the objective card; it holds the complete authority, source bindings, every clause locator, the outcome catalog and the action history.
+
 **Evidence limit:** The strongest claim a given evidence route can support. Also called a proof ceiling in the normative reference.
 
 **Interaction closure:** Coverage of reachable scenario combinations that can change harm, state, oracle, recovery, or consumer result.
@@ -25,6 +27,8 @@
 **Lifecycle disposition:** A rule-bound decision for a reusable skill event, such as existing skill applicable, generic invariant sufficient, candidate, revise, merge, supersede, retire, project-local, unconfirmed, or rejected.
 
 **Negative-selection challenge:** The strongest plausible skill-selection counterexample that should remain unselected, together with the evidence and rule that reject it.
+
+**Objective card:** The short human-readable status summary written as `objective.txt`: the active objective, counts, pointers, continuity frontiers, open outcomes and next work. Full detail — authority, source bindings, clause locators, the outcome catalog and action history — lives in the evidence index beside it.
 
 **Objective contract:** The source-bound map of requested outcomes, acceptance criteria, constraints, means, and assumptions.
 

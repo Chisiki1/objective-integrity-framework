@@ -15,6 +15,7 @@ Use neutral, project-local facts. Do not include credentials, private paths, pri
 
 - Primary objective:
 - Independent deliverables:
+- Deliverables (machine list, when the schema's `deliverables` field is applied):
 - Acceptance criteria:
 - Constraints and authority:
 - Means and preferences:
@@ -22,6 +23,7 @@ Use neutral, project-local facts. Do not include credentials, private paths, pri
 
 ## Evidence
 
+- Evidence limit (the strongest claim this route can support):
 - Evidence route:
 - Freshness requirement:
 - Invalidation trigger:

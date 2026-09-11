@@ -38,6 +38,10 @@ The portable Python checker remains a useful conservative screen. Its pass is no
 
 Use `adapters/hermes/` only when that runtime is intentionally selected. It binds the ledger to the host's stable session identity, uses explicit `host_binding` / `projection_filename` configuration, connects prompt capture and recovery injection through the host's supported hooks, and documents host-side exact-action screening for that host's tool payloads. It is optional packaging, not the framework identity; delivered context, trust and tool coverage remain host-specific and must be checked at the event-consumer boundary.
 
+## Optional Host Metadata Folders
+
+Some skills carry an optional `agents/` folder with host-interface metadata (for example `runtime/skills/artifact-access/agents/openai.yaml`). These files are optional packaging for specific plugin hosts: they are included in the full package, excluded from the skills-only plugin package, and are not required by the portable core.
+
 ## Legacy Split-Task Compatibility
 
 The durable status package under `runtime/skills/durable-supervisor-status/` supports recovery of an explicitly existing split-task lease. New work should use the same-conversation objective ledger. Legacy status does not create action authority or an independent review key.

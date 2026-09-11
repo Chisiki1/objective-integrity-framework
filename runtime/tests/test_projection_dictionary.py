@@ -1,4 +1,4 @@
-"""Lossless source dictionary; no ledger mutations in representation checks."""
+"""Evidence index and bounded card; no ledger mutations in representation checks."""
 from pathlib import Path
 import copy
 import importlib.util

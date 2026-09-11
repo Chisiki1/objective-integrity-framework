@@ -40,7 +40,8 @@
   ],
   "properties": {
     "schema_version": {
-      "const": "skill-selection-receipt-v1"
+      "const": "skill-selection-receipt-v1",
+      "description": "Emitted by tools/skill_resolver.py. The packaged runtime resolver emits a `mgskill-selection-receipt-v1` variant with additional top-level fields (`decision`, `withheld_count`); both name the same readable selection-receipt family."
     },
     "objective_id": {
       "type": "string",

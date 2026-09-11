@@ -1,3 +1,4 @@
+# Host interface metadata for plugin hosts (optional; not required by the portable core).
 interface:
   display_name: "Artifact Access"
   short_description: "Read exact versioned artifacts without guessing paths"

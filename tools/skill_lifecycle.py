@@ -11,6 +11,7 @@ from typing import Any
 HEX64 = re.compile(r"^[0-9A-Fa-f]{64}$")
 EFFECT_OUTCOMES = {
     "advanced",
+    "applied",
     "no_effect",
     "recurred",
     "false_block",
@@ -18,6 +19,9 @@ EFFECT_OUTCOMES = {
     "prevented",
     "outcome_unknown",
     "not_observed",
+    "not_applied",
+    "unavailable",
+    "not_applicable",
 }
 FORWARD_TRANSITIONS = {
     ("raw-event", "solution"),

@@ -7,6 +7,7 @@ Use this record when a reusable skill, registry entry, or deterministic helper m
 - Event ID:
 - Objective contract ID:
 - Source claims:
+- Skill ID:
 - Current lifecycle state:
 - Proposed lifecycle state:
 - Proposed disposition:
@@ -24,6 +25,8 @@ Use this record when a reusable skill, registry entry, or deterministic helper m
 
 ## Candidate Evidence
 
+- Source-bound benefit:
+- Ambiguity (for transition records):
 - Expected objective delta:
 - Expected evidence delta:
 - Baseline:
@@ -47,7 +50,7 @@ Use this record when a reusable skill, registry entry, or deterministic helper m
 
 - Actual objective delta:
 - Actual evidence delta:
-- Outcome: advanced | no_effect | recurred | false_block | misselected | prevented | outcome_unknown | not_observed
+- Outcome: advanced | applied | no_effect | recurred | false_block | misselected | prevented | outcome_unknown | not_observed | not_applied | unavailable | not_applicable
 - Consumer result:
 - Side effects:
 - Elapsed time:

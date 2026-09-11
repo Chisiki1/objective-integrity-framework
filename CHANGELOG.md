@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.2.1 — 2026-09-11
+
+A small follow-up that fixes stale descriptions left behind by the 0.2.0 card
+change and makes the core concepts clear from the documents themselves.
+
+### Fixed
+
+- Stale "the human view keeps every clause" wording replaced with the bounded
+  card + `EVIDENCE-INDEX.json` description across the framework reference, the
+  packaged agent guidance and the knowledge-stewardship guide.
+- The skill lifecycle schema now accepts the current `mgskill-effect-v2`/`v3`
+  records, and the lifecycle contract's effect-candidate section matches the v3
+  header (including `materiality` and `equivalent_skill_fingerprints`).
+- Adapter lists and samples aligned: the optional Hermes adapter is listed, the
+  runtime-demo sample matches current output, and the ledger path example is
+  corrected.
+
+### Documentation
+
+- A concise "How It Works" overview (English and Japanese) and terminology entries
+  for the objective card and the evidence index, so the core concepts read clearly
+  without requiring prior framework knowledge.
+
 ## 0.2.0 — 2026-09-11
 
 The framework and plugin share version 0.2.0. Existing task records continue to

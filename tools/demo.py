@@ -431,7 +431,7 @@ def run_demo(destination: Path) -> dict[str, Any]:
             "prior_candidate_id": None,
             "equivalent_fingerprints": [],
         },
-        "evidence": {"ledger_projection": "ledger-state/*/objective.txt", "completed_outcomes": ["DEMO-O1", "DEMO-O2"]},
+        "evidence": {"ledger_projection": "ledger-state/*/*/objective.txt", "completed_outcomes": ["DEMO-O1", "DEMO-O2"]},
         "rollback": {"method": "remove only the new inactive candidate directory"},
         "independent_challenge": {
             "status": "pending",

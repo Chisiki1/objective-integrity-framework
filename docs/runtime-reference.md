@@ -78,7 +78,7 @@ Start with the demonstration unless you are integrating the API directly.
 
 `status`, host start, and compact recovery are semantically read-only but may write bounded repair metadata inside the configured ledger root. They can acquire its lock, preserve a partial tail, and rebuild `current.json` and `objective.txt`; they do not classify source, change objective meaning, or authorize an action.
 
-`objective-input` retains the native ledger's validation and expected-head checks; it is not another objective store. The bounded human Objective Card keeps counts, pointers and continuity frontiers; full authority, source bindings, outcome catalog and action history remain in the same-ledger `EVIDENCE-INDEX.json`. The projection filename is configurable via `projection_filename`, and host session binding via `host_binding` (`session_env`, `bindings_dir`); both are absent by default. Current progress references can change while immutable outcome history remains available.
+`objective-input` retains the native ledger's validation and expected-head checks; it is not another objective store. The bounded human Objective Card keeps counts, pointers and continuity frontiers; full authority, source bindings, outcome catalog and action history remain in the same-ledger `EVIDENCE-INDEX.json`. The projection filename is configurable via `projection_filename`, and host session binding via `host_binding` (`session_env`, `bindings_dir`); both are absent by default. Current progress references can change while immutable outcome history remains available. In plain words: the card is the summary you read first; the index is the complete record beside it.
 
 ## Whole-Scope Work
 

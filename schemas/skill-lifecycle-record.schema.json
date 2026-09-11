@@ -21,13 +21,18 @@
         "actual_objective_delta",
         "planned_evidence_delta",
         "actual_evidence_delta",
+        "owner",
+        "trigger",
+        "candidate_identity",
+        "independent_challenge",
+        "retirement_trigger",
+        "unknown_case_disposition",
         "outcome",
         "consumer_result",
         "side_effects",
         "rollback_result",
-        "elapsed_ms",
-        "tool_calls",
-        "rework"
+        "rework",
+        "metrics"
       ]
     },
     {
@@ -51,8 +56,10 @@
   ],
   "properties": {
     "schema_version": {
+      "description": "Effect records use `mgskill-effect-v2`/`mgskill-effect-v3` (see the lifecycle contract); transition records use `skill-transition-v1`.",
       "enum": [
-        "skill-effect-v1",
+        "mgskill-effect-v2",
+        "mgskill-effect-v3",
         "skill-transition-v1"
       ]
     },
@@ -91,13 +98,17 @@
     "outcome": {
       "enum": [
         "advanced",
+        "applied",
         "no_effect",
         "recurred",
         "false_block",
         "misselected",
         "prevented",
         "outcome_unknown",
-        "not_observed"
+        "not_observed",
+        "not_applied",
+        "unavailable",
+        "not_applicable"
       ]
     },
     "from_state": {
@@ -121,8 +132,12 @@
       "minItems": 1
     },
     "independent_challenge": {
-      "type": "string",
-      "minLength": 1
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["pending", "completed"]}
+      },
+      "additionalProperties": true
     },
     "bounded_activation_scope": {
       "type": "string",
@@ -133,8 +148,9 @@
       "minLength": 1
     },
     "retirement_trigger": {
-      "type": "string",
-      "minLength": 1
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
     },
     "measurement": {
       "type": "object",

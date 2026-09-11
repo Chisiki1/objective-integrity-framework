@@ -24,6 +24,7 @@ Use this receipt when resolving focused skills or deterministic helpers for one 
 - Resource facts:
 - Consumer facts:
 - Risk facts:
+- Fallback to normal workflow (used / not needed):
 - Blind phase: none | initial | reconciled
 
 ## Selected Entries

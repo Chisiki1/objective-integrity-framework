@@ -33,7 +33,7 @@ For work that can resume, compact, hand off, queue, retry, or outlive one turn, 
 
 Raw event capture is evidence that input was received. The primary owner still determines its semantic relation to the active objective; a host hook, session identifier, child context, or copied prompt does not create authority by itself.
 
-Reuse that ledger for additions, clarification, resume and compaction in the same logical conversation; forks receive separate identities. Read it at those boundaries, after material results and completed items, and before final delivery. Factor repeated source triples in the human view without dropping clause locators, open outcomes or immutable history. Keep one current completion-scope reference rather than competing definitions of done.
+Reuse that ledger for additions, clarification, resume and compaction in the same logical conversation; forks receive separate identities. Read it at those boundaries, after material results and completed items, and before final delivery. Keep the human view bounded: the card keeps counts, pointers and continuity frontiers, while clause locators, open outcomes and immutable history remain in the same-ledger evidence index. Keep one current completion-scope reference rather than competing definitions of done.
 
 ## 3. Active Objective Integrity View
 
@@ -230,7 +230,7 @@ raw event -> causal family and solution -> disposition -> candidate -> shadow or
 
 This is lineage, not a fixed phase quota. A single failure, a recurrence count, a model suggestion, registry validation, test pass, or self-authored documentation review is not enough to activate a semantic skill. Activation needs a source-bound benefit, baseline, representative replay or shadow evidence, normal-path counterexamples, independent challenge, bounded activation, rollback, measurement, and retirement trigger. Material ambiguity returns a user decision rather than an automatic transition.
 
-Effect records should distinguish planned and actual objective deltas, planned and actual evidence deltas, consumer result, side effects, rollback, elapsed time, tool/delegation cost, rework, counterevidence, and proof ceiling. Public effect outcomes include `advanced`, `no_effect`, `recurred`, `false_block`, `misselected`, `prevented`, `outcome_unknown`, and `not_observed`.
+Effect records should distinguish planned and actual objective deltas, planned and actual evidence deltas, consumer result, side effects, rollback, elapsed time, tool/delegation cost, rework, counterevidence, and proof ceiling. Public effect outcomes include `advanced`, `applied`, `no_effect`, `recurred`, `false_block`, `misselected`, `prevented`, `outcome_unknown`, `not_observed`, `not_applied`, `unavailable`, and `not_applicable`.
 
 `prevented` is limited to an observed pre-submission block with the rejected candidate preserved and the applicable constraint set matched to the final action representation. Post-submission parser rejection, exceptions, no-ops, and later repairs are containment evidence. They do not prove prevention or avoided consumer harm.
 

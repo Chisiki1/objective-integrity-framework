@@ -4,7 +4,7 @@
 
 Keep the objective intact. Turn experience into better next actions.
 
-Version **0.2.0** · [Download](https://github.com/Chisiki1/objective-integrity-framework/releases/latest) · [Changelog](CHANGELOG.md) · [Japanese guide](docs/ja/README.md).
+Version **0.2.1** · [Download](https://github.com/Chisiki1/objective-integrity-framework/releases/latest) · [Changelog](CHANGELOG.md) · [Japanese guide](docs/ja/README.md).
 
 [![CI](https://github.com/Chisiki1/objective-integrity-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/Chisiki1/objective-integrity-framework/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
@@ -15,7 +15,15 @@ Objective Integrity Framework is an open operating framework for agentic work th
 
 Use it as a five-minute review discipline, project-local guidance, a reusable agent skill, a skills-only plugin package, or a higher-assurance runtime. The core is platform-neutral. Product-specific integrations live in `adapters/` and remain optional.
 
+## How It Works
+
+Objective Integrity Framework keeps a small, explicit ledger per objective. The ledger holds three views of the same state: an append-only `journal.jsonl`, a machine-readable `current.json`, and the **objective card** — the short human-readable status file (`objective.txt`) that lists the active objective, open outcomes and the next eligible work. A companion `EVIDENCE-INDEX.json` keeps the complete record: full authority, source bindings, clause locators, the outcome catalog and the action history. The card is a bounded summary by design; completeness lives in the index.
+
+Work then follows one discipline: one owner per objective, actions recorded before and after execution, checks tied to the evidence they support, and lessons carried into the next matching action instead of only being recorded.
+
 ## What's New
+
+**0.2.1 update (2026-09-11):** consistency and clarity follow-up — stale card descriptions fixed across the docs and packaged guidance, adapters and samples aligned, and a concise "How It Works" overview added (see [CHANGELOG](CHANGELOG.md)).
 
 **0.2.0 update (2026-09-11):** the human objective card is now a bounded, reconciliation-led view with a
 machine-readable `EVIDENCE-INDEX.json` beside it; host wiring is explicit configuration;
@@ -141,7 +149,7 @@ flowchart TD
 
 - **Durable objective state:** Immutable source events, explicit source classification, open outcomes, pending effects, append-only history, and a concise human projection.
 - **Whole-scope execution:** One owner-controlled completion scope connects bounded jobs to the complete result; phase checks prevent premature formal verification from replacing unfinished implementation.
-- **Current knowledge and history:** Replace superseded current guidance while preserving exact, searchable backing. Repeated source references are factored rather than repeatedly pasted into the objective view.
+- **Current knowledge and history:** Replace superseded current guidance while preserving exact, searchable backing. Repeated source references are factored into the evidence index rather than repeatedly pasted into the card.
 - **Objective contract:** A source-bound map of what the user asked for, what counts as acceptance, and what is out of scope.
 - **Open deliverable ledger:** A live list of requested outcomes that prevents a later subtask from silently replacing the parent objective.
 - **Objective-necessity link:** A short reason every material action belongs on the critical path.

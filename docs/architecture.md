@@ -90,4 +90,4 @@ Keeping these planes separate prevents a lower-level pass from being promoted be
 - `.agents/skills/objective-integrity/`: progressive agent guidance.
 - `templates/` and `schemas/`: portable records and structural contracts.
 - `tools/`: adoption, demonstration, scans, validation, and compatibility entrypoints.
-- `adapters/`: opt-in host integrations, including Codex and native PowerShell support.
+- `adapters/`: opt-in host integrations, including Codex, native PowerShell and Hermes support.

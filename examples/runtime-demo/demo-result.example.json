@@ -23,6 +23,139 @@
     "outputs/status-card.txt",
     "outputs/next-use-note.txt"
   ],
+  "current_workflow": {
+    "allocation": {
+      "decision": "RETAIN_CURRENT",
+      "dispatch_performed": false,
+      "permission_granted": false,
+      "selection_ready": true
+    },
+    "artifacts": [
+      "current-workflow/label.txt",
+      "current-workflow/index.json"
+    ],
+    "final_observations": [
+      {
+        "actual": "Demo Project",
+        "expected": "Demo Project",
+        "id": "label-check",
+        "status": "pass"
+      },
+      {
+        "actual": {
+          "display_name": "Demo Project",
+          "label": "label.txt"
+        },
+        "connected_to_actual_label": true,
+        "expected": {
+          "display_name": "Demo Project",
+          "label": "label.txt"
+        },
+        "id": "index-check",
+        "status": "pass"
+      }
+    ],
+    "history": {
+      "archived_episode_retrieved": true,
+      "backing": "current-workflow/history/completed-episode.md",
+      "before_bytes": 1737,
+      "complete_backing_preserved": true,
+      "current": "current-workflow/PROJECT_MASTER.md",
+      "current_bytes": 472
+    },
+    "initial_findings": [
+      {
+        "actual": "Demo project",
+        "expected": "Demo Project",
+        "id": "label-check",
+        "status": "fail"
+      },
+      {
+        "actual": {
+          "display_name": "Demo project",
+          "label": "label.txt"
+        },
+        "connected_to_actual_label": true,
+        "expected": {
+          "display_name": "Demo Project",
+          "label": "label.txt"
+        },
+        "id": "index-check",
+        "status": "fail"
+      }
+    ],
+    "original_findings_preserved": true,
+    "permission_granted": false,
+    "phase_observations": [
+      {
+        "action": "IMPLEMENT",
+        "binding": {
+          "path": "<demo dir>/current-workflow/build-binding.json",
+          "sha256": "<SHA-256 of this demo run member>"
+        },
+        "owner_control": "ADMIT",
+        "permission_granted": false,
+        "phase": "BUILD",
+        "transition": "ADMIT_LIGHTWEIGHT"
+      },
+      {
+        "action": "FORMAL_CHECK",
+        "binding": {
+          "path": "<demo dir>/current-workflow/sweep-binding.json",
+          "sha256": "<SHA-256 of this demo run member>"
+        },
+        "owner_control": "ADMIT",
+        "permission_granted": false,
+        "phase": "SWEEP",
+        "transition": "ADMIT_LIGHTWEIGHT"
+      },
+      {
+        "action": "REPAIR_FINDINGS",
+        "binding": {
+          "path": "<demo dir>/current-workflow/repair-binding.json",
+          "sha256": "<SHA-256 of this demo run member>"
+        },
+        "owner_control": "ADMIT",
+        "permission_granted": false,
+        "phase": "REPAIR",
+        "transition": "ADMIT_LIGHTWEIGHT"
+      },
+      {
+        "action": "FORMAL_CHECK",
+        "binding": {
+          "path": "<demo dir>/current-workflow/resweep-binding.json",
+          "sha256": "<SHA-256 of this demo run member>"
+        },
+        "owner_control": "ADMIT",
+        "permission_granted": false,
+        "phase": "SWEEP",
+        "transition": "ADMIT_LIGHTWEIGHT"
+      },
+      {
+        "action": "ACCEPT",
+        "binding": {
+          "path": "<demo dir>/current-workflow/accept-binding.json",
+          "sha256": "<SHA-256 of this demo run member>"
+        },
+        "owner_control": "ADMIT",
+        "permission_granted": false,
+        "phase": "ACCEPT",
+        "transition": "ADMIT_LIGHTWEIGHT"
+      }
+    ],
+    "phase_sequence": [
+      "BUILD",
+      "SWEEP",
+      "REPAIR",
+      "SWEEP",
+      "ACCEPT"
+    ],
+    "review_evidence": "Synthetic structural fixtures only; no independent reviewer was simulated as real.",
+    "schema": "oif-current-workflow-demo-v1",
+    "scope": "Actual local file/readback and structural tool flow inside the explicit synthetic demo directory.",
+    "source": "current-workflow/source.txt",
+    "source_outcome_completed": false
+  },
   "improvement_candidate": {
     "state": "prepared",
     "review_status": "pending",

@@ -10,6 +10,7 @@ The command creates only the directory you name. It rejects live configuration r
 
 The demonstration uses synthetic English source text. It calls the shipped objective ledger, inactive-candidate materializer, and learning queue as subprocesses. The resulting `demo-result.json` points to:
 
+- the complete BUILD → SWEEP → REPAIR → ACCEPT `current_workflow` example (its artifacts land under `current-workflow/`);
 - two work artifacts whose outcomes remain visible across an additive source update;
 - the durable objective projection and command records;
 - an actual owned draft whose independent challenge is truthfully still pending;

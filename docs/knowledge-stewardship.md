@@ -8,12 +8,12 @@ The framework separates the current decision view from immutable evidence. This 
 
 | Artifact | Current role | What stays durable |
 |---|---|---|
-| `objective.txt` | The current objective, conditions, unresolved outcomes/effects and next work. | Exact source files, full machine state and append-only journal. |
+| `objective.txt` (the objective card) | The current objective, conditions, unresolved outcomes/effects and next work, as a short human-readable summary. | Exact source files, full machine state, `EVIDENCE-INDEX.json` and the append-only journal. |
 | Project master | Current project control and relevant active knowledge. | Raw episodes, failures, old dispositions and recovery evidence. |
 | Global master | Sanitized reusable families and current applicability. | Linked provenance and prior versions, without copying private project details. |
 | Learning queue | Each candidate's current owner, state, artifact and next-use trigger. | Immutable revision and transition history. |
 
-Repeated source event/ref/hash triples in `objective.txt` appear once in a local alias dictionary. Every clause and locator remains present. Read the dictionary and clause list together; aliases are display keys, not replacement identities. `current.json` and `journal.jsonl` retain their full replay meaning.
+`objective.txt` is a bounded card: counts, pointers and continuity frontiers only. Full source bindings, every clause locator, and the outcome/action catalog live beside it in `EVIDENCE-INDEX.json`, a machine-readable index in the same ledger. Read the card first and open the index for completeness; `current.json` and `journal.jsonl` retain their full replay meaning.
 
 ## Read Complete Applicable History
 

@@ -18,7 +18,7 @@ The runtime keeps three complementary views under an explicit project-local ledg
 
 The exact source event remains immutable. The human projection is a view, not a replacement source.
 
-Repeated source identities are displayed once in a source dictionary and referenced by aliases. Every clause retains its locator; open outcomes are not truncated to meet a line budget. Current next-work references replace superseded current pointers, while source, outcome and action history stay recoverable. See [Knowledge Stewardship](knowledge-stewardship.md).
+The bounded card keeps counts, pointers and continuity frontiers; full authority, source bindings, every clause locator, the outcome catalog and action history remain in the same-ledger `EVIDENCE-INDEX.json`. Current next-work references replace superseded current pointers, while source, outcome and action history stay recoverable. In plain words: the card is the summary you read first, and the index is the complete record kept beside it. See [Knowledge Stewardship](knowledge-stewardship.md).
 
 Create the ledger at the first effective user instruction, reuse it for the same logical conversation, and give forks separate identities. Re-read it on a user update, after a material result or completed item, on resume or compaction recovery, and before the final response. Automatic delivery depends on the host integration; a manual owner read remains the fallback.
 

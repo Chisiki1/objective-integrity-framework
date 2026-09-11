@@ -10,7 +10,7 @@ The demonstration creates its state only under the explicit new or empty directo
 python tools/demo.py --directory ../oif-demo
 ```
 
-Use the generated files to follow source capture, owner-input progress, an action result, a learning candidate, and a later matching query. The `current_workflow` result adds a complete BUILD → SWEEP → REPAIR → SWEEP → ACCEPT example, typed allocation, and current/history retrieval. Inspect `current-workflow/first-sweep-observations.json` alongside the repaired observations: the first findings remain available. Review references in the demo are synthetic structural fixtures, not a real independent review. The demonstration does not dispatch agents, install project guidance, or change an agent's global configuration.
+Use the generated files to follow source capture, owner-input progress, an action result, a learning candidate, and a later matching query. Sample outputs live in [examples/runtime-demo/](../examples/runtime-demo/) — see [demo-result.example.json](../examples/runtime-demo/demo-result.example.json) — for comparison. The `current_workflow` result adds a complete BUILD → SWEEP → REPAIR → SWEEP → ACCEPT example, typed allocation, and current/history retrieval. Inspect `current-workflow/first-sweep-observations.json` alongside the repaired observations: the first findings remain available. Review references in the demo are synthetic structural fixtures, not a real independent review. The demonstration does not dispatch agents, install project guidance, or change an agent's global configuration.
 
 ## Preview a Complete Project-Local Installation
 
@@ -87,7 +87,7 @@ python ../sample-project/.oif/tools/check.py --installed-runtime --temp-root ../
 
 ### Optional adapters
 
-The generic adapter is the default portable integration. Other adapters are opt-in. The Codex and native PowerShell adapters do not define the framework and are not required by the portable core.
+The generic adapter is the default portable integration. Other adapters are opt-in. The Codex, native PowerShell and Hermes adapters do not define the framework and are not required by the portable core; see [Platform adapters](platform-adapters.md).
 
 ## Skill Book Adoption
 
