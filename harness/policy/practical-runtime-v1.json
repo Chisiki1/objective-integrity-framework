@@ -1,0 +1,33 @@
+{
+  "id": "practical-runtime-v1",
+  "status": "authorized-scoped-method-selection",
+  "scope": "OIF harness practical runtime. Preserve substantive requirements, task evidence and unknown effects. Proportional methods govern research, independent review and learning; this profile grants no external-action authority.",
+  "mapping": [
+    {
+      "families": "A/B/C/N",
+      "preserved": "User intent, exact sources, scope, all acceptance criteria and permission boundaries",
+      "implementation": "Source CAS, explicit acceptance reconciliation, task-relative tools, controller-owned admission"
+    },
+    {
+      "families": "D/J",
+      "preserved": "Necessary current research and independent challenge",
+      "implementation": "Web when the task needs external facts; independent final review for executable/code output, larger changes or explicit review requests; no review of a review"
+    },
+    {
+      "families": "E/F/G/H",
+      "preserved": "Useful knowledge, improvement and honest delivery",
+      "implementation": "Persist original outcomes and recurrent faults for reuse; relevant knowledge lookup remains available. No compulsory model learning call or Skill creation after each tool"
+    },
+    {
+      "families": "I/K/L/M/O",
+      "preserved": "State continuity, first fault, partial success, integrated verification and proof ceilings",
+      "implementation": "Durable model/tool intents and results, source-bound continuation, file CAS and readback, preimages, artifact verification, bounded execution, explicit unknown effects"
+    },
+    {
+      "families": "R15/R16/Q18/U34",
+      "preserved": "Source-authorized change and finite completion",
+      "implementation": "This scoped authorized method replaces blanket per-operation rituals. Successful simple tasks terminate after actual artifact verification; mandatory outcomes remain mandatory"
+    }
+  ],
+  "recovery": "Preserve task records and exact preimages. Stop active work before changing versions, reconcile incompatible policy identities explicitly, and never automatically replay an unknown effect."
+}

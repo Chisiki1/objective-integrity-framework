@@ -12,6 +12,7 @@ import re
 
 DECLARATIONS = "tools/public-identifiers.json"
 HEX = re.compile(r"[0-9a-fA-F]{64}")
+UUID = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 
 
@@ -31,7 +32,7 @@ def parse(raw):
     if not isinstance(value, dict) or set(value) != {"schema", "entries"} or value["schema"] != "oif-public-identifiers-v1":
         raise ValueError("Invalid public-identifier declaration schema")
     entries = value["entries"]
-    if not isinstance(entries, list) or len(entries) > 100:
+    if not isinstance(entries, list) or len(entries) > 200:
         raise ValueError("Invalid public-identifier entry list")
     seen = set()
     for row in entries:
@@ -44,9 +45,9 @@ def parse(raw):
             raise ValueError("Public identifiers require an exact relative artifact path")
         if not HEX.fullmatch(row["blob_sha256"]):
             raise ValueError("Public identifiers require the complete artifact digest")
-        pattern = {"long_hex_identifier": HEX, "email": EMAIL}.get(row["kind"])
+        pattern = {"long_hex_identifier": HEX, "email": EMAIL, "uuid_identifier": UUID}.get(row["kind"])
         if pattern is None or not pattern.fullmatch(row["value"]):
-            raise ValueError("Only exact reviewed digest/email values can be declared")
+            raise ValueError("Only exact reviewed digest/email/UUID values can be declared")
         key = (path, row["blob_sha256"].lower(), row["kind"], row["value"])
         if key in seen:
             raise ValueError("Duplicate public identifier")
@@ -70,8 +71,16 @@ class PublicIdentifiers:
         self.declared.update(("long_hex_identifier", r["blob_sha256"]) for r in self.entries)
 
     def permits(self, path, raw, kind, value):
-        kind = {"long_hex": "long_hex_identifier"}.get(kind, kind)
-        if kind not in {"long_hex_identifier", "email"}:
+        kind = {"long_hex": "long_hex_identifier", "uuid": "uuid_identifier"}.get(kind, kind)
+        if kind == "long_hex_identifier" and path in {"harness/uv.lock", "harness/requirements-windows.txt"}:
+            # Public package hashes in the two pinned dependency lock formats.
+            # Other text in those files receives every normal privacy check.
+            text = raw.decode("utf-8")
+            hashes = set(re.findall(r'(?:hash = "sha256:|--hash=sha256:)([0-9a-f]{64})(?=["\s,]|$)', text))
+            hashes.update(re.findall(r'https://files.pythonhosted.org/packages/[a-f0-9]{2}/[a-f0-9]{2}/([a-f0-9]{60})/', text))
+            if value in hashes:
+                return True
+        if kind not in {"long_hex_identifier", "email", "uuid_identifier"}:
             return False
         if path == DECLARATIONS:
             # Older declarations do not grant permission to other old blobs.

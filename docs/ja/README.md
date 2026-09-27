@@ -4,17 +4,27 @@
 
 主目的を保ち、経験を次の行動の改善につなげる。
 
-**反復は、格上げに勝る。** 通すたびに品質が積み上がる — OIFを守れる高速なモデルは、高コスト・高推論のモデルを上回っていける。それがOIFの目標です。
+対応版: **0.3.0-beta.1**。[English](../../README.md) · [ダウンロード](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.1) · [変更履歴](../../CHANGELOG.md)
 
-対応版: **0.2.1**。[English](../../README.md) · [ダウンロード](https://github.com/Chisiki1/objective-integrity-framework/releases/latest) · [変更履歴](../../CHANGELOG.md)
+**今回の成果を、次の作業の出発点に。** 元の目的を保ち、役立つ経験を次の作業に引き継ぎ、変更が役立ったかを確かめます。
 
-0.2.1（2026-09-11）では、0.2.0で残っていた旧記述を修正し、中核概念の説明（「仕組み」）を明確化しました。
+Objective Integrity Framework は、AIエージェントが長い作業や修正を進める際に、依頼された成果を見失わず、得られた知見を実際の次の行動へ反映するためのオープンな運用フレームワークです。主目的の記録、必要な証拠、改善の採用と効果確認を結び付けます。
 
-0.2.0（2026-09-11）では、人間用カードを限定表示（Objective Card v2）とし、完全な機械可読索引`EVIDENCE-INDEX.json`を併置しました。ホスト結線（`host_binding`）と投影ファイル名（`projection_filename`）を明示設定化し、配布Skill群と補助フロー（遅延して届いた記録の整合 `action-method-supplement` など）を最新化、任意のHermesアダプタを追加しています。既存のタスク記録はそのまま使え、移行は不要です。
+このページは任意で読める日本語の導入・機能ガイドです。英語のREADMEと同じ版の主要機能・導入手順を説明します。中核は特定の製品やモデルに依存せず、製品ごとの連携はオプションです。
 
-Objective Integrity Framework は、AIエージェントが長い作業や修正を進める際に、依頼された成果を見失わず、得られた知見を実際の次の行動へ反映するためのオープンな運用フレームワークです。主目的の記録、必要な証拠、改善の採用と効果確認を結び付けます。記録や監査を増やすこと自体は目的にしません。
+## Windowsデスクトップ版
 
-このページは任意で読める日本語の導入・機能ガイドです。英語のREADMEと同じ版の主要機能・導入手順を説明し、詳細な仕様は各リンク先の英語リファレンスへ案内します。中核は特定の製品やモデルに依存せず、Codexなどの連携はオプションです。
+**0.3.0-beta.1（2026-09-28）**では、専用デスクトップ画面、指示ごとの進捗と結果、成果物プレビュー、複数チャット、コンテキスト圧縮、権限選択、共有学習の作成・利用・改良・統合・退役、本体の検証付き更新を備えたベータ版を公開しました。
+
+[ベータ版のダウンロード](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.1)から Windows x64 ZIP を全て展開し、**OIF.exe**を開いてモデルを設定してください。Pythonは同梱、WebView2 Runtimeが必要です。通常のファイル作業にDockerは不要です。隔離実行と本体コード検証にはDockerを使います。
+
+[デスクトップの日本語ガイド](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.1/harness/docs/ja.md)に、自己改善の流れ、長期作業、データ保存、更新・復元、検証範囲を記載しています。[日本語の紹介画像3枚](../showcase/ja/README.md)も用意しました。従来のFrameworkとスキル専用配布も利用できます。
+
+### 以前の主な更新
+
+0.2.1（2026-09-11）では、0.2.0で残っていた旧記述を修正し、中核概念の説明を明確化しました。
+
+0.2.0（2026-09-11）では、人間用カードを限定表示（Objective Card v2）とし、完全な機械可読索引`EVIDENCE-INDEX.json`を併置しました。ホスト結線（`host_binding`）と投影ファイル名（`projection_filename`）を明示設定化し、配布Skill群と補助フローを更新、任意のHermesアダプタを追加しています。Frameworkの既存タスク記録はそのまま使えます。
 
 ## 仕組み
 
@@ -24,19 +34,21 @@ Objective Integrity Framework は、目的ごとに小さく明示的な台帳�
 
 ## リリースをダウンロードする
 
-[Releaseページ](https://github.com/Chisiki1/objective-integrity-framework/releases/latest)で目的に応じて選び、同じ版の`SHA256SUMS.txt`も保存してください。
+[Releaseページ](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.1)で目的に応じて選び、同じ版の`SHA256SUMS.txt`も保存してください。
 
-- `objective-integrity-framework-0.2.1.zip`：説明・例・実行機能を含む全体。実行にはPython 3.10以降と標準ライブラリの`sqlite3`を使います。
-- `objective-integrity-0.2.1.zip`：Skillと必要な参照資料のパッケージ。対応ホストを使い、Python・APIキー・サーバーは不要です。
+- `objective-integrity-framework-0.3.0-beta.1.zip`：説明・例・実行機能を含む全体。実行にはPython 3.10以降と標準ライブラリの`sqlite3`を使います。
+- `objective-integrity-0.3.0-beta.1.zip`：Skillと必要な参照資料のパッケージ。対応ホストを使い、Python・APIキー・サーバーは不要です。
+- `OIF-Desktop-0.3.0-beta.1-windows-x64.zip`：Windowsデスクトップアプリ。全て展開してOIF.exeを起動します。
+- `OIF-Showcase-0.3.0-beta.1.zip`：英語3枚・日本語3枚の紹介画像と説明。
 - `release.json`：元のコミット、配布ファイルのサイズ・ハッシュ、ビルダー識別情報。
 
-PowerShellでは`Get-FileHash .\objective-integrity-framework-0.2.1.zip -Algorithm SHA256`で表示した値を、チェックサムの同名行と比較します。Linuxで両ZIP・`release.json`を保存した場合は`sha256sum -c SHA256SUMS.txt`、macOSでは`shasum -a 256 -c SHA256SUMS.txt`で確認できます。一部だけ保存した場合は個別に比較してください。不一致なら使用せず同じReleaseから取得し直します。
+PowerShellでは`Get-FileHash .\objective-integrity-framework-0.3.0-beta.1.zip -Algorithm SHA256`で表示した値を、チェックサムの同名行と比較します。Linuxで全ZIP・`release.json`を保存した場合は`sha256sum -c SHA256SUMS.txt`、macOSでは`shasum -a 256 -c SHA256SUMS.txt`で確認できます。一部だけ保存した場合は個別に比較してください。不一致なら使用せず同じReleaseから取得し直します。
 
 ZIPは新しいフォルダーへ展開します。フル構成はこのガイドのデモ・導入手順へ、Skillのみは対応ホストの通常のプラグイン導入へ進んでください。取得だけでインストールや公式ディレクトリ登録は行いません。旧版とバックアップは保持し、更新では明示した同じ導入先へ`--update`のプレビューを行い、復旧は保存済みマニフェストを使います。タスク記録はプラグインの外に置きます。
 
-フレームワークとプラグインは版番号を揃え、タグは`v0.2.1`形式です。最初のタグは`v0.1.1`で、先に配布した未タグの0.1.0を区別します。0.2.1でもタスク記録の移行は不要です。0.xの間はマイナー更新で互換性が変わる可能性があるため、変更履歴を確認してください。CIはWindows／Linux、Python 3.10／CI時点の最新安定版を対象にします。
+フレームワークとプラグインは版番号を揃え、今回のタグは`v0.3.0-beta.1`です。最初のタグは`v0.1.1`で、先に配布した未タグの0.1.0を区別します。Frameworkのタスク記録の形式は維持しています。デスクトップ版のデータは専用ガイドのバックアップ・更新・復元手順で扱います。0.xの間はマイナー更新で互換性が変わる可能性があるため、変更履歴を確認してください。FrameworkのCIはWindows／Linux、Python 3.10／CI時点の最新安定版を対象にします。デスクトップ版はWindows、Python 3.12とNodeで検証します。
 
-ローカルで配布物を再生成する場合は、GitとPythonを用意し、対象タグの変更のないチェックアウトで`python -B tools/release.py --destination ../oif-release`を実行します。表示された`plan_sha256`を確認後、同じコマンドに`--expect-plan <plan-sha256> --apply`を付けます。保存先は既存の親の下の未作成・分離ディレクトリとし、既存ファイルは上書きしません。同一Git／Python／圧縮環境で再現でき、公開・導入・設定変更は行いません。詳しくは[リリース案内](../releases.md)、問い合わせは[サポート](../support.md)を参照してください。
+ローカルでFrameworkとSkillの配布物を再生成する場合は、GitとPythonを用意し、対象タグの変更のないチェックアウトで`python -B tools/release.py --destination ../oif-release`を実行します。表示された`plan_sha256`を確認後、同じコマンドに`--expect-plan <plan-sha256> --apply`を付けます。保存先は既存の親の下の未作成・分離ディレクトリとし、既存ファイルは上書きしません。同一Git／Python／圧縮環境で再現でき、公開・導入・設定変更は行いません。詳しくは[リリース案内](../releases.md)、問い合わせは[サポート](../support.md)を参照してください。 デスクトップと紹介画像の配布物は、分離した保存先で`harness/scripts/Build-Windows.ps1`を実行し、続けて`tools/desktop_release.py`で同じコミットの基本配布物とまとめます。具体的な引数はリリース案内に記載しています。
 
 ## できること
 
@@ -82,7 +94,7 @@ python tools/plugin.py build --destination ../oif-plugin --expect-plan <plan-sha
 python tools/plugin.py validate --directory ../oif-plugin/objective-integrity
 ```
 
-最初のコマンドは書込みをせず、対象と`plan_sha256`を表示します。その値を2つ目のコマンドへ入れると、`objective-integrity/`フォルダー、`objective-integrity-0.2.1.zip`、`build.json`を生成します。元ファイルの変更、既存保存先、プランの不一致があれば上書きしません。同じ元ファイルからは同じZIPバイト列を生成します。
+最初のコマンドは書込みをせず、対象と`plan_sha256`を表示します。その値を2つ目のコマンドへ入れると、`objective-integrity/`フォルダー、`objective-integrity-0.3.0-beta.1.zip`、`build.json`を生成します。元ファイルの変更、既存保存先、プランの不一致があれば上書きしません。同じ元ファイルからは同じZIPバイト列を生成します。
 
 対応ホストの通常のプラグイン導入手順で読み込んでください。ローカルのマーケットプレイスを使う場合、この出力例ではルートが`oif-plugin`、参照先が`./objective-integrity`になります。[英語のプラグインガイド](../plugin.md)と、そこからリンクする公式の現行手順を参照してください。生成だけでインストール・公開・フック有効化は行いません。
 
@@ -200,3 +212,7 @@ Apache License 2.0。[LICENSE](../../LICENSE)を参照してください。
 ## スポンサー
 
 計算リソースをご提供いただいた [@BlueSnyaiper](https://x.com/BlueSnyaiper) さん、[@kekkon_soon](https://x.com/kekkon_soon) さんに感謝します。
+
+## デスクトップ版の紹介画像
+
+[日本語の紹介画像3枚](../showcase/ja/README.md)で、目的の継続、チャットを越えた学習、ハーネス自体の改善を紹介しています。

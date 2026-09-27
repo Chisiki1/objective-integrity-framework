@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "objective-integrity",
-  "version": "0.2.1",
+  "version": "0.3.0-beta.1",
   "description": "Keep long tasks faithful to their objectives and turn useful lessons into better next actions.",
   "author": {
     "name": "Objective Integrity Framework",
@@ -10,7 +10,12 @@
   "homepage": "https://github.com/Chisiki1/objective-integrity-framework/blob/main/docs/plugin.md",
   "repository": "https://github.com/Chisiki1/objective-integrity-framework",
   "license": "Apache-2.0",
-  "keywords": ["objectives", "task-continuity", "self-improvement", "agent-skills"],
+  "keywords": [
+    "objectives",
+    "task-continuity",
+    "self-improvement",
+    "agent-skills"
+  ],
   "extensions": {
     "com.openai": {
       "interface": {
@@ -19,7 +24,10 @@
         "longDescription": "Keep the requested outcome, active requirements and unfinished deliverables visible as work evolves. Objective Integrity helps an agent resume the right work, distinguish evidence from completion, and carry useful lessons into the next applicable action. Use it for long tasks, changing requirements, interrupted work and recurring mistakes. Start with the included instructions and task-local records; add the optional OIF runtime when executable ledgers and checks are useful. The skill works with the host's existing tools and permissions and does not add a server, account connection or background service.",
         "developerName": "Objective Integrity Framework",
         "category": "Productivity",
-        "capabilities": ["Preserve task requirements", "Apply reusable improvements"],
+        "capabilities": [
+          "Preserve task requirements",
+          "Apply reusable improvements"
+        ],
         "websiteURL": "https://github.com/Chisiki1/objective-integrity-framework",
         "privacyPolicyURL": "https://github.com/Chisiki1/objective-integrity-framework/blob/main/PRIVACY.md",
         "termsOfServiceURL": "https://github.com/Chisiki1/objective-integrity-framework/blob/main/LICENSE",

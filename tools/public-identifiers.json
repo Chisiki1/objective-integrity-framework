@@ -32,6 +32,110 @@
       "value": "test@example.invalid",
       "reason": "Synthetic identity used exclusively in a disposable local Git test repository.",
       "provenance": "ReleaseAssets.git in tests/test_release.py; the address is not a maintainer contact."
+    },
+    {
+      "path": "harness/scripts/Build-Desktop.ps1",
+      "blob_sha256": "E5F66EF2D530D1B426FD9F0391E2016DDE2EB9D989D58A7FCC0447CD202601B6",
+      "kind": "long_hex_identifier",
+      "value": "F492BBF547D0DA329553B6727435B677579B1E9F91CC9E4A1AD029366D5F23D0",
+      "reason": "Pinned WebView2 SDK package digest.",
+      "provenance": "https://api.nuget.org/v3-flatcontainer/microsoft.web.webview2/1.0.4191.47/microsoft.web.webview2.1.0.4191.47.nupkg"
+    },
+    {
+      "path": "harness/scripts/OIF.manifest",
+      "blob_sha256": "CDEAE9A26F95AB2162DEE408A108288888E1869449410D292ED62A8119A2DE63",
+      "kind": "uuid_identifier",
+      "value": "8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a",
+      "reason": "Windows supported operating system identifier.",
+      "provenance": "https://learn.microsoft.com/en-us/windows/win32/sbscs/application-manifests"
+    },
+    {
+      "path": "harness/src/policy_harness/updates.py",
+      "blob_sha256": "9A1F4C892AE3460C0344672709C0BDDB2F8543CE2238C088AABA43B772BF6FAF",
+      "kind": "long_hex_identifier",
+      "value": "223921b76ee99bde995b7ff738513eef100fb51d18c93597a113bcffe865b2a7",
+      "reason": "Pinned public tokenizer content digest.",
+      "provenance": "https://openaipublic.blob.core.windows.net/encodings/cl100k_base.tiktoken"
+    },
+    {
+      "path": "harness/tests/test_ui_preferences.py",
+      "blob_sha256": "D305036EDB928B48BF839ED63B84363532C787F8C6FA120FE6BF29013B36437C",
+      "kind": "long_hex_identifier",
+      "value": "20D25566050BFAD17D0C22B77FF59B1C04BA8BE8CECE0A9377058D2A2902F573",
+      "reason": "Checks the shipped OIF logo bytes.",
+      "provenance": "harness/src/policy_harness/static/oif-outline.png"
+    },
+    {
+      "path": "harness/scripts/OifShell.cs",
+      "blob_sha256": "55D477EB8AC443F0E716CA0D1D027D6D9739B4BA2DA9DCEC4A967E28F002AB87",
+      "kind": "uuid_identifier",
+      "value": "9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3",
+      "reason": "Public Windows Shell property or COM interface identifier.",
+      "provenance": "https://learn.microsoft.com/en-us/windows/win32/shell/props-system-appusermodel-id"
+    },
+    {
+      "path": "harness/scripts/OifShell.cs",
+      "blob_sha256": "55D477EB8AC443F0E716CA0D1D027D6D9739B4BA2DA9DCEC4A967E28F002AB87",
+      "kind": "uuid_identifier",
+      "value": "886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99",
+      "reason": "Public Windows Shell property or COM interface identifier.",
+      "provenance": "https://learn.microsoft.com/en-us/windows/win32/shell/props-system-appusermodel-id"
+    },
+    {
+      "path": "harness/scripts/OifShell.cs",
+      "blob_sha256": "55D477EB8AC443F0E716CA0D1D027D6D9739B4BA2DA9DCEC4A967E28F002AB87",
+      "kind": "uuid_identifier",
+      "value": "00021401-0000-0000-C000-000000000046",
+      "reason": "Public Windows Shell property or COM interface identifier.",
+      "provenance": "https://learn.microsoft.com/en-us/windows/win32/shell/props-system-appusermodel-id"
+    },
+    {
+      "path": "harness/tests/desktop/ShellProbe.cs",
+      "blob_sha256": "B4482E75378A1F581FE39C92B9B0A73DB19390B36C347715255400D4AEDDBB88",
+      "kind": "uuid_identifier",
+      "value": "9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3",
+      "reason": "Public Windows Shell property or COM interface identifier.",
+      "provenance": "https://learn.microsoft.com/en-us/windows/win32/shell/props-system-appusermodel-id"
+    },
+    {
+      "path": "harness/tests/desktop/ShellProbe.cs",
+      "blob_sha256": "B4482E75378A1F581FE39C92B9B0A73DB19390B36C347715255400D4AEDDBB88",
+      "kind": "uuid_identifier",
+      "value": "886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99",
+      "reason": "Public Windows Shell property or COM interface identifier.",
+      "provenance": "https://learn.microsoft.com/en-us/windows/win32/shell/props-system-appusermodel-id"
+    },
+    {
+      "path": "harness/tests/desktop/ShellProbe.cs",
+      "blob_sha256": "B4482E75378A1F581FE39C92B9B0A73DB19390B36C347715255400D4AEDDBB88",
+      "kind": "uuid_identifier",
+      "value": "00021401-0000-0000-C000-000000000046",
+      "reason": "Public Windows Shell property or COM interface identifier.",
+      "provenance": "https://learn.microsoft.com/en-us/windows/win32/shell/props-system-appusermodel-id"
+    },
+    {
+      "path": "harness/tests/test_providers.py",
+      "blob_sha256": "B99E630D9F1DEE26565274BAABBD9B652A8CB1F6637847C694343AF8CE249C96",
+      "kind": "email",
+      "value": "password@example.org",
+      "reason": "Synthetic reserved-domain test data for private-source rejection.",
+      "provenance": "Provider redaction regression fixtures; example.org is reserved for examples."
+    },
+    {
+      "path": "harness/tests/test_providers.py",
+      "blob_sha256": "B99E630D9F1DEE26565274BAABBD9B652A8CB1F6637847C694343AF8CE249C96",
+      "kind": "email",
+      "value": "pass@example.org",
+      "reason": "Synthetic reserved-domain test data for private-source rejection.",
+      "provenance": "Provider redaction regression fixtures; example.org is reserved for examples."
+    },
+    {
+      "path": "harness/tests/test_providers.py",
+      "blob_sha256": "B99E630D9F1DEE26565274BAABBD9B652A8CB1F6637847C694343AF8CE249C96",
+      "kind": "email",
+      "value": "person@example.org",
+      "reason": "Synthetic reserved-domain test data for private-source rejection.",
+      "provenance": "Provider redaction regression fixtures; example.org is reserved for examples."
     }
   ]
 }

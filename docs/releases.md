@@ -1,15 +1,19 @@
 # Releases and downloads
 
-Use the [latest release](https://github.com/Chisiki1/objective-integrity-framework/releases/latest)
-for a fixed, inspectable version. The current version is **0.2.1**. The framework
+Use the [desktop beta release](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.1)
+for a fixed, inspectable version. The current version is **0.3.0-beta.1**. The framework
 and skills-only plugin share that version; `main` can contain later development.
 
 ## Choose one download
 
+- **OIF-Desktop-0.3.0-beta.1-windows-x64.zip** — the ready-to-open Windows app. Extract all files and open OIF.exe. [Guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.1/harness/README.md).
+- **OIF-Showcase-0.3.0-beta.1.zip** — labelled example images and their captions.
+
+
 | Asset | Use it for | Requirements |
 |---|---|---|
-| `objective-integrity-framework-0.2.1.zip` | Full source, documentation, examples and optional executable runtime | Reading needs no runtime; Python 3.10+ with standard-library `sqlite3` for the tools |
-| `objective-integrity-0.2.1.zip` | Self-contained Objective Integrity skill, references and practice cases | A compatible plugin host; no Python, API key, server or OIF account |
+| `objective-integrity-framework-0.3.0-beta.1.zip` | Full source, documentation, examples and optional executable runtime | Reading needs no runtime; Python 3.10+ with standard-library `sqlite3` for the tools |
+| `objective-integrity-0.3.0-beta.1.zip` | Self-contained Objective Integrity skill, references and practice cases | A compatible plugin host; no Python, API key, server or OIF account |
 | `SHA256SUMS.txt` | Check downloaded ZIPs and `release.json` | A SHA-256 utility |
 | `release.json` | Exact source commit/tree, artifact hashes, sizes and builder identities | Any text or JSON reader |
 
@@ -24,11 +28,11 @@ Download `SHA256SUMS.txt` from the **same version's release** as your ZIP. On
 PowerShell, print the file's hash and compare it with the matching filename's row:
 
 ```powershell
-Get-FileHash .\objective-integrity-framework-0.2.1.zip -Algorithm SHA256
+Get-FileHash .\objective-integrity-framework-0.3.0-beta.1.zip -Algorithm SHA256
 Get-Content .\SHA256SUMS.txt
 ```
 
-On Linux, place the two ZIPs, `release.json` and `SHA256SUMS.txt` in one directory:
+On Linux, place all downloaded ZIPs, `release.json` and `SHA256SUMS.txt` in one directory:
 
 ```bash
 sha256sum -c SHA256SUMS.txt
@@ -59,19 +63,15 @@ rollback route if recovery is needed; do not overwrite edited files by hand.
 ## Version compatibility and support
 
 OIF uses `MAJOR.MINOR.PATCH` versions and `v`-prefixed release tags. The current
-tag is **v0.2.1**; the first versioned tag was **v0.1.1**, following the earlier
-untagged 0.1.0 plugin package. 0.2.1 clarifies the core concepts and fixes stale descriptions; 0.2.0 added the bounded card and evidence index,
-refreshed skills and explicit host configuration; existing task records continue
-to work and no migration step is required. The [changelog](../CHANGELOG.md) distinguishes additions, fixes
-and strengthened existing behavior.
+tag is **v0.3.0-beta.1**; the first versioned tag was **v0.1.1**, following the earlier
+untagged 0.1.0 plugin package. This beta adds the Windows desktop harness.
+Framework records keep their existing schemas. Desktop data uses its own local
+store and the documented [backup/update/restore procedure](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.1/harness/docs/guide.md#back-up-update-and-restore).
 
 During 0.x development, minor versions may change interfaces; patch versions are
-intended for compatible corrections. Record schemas retain their own explicit
-versions. Read migration notes before adopting an incompatible change. Supported
-CI covers Windows and Linux on Python 3.10 and the latest stable Python available
-to CI. Other hosts can use the portable instructions, but check their own tooling
-compatibility. Maintainers prioritize the latest release; no paid support or
-fixed response deadline is implied. See [support](support.md) and [security](../SECURITY.md).
+intended for compatible corrections. The framework CI covers Windows and Linux
+on Python 3.10 and the current Python release. The desktop job uses Windows and
+Python 3.12 with Node for UI regressions. See [support](support.md) and [security](../SECURITY.md).
 
 ## Reproduce the assets
 
@@ -86,7 +86,19 @@ The first command is a read-only preview. The second requires its exact hash,
 an absent destination and an existing separate parent. The builder uses committed
 source, rejects local changes/redirected members, reuses the plugin builder, and
 reads back every asset. It never tags, uploads, installs or changes configuration.
-`plugin-build/` is retained local build material; the four named top-level assets
-are the distribution. Repeated builds with the same Git/Python/compression
+`plugin-build/` is retained local build material. These commands build the two core archives and their checksums. Repeated builds with the same Git/Python/compression
 environment produce the same bytes. If a build fails, inspect its retained output
 before selecting a new destination. Existing output is never deleted or reused.
+
+
+For a desktop beta, first build the Windows folder with
+`harness/scripts/Build-Windows.ps1` in a separate directory, then run:
+
+```bash
+python -B tools/desktop_release.py --base ../oif-release --desktop ../OIF-build --destination ../oif-beta-assets
+```
+
+The additional builder checks desktop source bytes against the same committed
+checkout, excludes runtime data and build caches, and creates the desktop and
+showcase ZIPs plus a combined manifest and checksums. It refuses an existing output
+directory. None of these commands publishes the result.

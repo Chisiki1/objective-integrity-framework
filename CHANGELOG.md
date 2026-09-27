@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0-beta.1 — 2026-09-28
+
+- Add the OIF Windows desktop harness with a dedicated window, white OIF icon and local service recovery.
+- Preserve instruction-by-instruction progress and results, important/full progress views, bounded record retrieval and artifact preview.
+- Add shared lesson creation, selection, actual-use assessment, refinement, consolidation and retirement across chats.
+- Include proportional execution policy, automatic context compression, model configuration and explicit access modes.
+- Include a controlled harness-code update path with verification, activation, next-use records and rollback.
+- Ship a complete Windows x64 package with pinned Python dependencies, English/Japanese guides and labelled example images.
+- Keep the framework and skills-only plugin distributions available at the same beta version.
+
+
 ## 0.2.1 — 2026-09-11
 
 A small follow-up that fixes stale descriptions left behind by the 0.2.0 card

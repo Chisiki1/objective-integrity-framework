@@ -9,9 +9,9 @@ from pathlib import Path
 from public_identifiers import PublicIdentifiers, free_text
 
 
-DEFAULT_EXCLUDES = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "work"}
+DEFAULT_EXCLUDES = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "work", ".venv", ".work", ".runtime", "python"}
 # A narrow language exception, not an exclusion from privacy or secret checks.
-JAPANESE_EXPLANATIONS = {"docs/ja/README.md"}
+JAPANESE_EXPLANATIONS = {"docs/ja/README.md", "harness/examples/ja.json", "docs/showcase/ja/README.md", "docs/showcase/ja/01-objective.html", "docs/showcase/ja/02-learning.html", "docs/showcase/ja/03-controlled-improvement.html"}
 GENERIC_PATTERNS = {
     "windows_home_path": re.compile(r"[A-Za-z]:\\Users\\[^\\\s]+"),
     "drive_root_path": re.compile(r"(?<![A-Za-z])[A-Za-z]:\\(?!\\)"),
@@ -64,7 +64,7 @@ def main(argv: list[str] | None = None) -> int:
         except UnicodeDecodeError:
             continue
         for label, pattern in patterns.items():
-            if label == "japanese_text" and rel in JAPANESE_EXPLANATIONS:
+            if label == "japanese_text" and (rel in JAPANESE_EXPLANATIONS or rel == "harness/docs/ja.md" or (rel.startswith(("harness/src/", "harness/tests/", "harness/scripts/")) and path.suffix in {".py", ".js", ".html", ".cs", ".ps1"})):
                 continue
             for match in pattern.finditer(text):
                 if public.permits(rel, raw, label, match.group(0)):

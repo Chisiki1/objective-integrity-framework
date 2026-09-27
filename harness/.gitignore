@@ -1,0 +1,10 @@
+.venv/
+.runtime/
+.work/
+python/
+desktop/*.dll
+/OIF.exe
+/OIF.exe.config
+__pycache__/
+.pytest_cache/
+*.pyc

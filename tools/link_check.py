@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 LINK_RE = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
-EXCLUDES = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
+EXCLUDES = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", ".venv", ".work", ".runtime", "python"}
 
 
 def iter_markdown(root: Path):

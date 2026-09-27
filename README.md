@@ -4,16 +4,24 @@
 
 Keep the objective intact. Turn experience into better next actions.
 
-Version **0.2.1** · [Download](https://github.com/Chisiki1/objective-integrity-framework/releases/latest) · [Changelog](CHANGELOG.md) · [Japanese guide](docs/ja/README.md).
+Version **0.3.0-beta.1** · [Download](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.1) · [Changelog](CHANGELOG.md) · [Japanese guide](docs/ja/README.md).
 
 [![CI](https://github.com/Chisiki1/objective-integrity-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/Chisiki1/objective-integrity-framework/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 Objective Integrity Framework is an open operating framework for agentic work that must stay faithful to the requested outcome across long tasks, corrections, handoffs, reviews, and external actions. It gives an agent a durable objective, a proportionate evidence model, and a practical learning loop without turning process artifacts into the goal.
 
-> **Quality compounds with every pass.** A fast model that follows the framework keeps improving — out-iterating heavier, costlier models. That is the goal the framework is built around — *iterate, don't escalate*.
+> **A result today. A better starting point next time.** Keep the original goal, carry useful lessons into later work, and check whether each change helped.
 
 Use it as a five-minute review discipline, project-local guidance, a reusable agent skill, a skills-only plugin package, or a higher-assurance runtime. The core is platform-neutral. Product-specific integrations live in `adapters/` and remain optional.
+
+## OIF Desktop beta
+
+The framework now has a **dedicated Windows agent workspace**. Keep instructions and results together, preview artifacts, reuse shared lessons across chats, and improve the harness through a controlled verification and recovery path.
+
+**[Download Windows x64](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.1)** · [Desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.1/harness/README.md) · [Learning and updates](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.1/harness/docs/guide.md) · [Japanese desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.1/harness/docs/ja.md)
+
+Extract the full ZIP, open **OIF.exe**, and configure your model in Settings. Python is included. The desktop uses the installed WebView2 Runtime. Ordinary file work needs no Docker; isolated execution and harness-code verification use Docker. The framework and skills-only downloads remain available.
 
 ## How It Works
 
@@ -23,13 +31,16 @@ Work then follows one discipline: one owner per objective, actions recorded befo
 
 ## What's New
 
+**0.3.0-beta.1 (2026-09-28):** the first public Windows desktop harness, persistent multi-chat execution, bounded context and record retrieval, artifact previews, access modes, shared learning with revision/merge/retirement, and controlled code-update verification. The public policy is self-contained. See the [desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.1/harness/docs/guide.md) for behavior and beta scope.
+
+
 **0.2.1 update (2026-09-11):** consistency and clarity follow-up — stale card descriptions fixed across the docs and packaged guidance, adapters and samples aligned, and a concise "How It Works" overview added (see [CHANGELOG](CHANGELOG.md)).
 
 **0.2.0 update (2026-09-11):** the human objective card is now a bounded, reconciliation-led view with a
 machine-readable `EVIDENCE-INDEX.json` beside it; host wiring is explicit configuration;
 and the shipped skills carry the latest same-chat workflows.
 
-- **Quality compounds with every pass:** each pass through the objective, action, observation, evidence and correction loop catches and fixes more than the last — the framework's goal is that a fast model which follows it can out-iterate heavier, costlier models.
+- **Learning reaches the next action:** select an applicable lesson, use it in actual work, assess the result, then retain, refine or retire it.
 - **A bounded card, a complete index:** the card keeps counts, pointers and continuity frontiers; full authority, source bindings, outcomes and action history stay in `EVIDENCE-INDEX.json`.
 - **Explicit host bindings:** `host_binding` and `projection_filename` configuration make host-specific wiring a documented interface instead of a fork. See `adapters/hermes/` for one optional binding.
 - **Late records, no rewritten history:** `action-method-supplement` aligns a late method record without hiding the original omission.
@@ -210,3 +221,9 @@ Apache License 2.0. See [LICENSE](LICENSE).
 ## Sponsors
 
 Thanks to [@BlueSnyaiper](https://x.com/BlueSnyaiper) and [@kekkon_soon](https://x.com/kekkon_soon) for providing computing resources.
+
+## Desktop in pictures
+
+[Three feature illustrations](docs/showcase/README.md) · [Japanese edition](docs/showcase/ja/README.md)
+
+![OIF Desktop: keep the goal and see the result](docs/assets/oif-desktop-01-objective.png)

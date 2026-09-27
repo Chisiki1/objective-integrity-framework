@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>OIF</title><link rel="icon" href="/static/oif-desktop.png" type="image/png">
+  <script src="/static/i18n.js"></script><link rel="stylesheet" href="/static/style.css"><script src="/static/presentation.js" defer></script><script src="/static/artifact-preview.js" defer></script><script src="/static/conversation.js" defer></script><script src="/static/record-view.js" defer></script><script src="/static/app.js" defer></script><script src="/static/provider-settings.js" defer></script><script src="/static/workspace.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content" data-i18n="メインへ移動">メインへ移動</a>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="OIF ホーム" data-i18n-label="OIF ホーム"><img src="/static/oif-outline.png" alt="" width="40" height="40"><span>OIF</span></a>
+    <div class="top-actions"><span id="connection" class="connection">接続を確認中</span><label class="language-control"><span class="sr-only" data-i18n="表示言語">表示言語</span><select id="language-select" aria-label="表示言語" data-i18n-label="表示言語"><option value="ja">日本語</option><option value="en">English</option></select></label><button id="theme-toggle" class="quiet" type="button">ライトに切り替え</button><button id="settings-open" class="quiet" data-i18n="接続設定">接続設定</button></div>
+  </header>
+  <div id="notice" role="status" class="notice" hidden></div>
+  <div class="app-layout">
+    <aside id="chat-sidebar" class="sidebar" aria-label="タスク一覧" data-i18n-label="タスク一覧">
+      <button id="new-task" class="primary new-task"><span aria-hidden="true">＋</span> <span data-i18n="新しい作業">新しい作業</span></button>
+      <div class="section-label"><span data-i18n="保存されたタスク">保存されたタスク</span><button id="reload-tasks" class="icon-button" aria-label="タスク一覧を更新" data-i18n-label="タスク一覧を更新">↻</button></div>
+      <div class="sidebar-tools"><select id="task-scope" aria-label="タスクの場所" data-i18n-label="タスクの場所"><option value="active" data-i18n="タスク">タスク</option><option value="archive" data-i18n="アーカイブ">アーカイブ</option><option value="trash" data-i18n="ごみ箱">ごみ箱</option></select><button id="folder-create" type="button" class="icon-button" aria-label="フォルダーを作成" data-i18n-label="フォルダーを作成">＋</button></div><details class="folder-disclosure"><summary data-i18n="フォルダー">フォルダー</summary><nav id="folder-list"></nav></details><nav id="task-list" class="task-list"><p class="muted" data-i18n="記録を読み込んでいます。">記録を読み込んでいます。</p></nav>
+      <div class="sidebar-footer"><span class="dot"></span><span data-i18n="このPCに記録を保存">このPCに記録を保存</span></div>
+    </aside>
+    <div id="sidebar-resizer" class="sidebar-resizer" role="separator" tabindex="0" aria-orientation="vertical" aria-controls="chat-sidebar" aria-label="チャット一覧の幅" data-i18n-label="チャット一覧の幅" title="ドラッグで幅を調整。左右キーでも調整でき、ダブルクリックで元に戻せます。" data-i18n-title="ドラッグで幅を調整。左右キーでも調整でき、ダブルクリックで元に戻せます。"></div>
+    <main id="main-content">
+      <section id="loading" class="welcome" hidden aria-live="polite"><p class="muted" id="loading-message">選択したタスクの記録を読み込んでいます。</p></section>
+      <section id="welcome" class="welcome">
+        <h1 data-i18n="何を完成させたいですか？">何を完成させたいですか？</h1>
+        <form id="task-form" class="task-form">
+          <label class="sr-only" for="objective" data-i18n="何を完成させたいですか？">何を完成させたいですか？</label>
+          <textarea id="objective" name="objective" rows="5" required maxlength="100000" placeholder="作りたいもの、調べたいこと、必要な成果物を入力してください。" data-i18n-placeholder="作りたいもの、調べたいこと、必要な成果物を入力してください。"></textarea>
+          <div id="new-files" class="file-chips"></div>
+          <div class="form-footer">
+            <div class="composer-tools">
+              <button id="new-pick" type="button" class="quiet" data-i18n="添付">添付</button><input id="new-file-input" type="file" multiple hidden>
+              <label class="access-control" for="new-access"><span data-i18n="アクセス権限">アクセス権限</span><select id="new-access" aria-label="アクセス権限" data-i18n-label="アクセス権限" aria-describedby="new-access-description"><option value="workspace">作業フォルダーのみ</option><option value="ask">変更・通信の前に確認</option><option value="read_only">読み取り専用</option><option value="full">フルアクセス</option></select></label>
+              <small id="new-folder-label"></small>
+            </div>
+            <button class="primary" id="submit-task" type="submit" data-i18n="作業を開始">作業を開始</button>
+          </div>
+          <p id="new-access-description" class="access-description">作業フォルダー内の編集・実行を許可します。公開Webも参照できます。</p>
+        </form>
+      </section>
+      <section id="task-view" hidden>
+        <div class="task-heading"><div><p class="eyebrow" id="task-id"></p><h1 id="task-title"></h1></div><span id="task-status" class="badge"></span></div>
+        <div id="task-state-banner" class="task-state-banner" role="status" aria-live="polite"></div>
+        <details class="objective-card"><summary data-i18n="この作業の主目的">この作業の主目的</summary><p id="primary-objective"></p><ul id="acceptance-list"></ul></details><div id="pending-work" role="status"></div>
+        <div class="task-toolbar"><div class="tabs" role="tablist" aria-label="記録の表示方法" data-i18n-label="記録の表示方法"><button id="chat-tab" class="tab active" role="tab" aria-selected="true" aria-controls="chat-panel" data-i18n="チャット">チャット</button><button id="list-tab" class="tab" role="tab" aria-selected="false" aria-controls="list-panel" data-i18n="全工程の一覧">全工程の一覧</button></div><label id="progress-filter-label" class="progress-filter"><span data-i18n="進捗の表示">進捗の表示</span><select id="progress-filter" aria-label="進捗の表示" data-i18n-label="進捗の表示"><option value="all" data-i18n="すべての進捗">すべての進捗</option><option value="important" data-i18n="重要な進捗だけ">重要な進捗だけ</option></select></label><div class="task-controls"><button id="refresh-task" class="quiet" data-i18n="表示を更新" title="このチャットの記録と接続を更新します。作業や入力中の内容は保持します。" data-i18n-title="このチャットの記録と接続を更新します。作業や入力中の内容は保持します。">表示を更新</button><button id="export-task" class="quiet" data-i18n="記録を保存">記録を保存</button><button id="resume-task" class="quiet" hidden data-i18n="再開">再開</button><button id="stop-task" class="danger" hidden data-i18n="停止">停止</button></div></div>
+        <section id="instruction-strip" class="instruction-strip"><div class="current-source"><strong id="current-source-label"></strong><span id="current-source-status"></span><p id="current-source-text"></p></div>
+            <details class="source-history" id="source-drawer"><summary><span data-i18n="ユーザーの指示履歴">ユーザーの指示履歴</span> <span id="source-count"></span></summary><div id="source-history"></div><p id="source-state" class="muted"></p></details>
+        </section>
+        <div class="work-columns"><div class="activity-column">
+          <div id="chat-panel" role="tabpanel" aria-labelledby="chat-tab">
+
+            <p class="stream-note" id="stream-state">保存された記録を読み込んでいます。</p><div id="chat-events" class="chat-events" role="log" aria-live="polite" aria-relevant="additions"></div>
+            <section id="final-result" class="result-card" hidden><h2 data-i18n="作業の結果">作業の結果</h2><div id="final-content"></div></section>
+          </div>
+          <div id="list-panel" role="tabpanel" aria-labelledby="list-tab" hidden><div class="table-wrap"><table><thead><tr><th data-i18n="時刻">時刻</th><th data-i18n="工程">工程</th><th data-i18n="状態">状態</th><th data-i18n="内容・根拠">内容・根拠</th></tr></thead><tbody id="event-rows"></tbody></table></div></div>
+          <div id="conversation-controls" class="conversation-controls"><button id="toggle-current-progress" type="button" class="quiet"></button><button id="follow-latest" type="button" class="quiet" data-i18n="最新へ" hidden>最新へ</button></div>
+          <section id="artifact-result" class="artifact-result" hidden><h2 data-i18n="成果物">成果物</h2><div id="task-artifacts"></div></section>
+          <div id="permission-requests"></div><section class="instruction-card" aria-label="このタスクに指示を追加" data-i18n-label="このタスクに指示を追加">
+            <form id="instruction-form">
+              <label class="sr-only" for="instruction-text" data-i18n="このタスクに指示を追加">このタスクに指示を追加</label><textarea id="instruction-text" rows="2" required maxlength="100000" placeholder="追加したい条件、訂正したい内容、続けてほしい作業を入力してください。" data-i18n-placeholder="追加したい条件、訂正したい内容、続けてほしい作業を入力してください。"></textarea>
+              <div id="message-files" class="file-chips"></div>
+              <div class="composer-footer">
+                <div class="composer-tools">
+                  <button id="message-pick" type="button" class="quiet" data-i18n="添付">添付</button><input id="message-file-input" type="file" multiple hidden>
+                  <label class="access-control" for="task-access"><span data-i18n="アクセス権限">アクセス権限</span><select id="task-access" aria-label="アクセス権限" data-i18n-label="アクセス権限" aria-describedby="task-access-description"><option value="workspace">作業フォルダーのみ</option><option value="ask">変更・通信の前に確認</option><option value="read_only">読み取り専用</option><option value="full">フルアクセス</option></select></label>
+                </div>
+                <div class="instruction-footer"><button id="submit-instruction" class="primary" type="submit">指示を送信</button></div>
+              </div>
+              <p id="task-access-description" class="access-description">作業フォルダー内の編集・実行を許可します。公開Webも参照できます。</p>
+              <p id="instruction-message" class="instruction-message" role="status" aria-live="polite"></p>
+            </form>
+            <details class="attachment-disclosure" hidden><summary data-i18n="ファイルを添付">ファイルを添付</summary><form id="attachment-form" class="attachment-form"><label for="attachment-file" data-i18n="このタスクにファイルを添付">このタスクにファイルを添付</label><input id="attachment-file" type="file" aria-describedby="attachment-limit attachment-selected"><p id="attachment-selected" class="muted"></p><div class="instruction-footer"><span id="attachment-limit" class="muted"></span><button id="submit-attachment" type="submit">添付を送信</button></div><p id="attachment-message" class="instruction-message" role="status" aria-live="polite"></p></form></details>
+          </section>
+        </div><details id="task-details" class="detail-column"><summary data-i18n="作業の詳細">作業の詳細</summary><div class="detail-body">
+          <details><summary data-i18n="操作と成果物">操作と成果物</summary><div id="operations"></div></details>
+          <details><summary data-i18n="未完了・確認が必要なこと">未完了・確認が必要なこと</summary><div id="open-details"></div></details>
+          <details><summary><span data-i18n="改善のアイデア">改善のアイデア</span> <span id="idea-count"></span></summary><div id="ideas"></div></details>
+          <details><summary><span data-i18n="Skill・知識">Skill・知識</span> <span id="skill-count"></span></summary><div id="skills"></div></details>
+          <details><summary><span data-i18n="担当と子タスク">担当と子タスク</span> <span id="child-count"></span></summary><div id="children"></div></details>
+          <details><summary data-i18n="根拠・出典・適用状態">根拠・出典・適用状態</summary><div id="evidence"></div></details>
+        </div></details></div>
+      </section>
+    </main>
+  </div>
+  <dialog id="settings-dialog" aria-labelledby="settings-title"><form id="settings-form">
+    <div class="dialog-heading"><h2 id="settings-title" data-i18n="接続設定">接続設定</h2><button id="settings-close" class="icon-button" type="button" aria-label="閉じる" data-i18n-label="閉じる">×</button></div>
+    <p class="muted" data-i18n="契約済みの接続先を指定します。キーは入力して保存できますが、画面へ再表示しません。">契約済みの接続先を指定します。キーは入力して保存できますが、画面へ再表示しません。</p>
+    <div class="fields-grid"><label class="wide"><span data-i18n="保存した接続">保存した接続</span><select id="provider-profile"><option value="">現在の設定</option></select></label></div>
+    <div class="dialog-footer"><button id="profile-use" type="button" class="quiet" data-i18n="この接続を使う">この接続を使う</button><button id="profile-delete" type="button" class="quiet" data-i18n="一覧から削除">一覧から削除</button><button id="openrouter-login" type="button" class="quiet" data-i18n="OpenRouterでログイン">OpenRouterでログイン</button></div>
+    <details><summary data-i18n="接続に名前を付けて保存">接続に名前を付けて保存</summary><label><span data-i18n="接続名">接続名</span><input id="profile-name" maxlength="80" placeholder="例：普段の作業用"></label><button id="profile-save" type="button" class="quiet" data-i18n="入力中の設定を保存">入力中の設定を保存</button></details>
+    <div class="fields-grid"><label class="wide"><span data-i18n="APIの接続先">APIの接続先</span><input name="base_url" type="url" placeholder="https://…/v1" autocomplete="off"></label><label><span data-i18n="作業モデル">作業モデル</span><input name="model" placeholder="deepseek-v4.1-flash" autocomplete="off"></label><label><span data-i18n="レビュー用モデル（省略可）">レビュー用モデル（省略可）</span><input name="review_model" autocomplete="off"></label><label class="wide"><span data-i18n="モデルAPIキー">モデルAPIキー</span><input name="model_api_key" type="password" autocomplete="new-password"></label><label><span data-i18n="接続方式">接続方式</span><select name="api_mode"><option value="compatible" data-i18n="互換API">互換API</option><option value="deepagents">Deep Agents</option></select></label><label><span data-i18n="推論設定（省略可）">推論設定（省略可）</span><input name="reasoning_effort" placeholder="提供元が対応する値" data-i18n-placeholder="提供元が対応する値"></label><label><span data-i18n="文脈の上限（token）">文脈の上限（token）</span><input name="model_context_tokens" type="number" min="1" step="1"></label><label><span data-i18n="一回の出力上限（token）">一回の出力上限（token）</span><input name="max_output_tokens" type="number" min="1" step="1"></label></div>
+    <h3 data-i18n="Web情報収集">Web情報収集</h3><div class="fields-grid"><label><span data-i18n="サービス">サービス</span><select name="web_provider"><option value="none" data-i18n="未設定">未設定</option><option value="public_url" data-i18n="公開URLを直接取得">公開URLを直接取得</option><option value="brave">Brave Search</option><option value="tavily">Tavily</option></select></label><label><span data-i18n="接続先の変更（省略可）">接続先の変更（省略可）</span><input name="web_base_url" type="url" placeholder="https://…" autocomplete="off"></label><label class="wide"><span data-i18n="Webサービスのキー">Webサービスのキー</span><input name="web_api_key" type="password" autocomplete="new-password"></label></div>
+    <p class="muted" data-i18n="公開URLの取得は検索サービスを使いません。情報の不足や取得できなかった事実は、作業記録に残ります。">公開URLの取得は検索サービスを使いません。情報の不足や取得できなかった事実は、作業記録に残ります。</p><details><summary data-i18n="現在の環境・実効設定">現在の環境・実効設定</summary><pre id="environment-details"></pre></details><p id="settings-error" class="inline-error" role="alert"></p><div class="dialog-footer"><button class="primary" type="submit" data-i18n="設定を保存">設定を保存</button></div>
+  </form></dialog>
+  <dialog id="evidence-dialog" aria-labelledby="evidence-title"><div class="dialog-heading"><h2 id="evidence-title">記録の詳細</h2><button id="evidence-close" class="icon-button" aria-label="閉じる" data-i18n-label="閉じる">×</button></div><p class="muted" data-i18n="原記録">原記録</p><button id="evidence-explain" type="button" class="quiet" hidden data-i18n="この記録を解説">この記録を解説</button><section id="evidence-explanation" class="explanation" aria-live="polite" hidden></section><nav class="record-controls"><button id="record-previous" type="button" class="quiet" data-i18n="前へ">前へ</button><span id="record-page"></span><button id="record-next" type="button" class="quiet" data-i18n="次へ">次へ</button><a id="record-download" hidden data-i18n="原記録を保存">原記録を保存</a></nav><pre id="evidence-content"></pre></dialog>
+  <dialog id="approval-dialog" aria-labelledby="approval-title"><form id="approval-form"><div class="dialog-heading"><h2 id="approval-title" data-i18n="作業方針の変更を確認">作業方針の変更を確認</h2><button id="approval-close" type="button" class="icon-button" aria-label="閉じる" data-i18n-label="閉じる">×</button></div><p data-i18n="以下の正確な変更だけが判断の対象です。">以下の正確な変更だけが判断の対象です。</p><pre id="approval-content"></pre><label><span data-i18n="判断の理由">判断の理由</span><textarea id="approval-reason" rows="3" required></textarea></label><p id="approval-error" role="alert" class="inline-error"></p><div class="dialog-footer"><button class="quiet" type="submit" value="reject" data-i18n="この変更を承認しない">この変更を承認しない</button><button class="primary" type="submit" value="approve" data-i18n="この変更を承認する">この変更を承認する</button></div></form></dialog>
+<div id="task-menu" class="task-menu" role="group" aria-label="タスクの操作" data-i18n-label="タスクの操作" hidden></div>
+  <dialog id="organize-dialog" aria-labelledby="organize-title"><form id="organize-form"><div class="dialog-heading"><h2 id="organize-title"></h2><button id="organize-close" type="button" class="icon-button" aria-label="閉じる" data-i18n-label="閉じる">×</button></div><input id="organize-name" aria-label="名前" data-i18n-label="名前" required><select id="organize-folder" aria-label="フォルダー" data-i18n-label="フォルダー"></select><p id="organize-error" class="inline-error" role="alert"></p><div class="dialog-footer"><button id="organize-save" class="primary" type="submit" data-i18n="保存">保存</button></div></form></dialog>
+
+  <dialog id="artifact-dialog" aria-labelledby="artifact-title"><div class="dialog-heading"><div><p id="artifact-preview-label" class="eyebrow">成果物のプレビュー</p><h2 id="artifact-title"></h2></div><button id="artifact-close" class="icon-button" type="button" aria-label="閉じる">×</button></div><div class="artifact-preview-toolbar"><div id="artifact-view-switch" hidden><button id="artifact-view-rendered" type="button" class="quiet" aria-pressed="true">プレビュー</button><button id="artifact-view-source" type="button" class="quiet" aria-pressed="false">原文</button></div><span id="artifact-meta" class="muted"></span><a id="artifact-download" class="quiet" download>ダウンロード</a></div><section id="artifact-preview-body" tabindex="0" aria-live="polite"></section></dialog>
+<dialog id="full-access-dialog" aria-labelledby="full-access-title" aria-describedby="full-access-description"><form id="full-access-form"><h2 id="full-access-title"></h2><p id="full-access-description"></p><label for="full-access-text" id="full-access-input-label"></label><input id="full-access-text" type="text" autocomplete="off" spellcheck="false"><div class="dialog-footer"><button id="full-access-cancel" class="quiet" type="button"></button><button id="full-access-allow" class="full-access" type="submit" disabled></button></div></form></dialog>
+</body></html>

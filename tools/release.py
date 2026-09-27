@@ -35,8 +35,8 @@ def source_bundle(root):
     if git(root, "status", "--porcelain", "--untracked-files=all").strip():
         raise ValueError("Use a clean committed checkout; no local or untracked changes")
     version = (root / "VERSION").read_text(encoding="utf8").strip()
-    if not re.fullmatch(r"(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)", version):
-        raise ValueError("VERSION must contain one stable numeric semantic version")
+    if not re.fullmatch(r"(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?", version):
+        raise ValueError("VERSION must contain one semantic version, optionally with a prerelease suffix")
     manifest, _ = plugin.payload(root)
     if manifest["version"] != version:
         raise ValueError("VERSION and plugin version must agree")
