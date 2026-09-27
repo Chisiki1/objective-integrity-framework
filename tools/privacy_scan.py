@@ -11,7 +11,7 @@ from public_identifiers import PublicIdentifiers, free_text
 
 DEFAULT_EXCLUDES = {".git", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "work", ".venv", ".work", ".runtime", "python"}
 # A narrow language exception, not an exclusion from privacy or secret checks.
-JAPANESE_EXPLANATIONS = {"docs/ja/README.md", "harness/examples/ja.json", "docs/showcase/ja/README.md", "docs/showcase/ja/01-objective.html", "docs/showcase/ja/02-learning.html", "docs/showcase/ja/03-controlled-improvement.html"}
+JAPANESE_EXPLANATIONS = {"docs/ja/README.md", "harness/examples/ja.json", "docs/showcase/ja/README.md", "docs/showcase/ja/03-records.html", "docs/showcase/ja/01-learning.html", "docs/showcase/ja/02-improvement.html"}
 GENERIC_PATTERNS = {
     "windows_home_path": re.compile(r"[A-Za-z]:\\Users\\[^\\\s]+"),
     "drive_root_path": re.compile(r"(?<![A-Za-z])[A-Za-z]:\\(?!\\)"),

@@ -17,7 +17,7 @@ derived from the portable metadata, not maintained as a second configuration.
 
 ## Build a package
 
-Prefer the ready-to-download ZIP on the [release page](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.1).
+Prefer the ready-to-download ZIP on the [release page](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.2).
 The [release guide](releases.md) explains archive choice, checksum verification
 and version compatibility. Building locally is optional.
 
@@ -51,7 +51,7 @@ oif-plugin/
     PRIVACY.md
     LICENSE
     NOTICE
-  objective-integrity-0.3.0-beta.1.zip
+  objective-integrity-0.3.0-beta.2.zip
   build.json
 ```
 

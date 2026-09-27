@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-beta.2 — 2026-09-28
+
+- Replace the English and Japanese desktop showcase with matching content and order: shared learning, harness improvement, and actual-use records.
+- Show the real cross-chat lesson-use and assessment records in both language editions.
+- Align current documentation and distribution archives with the six replacement images; remove obsolete showcase artwork from the current source.
+- Refresh example wording and release metadata. Application behavior and dependencies are unchanged.
+
 ## 0.3.0-beta.1 — 2026-09-28
 
 - Add the OIF Windows desktop harness with a dedicated window, white OIF icon and local service recovery.

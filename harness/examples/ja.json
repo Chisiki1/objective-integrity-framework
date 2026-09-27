@@ -10,7 +10,7 @@
   "The launch brief is ready. It explains the goal, the three changes and the next step. Open the Markdown preview to read it.": "公開に向けた説明ができました。目的、3つの変更点、次の一歩をまとめています。ファイルを開くと、この画面で内容を読めます。",
   "Save the requested text and verify its bytes": "指定された文章を保存し、保存内容を読み戻して確認する",
   "The saved file was read back by the file tool.": "ファイルの保存時に、実際に書き込まれた内容を読み戻して確認しました。",
-  "Verify text where it is written": "文章は保存したその場で内容を確認する",
+  "Read back saved files to verify the requested content": "保存したファイルを開き直し、依頼どおりの内容か確認する",
   "The file tool returned the saved bytes and text facts.": "保存操作から実際の内容と文字数を確認できました。",
   "Writing literal UTF-8 text": "指定された文章をUTF-8で保存するとき",
   "Write the exact content, then use the file tool readback to check the saved text.": "指定の文章を保存し、保存操作の読み戻し結果で内容を確かめる。",

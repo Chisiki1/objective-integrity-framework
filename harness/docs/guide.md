@@ -1,6 +1,6 @@
 # OIF Desktop guide
 
-Version **0.3.0-beta.1** · [Quick start](../README.md) · [Japanese](ja.md)
+Version **0.3.0-beta.2** · [Quick start](../README.md) · [Japanese](ja.md)
 
 ## A task from request to result
 

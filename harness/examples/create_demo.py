@@ -89,7 +89,7 @@ Illustrative content created by the scripted OIF example.
     first = store.create_task(tr('Draft a concise launch brief'), tr(['Save the requested Markdown brief']),
                              options={'folder_id': folder['id']})
     done = complete('launch-brief.md', 'The launch brief is ready. It explains the goal, the three changes and the next step. Open the Markdown preview to read it.')
-    done['learning'] = [dict(action='create', title='Verify text where it is written',
+    done['learning'] = [dict(action='create', title='Read back saved files to verify the requested content',
         reason='The file tool returned the saved bytes and text facts.', operation_indices=[0],
         applies_when='Writing literal UTF-8 text',
         procedure='Write the exact content, then use the file tool readback to check the saved text.',

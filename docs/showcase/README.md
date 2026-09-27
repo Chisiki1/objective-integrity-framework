@@ -1,17 +1,25 @@
-# OIF Desktop showcase · 0.3.0-beta.1
+# OIF Desktop showcase · 0.3.0-beta.2
 
-- **01 — Keep the goal. See the result.** The real desktop UI presents the applied instruction, completed result and latest artifact together.
-- **02 — A useful lesson. A better next step.** A feature illustration of shared learning: create, use, assess, refine, merge and retire.
-- **03 — Change the harness. Keep a way back.** A feature illustration of controlled code improvement, from inspection through verification to actual use and recovery.
+[Japanese edition](ja/README.md) · [Desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.2/harness/README.md)
 
-The workspace contains illustrative content. Its decisions are scripted; the file writes, readback and cross-task lesson-use records are produced by the real engine. These are examples, not model-quality or competitor benchmarks. Reproduce the example with `harness/examples/create_demo.py` from the source distribution.
+## 01 — Refine learned procedures through use and evaluation.
 
-Images and HTML layouts are licensed under the repository's Apache-2.0 license. The HTML sources and original UI captures are included in the full source archive. The showcase ZIP includes six finished PNGs for sharing: three English and three Japanese.
+Save knowledge with evidence, conditions, procedures and limits, then reuse it in other tasks. Record the operation and outcome of each use, and use the assessment to refine, merge or retire it. Retain earlier records while keeping shared knowledge organized and current.
 
-[Japanese edition](ja/README.md)
+![Learning from execution, assessing use, and refining, merging or retiring knowledge](../assets/oif-desktop-01-learning.png)
 
-![Objective continuity](../assets/oif-desktop-01-objective.png)
+## 02 — Improve the harness through testing and real use.
 
-![Learning across chats](../assets/oif-desktop-02-learning.png)
+Test proposed changes to OIF in isolation, then apply verified changes. Track subsequent use and its results, and restore the saved version when needed. The user's conditions and permissions also apply to self-improvement.
 
-![Controlled self-improvement](../assets/oif-desktop-03-improvement.png)
+![Inspect, propose, test in isolation, review and activate, use, and recover](../assets/oif-desktop-02-improvement.png)
+
+## 03 — Trace learning and improvement through task records.
+
+The app shows knowledge from another chat used in an operation and the outcome assessed. Progress records connect the shared lesson to its actual use.
+
+![Knowledge from another chat used in an operation and its outcome assessed](../assets/oif-desktop-03-records.png)
+
+Images 1 and 2 explain OIF features. Image 3 shows a sample task in the actual app. The example uses scripted model replies; file operations and cross-chat lesson use run through the real engine. Reproduce it with `harness/examples/create_demo.py` from the source distribution.
+
+Images and HTML are licensed under the repository's Apache-2.0 license. The full source archive includes the HTML layouts and original UI captures. The showcase ZIP contains six finished PNGs: three English and three Japanese, in the same order.
