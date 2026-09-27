@@ -136,6 +136,22 @@
       "value": "person@example.org",
       "reason": "Synthetic reserved-domain test data for private-source rejection.",
       "provenance": "Provider redaction regression fixtures; example.org is reserved for examples."
+    },
+    {
+      "path": "docs/assets/desktop-logo.png",
+      "blob_sha256": "20D25566050BFAD17D0C22B77FF59B1C04BA8BE8CECE0A9377058D2A2902F573",
+      "kind": "uuid_identifier",
+      "value": "8cfb640f-667e-4d2c-af3c-75597dda9ef3",
+      "reason": "Content-authenticity manifest identity of the published OIF artwork; not a user, task or credential identifier.",
+      "provenance": "PNG caBX C2PA metadata: claim_generator_info names OpenAI Media Service API; c2pa.actions.v2 records gpt-image creation. Exact manifest reference retained with the artwork."
+    },
+    {
+      "path": "harness/src/policy_harness/static/oif-outline.png",
+      "blob_sha256": "20D25566050BFAD17D0C22B77FF59B1C04BA8BE8CECE0A9377058D2A2902F573",
+      "kind": "uuid_identifier",
+      "value": "8cfb640f-667e-4d2c-af3c-75597dda9ef3",
+      "reason": "Content-authenticity manifest identity of the published OIF artwork; not a user, task or credential identifier.",
+      "provenance": "PNG caBX C2PA metadata: claim_generator_info names OpenAI Media Service API; c2pa.actions.v2 records gpt-image creation. Exact manifest reference retained with the artwork."
     }
   ]
 }
