@@ -863,6 +863,7 @@ def create_app(data_dir: Path | None = None, engine=None, settings=None, store=N
         # Block a queued practical start even if its HTTP request entered before
         # this atomic idle check. Existing task handles were checked above.
         app.state.engine.maintenance_restart_pending = True
+        app.state.engine.service_shutdown_pending = True
         app.state.shutdown_event.set()
         callback()
 

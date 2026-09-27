@@ -23,16 +23,27 @@ from uuid import uuid4
 PROTECTED = {'.runtime', '.work', '.venv', '.git', '.env', 'settings.json', 'credentials.json'}
 
 
+def filesystem_path(path):
+    """Use extended Windows paths for nested package members, without OS changes."""
+    path = Path(path).absolute()
+    value = str(path)
+    # Leave room for the atomic-write suffix as well as the member itself.
+    if os.name == 'nt' and len(value) >= 200 and not value.startswith('\\\\?\\'):
+        value = '\\\\?\\UNC\\' + value[2:] if value.startswith('\\\\') else '\\\\?\\' + value
+        return Path(value)
+    return path
+
+
 def digest(path):
     h = hashlib.sha256()
-    with Path(path).open('rb') as stream:
+    with filesystem_path(path).open('rb') as stream:
         for block in iter(lambda: stream.read(1024 * 1024), b''):
             h.update(block)
     return h.hexdigest().upper()
 
 
 def plain(path, *, missing=False):
-    path = Path(path).absolute()
+    path = filesystem_path(path)
     for part in [*reversed(path.parents), path]:
         try:
             info = part.lstat()
@@ -54,7 +65,7 @@ def member(root, name, *, checked_directories=None):
             or parts[0].lower() in PROTECTED or name.lower() == 'application.json'
             or any(re.fullmatch(r'(?i)(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?', p) for p in parts)):
         raise ValueError('Protected or invalid package path')
-    target = Path(root).joinpath(*parts)
+    target = filesystem_path(Path(root).joinpath(*parts))
     if checked_directories is None:
         return plain(target, missing=True)
     # A package has thousands of files sharing the same directories. Check each

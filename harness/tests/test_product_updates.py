@@ -212,17 +212,70 @@ def test_install_checks_selected_plan_identity_under_shared_lock(tmp_path,monkey
     assert not manager.lock.locked() and not (manager.data/'product-update-pending.json').exists()
 
 
-def test_shutdown_blocks_even_a_queued_maintenance_recovery_task(tmp_path,monkeypatch):
+@pytest.mark.parametrize('endpoint', ['/api/shutdown','/api/maintenance/restart','/api/app-updates/install'])
+def test_shutdown_apis_block_even_a_queued_maintenance_recovery_task(tmp_path,monkeypatch,endpoint):
+    from fastapi.testclient import TestClient
     from .test_practical_runtime import runtime
+    from .test_server import Settings
     from policy_harness.models import PolicyError
+    from policy_harness.server import create_app
     engine,store,gateway,_,task=runtime(tmp_path,[])
     monkeypatch.setattr(engine.maintenance,'recovery_targets',lambda *_:True)
-    engine.maintenance_restart_pending=True
-    engine.service_shutdown_pending=True
+    monkeypatch.setattr(updates,'launch_restart',lambda *_:None)
+    app=create_app(tmp_path,engine=engine,settings=Settings(),store=store)
+    exits=[];app.state.request_shutdown=lambda:exits.append('exit')
     try:
-        with pytest.raises(PolicyError,match='再起動'):engine.start_task(task['id'])
-        assert not engine.running and not gateway.calls
+        with TestClient(app,base_url='http://127.0.0.1:8765',client=('127.0.0.1',41234)) as client:
+            assert client.get('/').status_code==200
+            client.headers['X-CSRF-Token']=client.get('/api/session').json()['csrf_token']
+            app.state.product_updates=SimpleNamespace(install=lambda *_:None)
+            payload={'expected_instance_id':app.state.instance_id}
+            if endpoint.endswith('/install'):payload['version']='0.3.0-beta.3'
+            else:payload['only_if_idle']=True
+            assert client.post(endpoint,json=payload).status_code==200
+            assert exits==['exit']
+            # Represents a start queued before the HTTP middleware closed.
+            with pytest.raises(PolicyError,match='再起動'):engine.start_task(task['id'])
+            assert not engine.running and not gateway.calls
     finally:store.close()
+
+
+def test_nested_package_paths_extract_install_and_restore(tmp_path,monkeypatch):
+    name='python/Lib/site-packages/'+('nested/'*24)+'schema.py'
+    root=package(tmp_path/'app','0.3.0-beta.2',{'OIF.exe':'old','a.txt':'old'})
+    stage=tmp_path/'updates'/'selected'/'package';stage.parent.mkdir(parents=True)
+    files={'OIF.exe':b'new','a.txt':b'new','python/python.exe':b'fixture',
+           'src/policy_harness/product_install.py':b'fixture',name:b'nested content'}
+    metadata={'schema':'oif-desktop-package-v1','version':'0.3.0-beta.3','members':[
+        {'path':n,'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest().upper()} for n,b in files.items()]}
+    raw=io.BytesIO()
+    with zipfile.ZipFile(raw,'w') as archive:
+        for n,b in {**files,'application.json':json.dumps(metadata).encode()}.items():
+            archive.writestr('OIF-Desktop-0.3.0-beta.3/'+n,b)
+    updates.extract_package(raw.getvalue(),stage,{'version':'0.3.0-beta.3'})
+    assert install.member(stage,name).read_bytes()==b'nested content'
+    work=tmp_path/'work';work.mkdir();install.make_plan(root,stage,work)
+    install.apply_plan(work)
+    assert install.member(root,name).read_bytes()==b'nested content'
+    # A second update backs up and restores the long member on a later failure.
+    newer=tmp_path/'newer';updates.extract_package(raw.getvalue(),newer,{'version':'0.3.0-beta.3'})
+    install.member(newer,name).write_bytes(b'changed')
+    data=json.loads((newer/'application.json').read_bytes())
+    for row in data['members']:
+        if row['path']==name:row.update(bytes=7,sha256=hashlib.sha256(b'changed').hexdigest().upper())
+    install.atomic(newer/'application.json',data)
+    retry=tmp_path/'retry';retry.mkdir();install.make_plan(root,newer,retry)
+    original=install.replace_bytes;failed=False
+    def fail_manifest(path,content):
+        nonlocal failed
+        if Path(path)==root/'application.json' and not failed:
+            failed=True;raise OSError('synthetic final write failure')
+        return original(path,content)
+    monkeypatch.setattr(install,'replace_bytes',fail_manifest)
+    with pytest.raises(OSError,match='synthetic'):install.apply_plan(retry)
+    assert install.member(root,name).read_bytes()==b'nested content'
+    assert install.member(retry/'backup',name).read_bytes()==b'nested content'
+    install.manifest(root)
 
 
 def test_recovery_waits_for_windows_files_before_restoring(tmp_path,monkeypatch):

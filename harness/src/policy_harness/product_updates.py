@@ -86,6 +86,7 @@ def select_release(rows, current):
 
 
 def extract_package(raw, destination, release):
+    destination = plain(destination, missing=True)
     prefix = 'OIF-Desktop-' + release['version'] + '/'
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         rows = archive.infolist()
