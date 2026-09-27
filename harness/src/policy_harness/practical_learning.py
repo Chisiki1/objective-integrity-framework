@@ -88,18 +88,21 @@ class PracticalLearning:
 
     def context(self, task):
         from .practical_context import bounded_result
+        # A short task title can omit the concrete work described by its
+        # acceptance criteria. Search both without expanding the context budget.
+        query = task['objective'][:1500] + ' ' + ' '.join(task.get('acceptance', []))[:1500]
         rows = self.store.operation_headers(task['id'], max(0, self.store.operation_count(task['id']) - 8), 8)
         tools = {r.get('tool_name', r['operation']['kind']) for r in rows}
-        if re.search(r'保存|書[き込]|作成|\b(?:write|writing|create|creating)\b', task['objective'], re.I):
+        if re.search(r'保存|書[き込]|作成|\b(?:write|writing|create|creating)\b', query, re.I):
             tools.add('file_write')
-        if re.search(r'読|読み戻|\b(?:read|reading|readback)\b', task['objective'], re.I):
+        if re.search(r'読|読み戻|\b(?:read|reading|readback)\b', query, re.I):
             tools.add('file_read')
-        words = set(re.findall(r'[\w]{3,}', task['objective'].casefold()))
+        words = set(re.findall(r'[\w]{3,}', query.casefold()))
         def rank(skill):
             return (len(tools & set(skill.get('tools', []))) * 3
                     + sum(w in (skill['title'] + skill['applies_when']).casefold() for w in words),
                     skill.get('updated_at', ''))
-        candidates = self.available(task, query=task['objective'], tools=tools)
+        candidates = self.available(task, query=query, tools=tools)
         # Retrieval rank already considers the whole knowledge base. A harmful
         # current revision is downranked, with the recorded outcomes visible to
         # the model so it can refine/retire it rather than blindly repeat it.

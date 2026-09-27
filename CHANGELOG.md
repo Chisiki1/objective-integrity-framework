@@ -5,6 +5,7 @@
 - Add the OIF Windows desktop harness with a dedicated window, white OIF icon and local service recovery.
 - Preserve instruction-by-instruction progress and results, important/full progress views, bounded record retrieval and artifact preview.
 - Add shared lesson creation, selection, actual-use assessment, refinement, consolidation and retirement across chats.
+- Retrieve lessons from both task goals and acceptance criteria, including work described only in the requirements.
 - Include proportional execution policy, automatic context compression, model configuration and explicit access modes.
 - Include a controlled harness-code update path with verification, activation, next-use records and rollback.
 - Ship a complete Windows x64 package with pinned Python dependencies, English/Japanese guides and labelled example images.

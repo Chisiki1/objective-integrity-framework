@@ -200,6 +200,35 @@ def skill(identity, title, **changes):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize('title,criterion,procedure', [
+    ('Prepare the welcome message', 'Save the welcome text', 'Verify text where it is written'),
+    ('新しく参加する人への案内文を作る', '案内文をテキストファイルに保存する', '指定された文章を保存するときに内容を確認する'),
+])
+async def test_acceptance_only_relevance_reaches_next_real_operation(tmp_path,title,criterion,procedure):
+    engine,store,gateway,web,_=runtime(tmp_path,[])
+    row=skill('lesson',procedure)
+    store.record('practical_skill','lesson',row)
+    store.record('practical_skill','private',dict(row,id='private',scope='task:another'))
+    store.record('practical_skill','retired',dict(row,id='retired',status='retired'))
+    other=store.create_task(title,[criterion])
+    assert engine.learning.available(other,query=title)==[]
+    offered=engine.learning.context(other)['skills']
+    assert [item['id'] for item in offered]==['lesson']
+    action=steps(tool('file_write',path='welcome.txt',text='Welcome'))
+    action['skill_uses']=[{'skill':0,'tool_index':0,'adaptation':'Check the saved text returned by this operation.'}]
+    done=finish('welcome.txt')
+    done['learning_assessments']=[{'operation_index':0,'judgment':'helpful','reason':'The actual saved text was returned and checked.'}]
+    gateway.replies=[action,done]
+    await engine.start_task(other['id'])
+    assert store.get_task(other['id'])['status']=='completed'
+    assert Path(other['workspace'],'welcome.txt').read_bytes()==b'Welcome'
+    assert store.record_get('practical_skill','lesson')['use_outcomes']['helpful']==1
+    assert len(gateway.calls)==2 and web.calls==[]
+    assert not store.task_records('practical_learning_rejection',other['id'])
+    store.close()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize('scope',['local','general'])
 async def test_merge_retains_shared_sources_when_replacement_is_private(tmp_path,scope):
     from policy_harness.practical_models import ToolRequest

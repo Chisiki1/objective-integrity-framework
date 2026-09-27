@@ -108,6 +108,9 @@ Illustrative content created by the scripted OIF example.
     provider.replies = [action, done]
     await engine.start_task(second['id'])
     assert store.get_task(second['id'])['status'] == 'completed'
+    uses = store.task_records('practical_skill_use', second['id'])
+    assert len(uses) == 1 and uses[0]['assessment']['judgment'] == 'helpful'
+    assert not store.task_records('practical_learning_rejection', second['id'])
     third = store.create_task(tr('Keep the next milestone clear'), tr(['Save the checklist']), options={'folder_id':folder['id']})
     provider.replies = [write('next-step.md', '# Next milestone\n\n- Review the brief.\n- Try the welcome message.\n- Record specific feedback.\n', 'Turning the next milestone into a short checklist.'),
         complete('next-step.md','The next milestone is written as three concrete actions.')]
@@ -115,7 +118,8 @@ Illustrative content created by the scripted OIF example.
     assert store.get_task(third['id'])['status'] == 'completed'
     org.update(first['id'], {'pinned':True}, org.metadata(first['id'])['revision'])
     print(json.dumps({'example':True,'scripted_decisions':True,'real_file_operations':True,
-        'tasks':[first['id'],second['id'],third['id']], 'shared_lessons':len(store.records('practical_skill'))}))
+        'tasks':[first['id'],second['id'],third['id']], 'shared_lessons':len(store.records('practical_skill')),
+        'cross_task_uses_assessed':len(uses)}))
     store.close()
 
 
