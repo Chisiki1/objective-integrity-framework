@@ -392,6 +392,11 @@ class UpdateManager:
             raise UpdateError('UPDATE_MANAGER_CROSSED_PROCESS_BOUNDARY')
         return dict(self._runtime)
 
+    def source_status(self) -> dict:
+        """Compare the current files with the original loaded cut, never rebase it."""
+        self.runtime_identity()
+        return {'restart_required': _manifest(self._code()) != self._loaded_manifest}
+
     def _active_binding(self) -> dict:
         path = self.control / 'active.json'
         if not path.exists():

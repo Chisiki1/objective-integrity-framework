@@ -5,7 +5,9 @@
 - Replace the English and Japanese desktop showcase with matching content and order: shared learning, harness improvement, and actual-use records.
 - Show the real cross-chat lesson-use and assessment records in both language editions.
 - Align current documentation and distribution archives with the six replacement images; remove obsolete showcase artwork from the current source.
-- Refresh example wording and release metadata. Application behavior and dependencies are unchanged.
+- Add official release notifications and optional in-app desktop updates with package verification, preserved user data and rollback on replacement failure.
+- Reload changed application files through an idle-only service restart. Reopening the desktop no longer keeps reusing an outdated idle service.
+- Keep active tasks running while an update is available, and provide a service restart action in the update panel.
 
 ## 0.3.0-beta.1 — 2026-09-28
 

@@ -195,3 +195,10 @@ select option:disabled{color:var(--muted)}
 #full-access-dialog h2{color:#ffd099}#full-access-description{line-height:1.8}#full-access-text{display:block;width:100%;margin-top:8px}
 :root[data-theme=light] .access-control select.full-access,:root[data-theme=light] button.full-access,:root[data-theme=light] .access-control option[value=full]{background:#fff0d4;color:#7a3900;border-color:#a75b13}
 :root[data-theme=light] #full-access-dialog h2{color:#7a3900}
+:root .app-update-button.has-update { color:var(--accent,#80b9c9); border-color:currentColor; }
+.app-update-dialog { width:min(520px,calc(100vw - 40px)); padding:24px; }
+.app-update-heading { display:flex;align-items:center;justify-content:space-between;gap:24px; }
+.app-update-heading h2 { margin:0; }
+.app-update-description,.app-update-status { line-height:1.6; }
+.app-update-actions { display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px;margin-top:24px; }
+.app-update-version { overflow-wrap:anywhere; }

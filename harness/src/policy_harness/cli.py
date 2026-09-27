@@ -21,8 +21,8 @@ import httpx
 from .models import PolicyError, now
 
 
-def _print(value):
-    print(json.dumps(value, ensure_ascii=False, indent=2))
+def _print(value, *, ascii_only=False):
+    print(json.dumps(value, ensure_ascii=ascii_only, indent=2))
 
 
 def _local_url(value):
@@ -597,6 +597,8 @@ def parser():
             command.add_argument('--output', type=Path)
         if name == 'shutdown':
             command.add_argument('--launch-id', help='一致する起動IDのサービスだけを終了')
+            command.add_argument('--if-idle', action='store_true')
+            command.add_argument('--if-source-changed', action='store_true')
     setup = commands.add_parser('setup', help='管理者が実行用の隔離環境を準備する')
     setup.add_argument('--data-dir')
     setup.add_argument('--without-pytest', action='store_true')
@@ -667,6 +669,24 @@ def main(argv=None):
                 raise ValueError('現在の指示の版を取得できません。タスクの状態を確認してください。')
             _print(client.post(path+'/instructions', {'text':args.text, 'expected_source_hash':expected}))
         elif args.command == 'shutdown':
+            if args.if_source_changed or args.if_idle:
+                # Old services reject/omit this endpoint. Never silently weaken
+                # an idle-only request into unconditional shutdown.
+                current = client.get('/api/maintenance')
+                if not current.get('conditional_shutdown'):
+                    raise ValueError('This service needs one manual restart to enable safe update recovery.')
+                if args.launch_id and current.get('launch_id') != args.launch_id:
+                    raise ValueError('対象の起動IDが一致しないため、終了しませんでした。')
+                if args.if_source_changed and not current.get('restart_required'):
+                    _print({'status': 'unchanged'}); return 0
+                if args.if_idle and current.get('active_tasks'):
+                    _print({'status': 'busy'}); return 0
+                result = client.post('/api/shutdown', {'expected_instance_id': current['instance_id'],
+                    'only_if_idle': args.if_idle, 'only_if_source_changed': args.if_source_changed})
+                # Windows PowerShell can decode a UTF-8 child using an OEM code
+                # page, even swallowing a closing JSON quote. This machine reply
+                # must survive that boundary unchanged.
+                _print(result, ascii_only=True); return 0
             current = client.get('/api/status')
             if args.launch_id and current.get('launch_id') != args.launch_id:
                 raise ValueError('対象の起動IDが一致しないため、終了しませんでした。')

@@ -45,6 +45,8 @@ project's HTTPS release page and tagged commit to establish their source.
 
 ## Start, update and recover
 
+For the Windows desktop package, use **Updates → Update and restart** when offered. Installation is optional and waits until tasks are idle. The [desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.2/harness/docs/guide.md#back-up-update-and-restore) covers package verification, preserved data, local modifications and recovery. Source installations use the manual procedure.
+
 For the full archive, open its top-level folder and follow the [quick start](../README.md#quick-start)
 or [adoption guide](adoption.md). The demo, installation and test temporary roots
 must be separate from the extracted distribution. No package manager install is

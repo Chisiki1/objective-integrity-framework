@@ -650,7 +650,7 @@ class PracticalEngine:
         result.elapsed_seconds = time.monotonic() - started
         self._record_result(task, operation, result)
         if restart_required:
-            raise Held('ハーネスの更新を反映するため、OIFを再起動してからこのチャットを再開してください。作業結果と元の失敗は保存されています。')
+            raise Held('本体の更新が必要です。画面上部の「更新」から「サービスを再起動」を選び、再接続後にこのチャットを再開してください。作業記録は保存されています。')
         return result
 
     def _web_failure(self, task, operation, reason, metadata=None):

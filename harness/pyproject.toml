@@ -30,7 +30,7 @@ testpaths = [
   "tests/test_credential_recovery_continuity.py", "tests/test_provider_evidence_recovery.py",
   "tests/test_server.py", "tests/test_executor.py", "tests/test_updates.py",
   "tests/test_source_input_ui.py", "tests/test_chat_recovery.py",
-  "tests/test_full_access.py", "tests/test_full_access_ui.py", "tests/test_public_package.py"
+  "tests/test_full_access.py", "tests/test_full_access_ui.py", "tests/test_public_package.py", "tests/test_product_updates.py"
 ]
 
 # Fixed acceptance for the shipped PracticalEngine and its complete shared
@@ -48,5 +48,5 @@ paths = [
   "tests/test_credential_recovery_continuity.py", "tests/test_provider_evidence_recovery.py",
   "tests/test_server.py", "tests/test_executor.py", "tests/test_updates.py",
   "tests/test_source_input_ui.py", "tests/test_chat_recovery.py",
-  "tests/test_full_access.py", "tests/test_full_access_ui.py", "tests/test_public_package.py"
+  "tests/test_full_access.py", "tests/test_full_access_ui.py", "tests/test_public_package.py", "tests/test_product_updates.py"
 ]

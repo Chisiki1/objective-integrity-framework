@@ -123,6 +123,7 @@ internal sealed class OifWindow : Form {
                 if (!Uri.TryCreate(e.Source, UriKind.Absolute, out from) || !IsLocal(from)) return;
                 string value;
                 try { value = e.TryGetWebMessageAsString(); } catch (ArgumentException) { return; }
+                if (value == "oif-update-close") { Close(); return; }
                 if (value != "oif-theme:dark" && value != "oif-theme:light") return;
                 int dark = value.EndsWith(":dark") ? 1 : 0;
                 DwmSetWindowAttribute(Handle, 20, ref dark, sizeof(int));

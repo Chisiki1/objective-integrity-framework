@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param([switch]$DesktopShortcut, [string]$OutputPath)
 $ErrorActionPreference = 'Stop'
+Import-Module Microsoft.PowerShell.Utility -ErrorAction Stop
 $oifRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $oifCompiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 if (-not (Test-Path -LiteralPath $oifCompiler)) { throw '.NET Framework compiler was not found.' }

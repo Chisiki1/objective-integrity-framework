@@ -14,7 +14,7 @@ using System.Runtime.InteropServices;
 [assembly: System.Reflection.AssemblyTitle("OIF")]
 [assembly: System.Reflection.AssemblyDescription("OIF desktop application")]
 [assembly: System.Reflection.AssemblyVersion("0.3.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersion("0.3.0-beta.1")]
+[assembly: System.Reflection.AssemblyInformationalVersion("0.3.0-beta.2")]
 
 internal static class OifLauncher {
     internal static readonly string Root = AppDomain.CurrentDomain.BaseDirectory;
@@ -92,6 +92,19 @@ internal static class OifLauncher {
     internal static string ProfileRoot { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OIF", "Desktop", InstallKey); } }
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)] static extern int SetCurrentProcessExplicitAppUserModelID(string appID);
     [DllImport("user32.dll")] static extern bool AllowSetForegroundWindow(int processId);
+    static bool UpdateInProgress() {
+        try {
+            string pending = Path.Combine(Root, ".runtime", "product-update-pending.json");
+            if (!File.Exists(pending)) return false;
+            var record = Json.Deserialize<Dictionary<string, object>>(File.ReadAllText(pending));
+            string id = Convert.ToString(record["work_id"]);
+            if (!System.Text.RegularExpressions.Regex.IsMatch(id, "^[a-f0-9]{32}$")) return false;
+            string path = Path.Combine(Root, ".runtime", "product-updates", id, "helper.lock");
+            if (!File.Exists(path)) return false;
+            try { using (File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) { } return false; }
+            catch (IOException) { return true; }
+        } catch (Exception error) { Record("Update state: " + error.Message); return false; }
+    }
     [STAThread]
     static int Main(string[] args) {
         bool serviceOnly = Array.IndexOf(args, "--service-only") >= 0;
@@ -103,6 +116,9 @@ internal static class OifLauncher {
             try { OifShell.SetShortcutIdentity(args[1], AppId); return 0; }
             catch (Exception error) { Record(error.ToString()); return 1; }
         }
+        // A second click must not open another mapped OIF.exe while the staged
+        // installer waits to replace it. The updater reopens the app itself.
+        if (UpdateInProgress()) { Record("The selected update is in progress; the app will reopen."); return 0; }
         SetCurrentProcessExplicitAppUserModelID(AppId);
         Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
         bool created;

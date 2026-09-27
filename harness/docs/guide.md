@@ -42,6 +42,18 @@ Closing the desktop window keeps the local service and running tasks alive. To s
 
 The application must stay in a writable folder. The complete Windows ZIP contains the app and its private Python environment. It is not a single-file executable.
 
+### Update from the app
+
+Open **Updates** at the top of the window. OIF checks the official GitHub releases at startup and caches the result for six hours; **Check for updates** refreshes it. Beta installations include beta releases, while stable installations stay on stable releases. A failed network check leaves ordinary tasks available.
+
+Choose **Update and restart** to download, verify and install the selected Windows package. This is optional. Active tasks must finish before installation starts. The app closes and reopens at the same path, preserving pins, `.runtime`, credentials, lessons and user files. Changed application files are backed up under `.runtime/product-updates`. The download is checked against the official release asset digest and every packaged file against its inventory. This verifies the files obtained from the official repository; it is not a separate publisher signature.
+
+If a package-owned file has been changed locally, the updater preserves it and asks for manual integration. A failed replacement restores the old application files before reopening. If the helper was interrupted during replacement, the next normal launch recovers the saved preimages first. This recovery does not rewind task data or replay tasks. A full folder backup remains the way to restore an older version and its data together.
+
+If the running service still holds older application files, choose **Restart service** in this panel. It waits for idle work, retains task records and reconnects to the new process. Reopening the desktop also replaces a stale idle service. A held chat can then be resumed explicitly. An ordinary page refresh only refreshes the display.
+
+### Manual update and full backup
+
 1. Finish or stop active work. Close the OIF window. Run `scripts/Stop-Harness.ps1` and wait for confirmed shutdown.
 2. Copy the entire application folder to a backup location. This retains `.runtime`, including task files, settings, protected credentials, learning and recovery records. Keep the same Windows user; credentials are not transferable to another account.
 3. Download the new ZIP and verify its checksum from that release. Extract it separately. Do not start it yet.

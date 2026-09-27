@@ -35,7 +35,9 @@ The [desktop guide](docs/guide.md) covers settings, recovery, long tasks, learni
 
 Task records, workspace files and encrypted provider credentials live in `.runtime` beside the app. Credentials use Windows user-bound protection. Back up this folder while the service is stopped. Closing the window alone does not stop the service; use `scripts/Stop-Harness.ps1` before a backup or update. Keep the same Windows account and original installation path when restoring.
 
-For an update, keep a full copy of the old app, extract the new version separately, stop both versions, move the old folder aside, put the new folder at the **same original path**, and copy the old `.runtime` into it before launch. Keep the old copy for rollback. Never merge two databases or replace data while work is running. See the guide for the complete procedure.
+Open **Updates** to check official OIF releases. The Windows package offers **Update and restart** when a newer compatible release is available. Installation starts only when you choose it and all tasks are idle. OIF verifies the download and package inventory, keeps the same app path, preserves `.runtime` and unknown user files, and backs up changed application files. Failed replacement restores those files before reopening. Locally modified package files are preserved and prevent automatic replacement. Beta installations see beta and stable releases; stable installations see stable releases.
+
+For a manual update or a source checkout, keep a full copy of the old app, extract the new version separately, stop both versions, move the old folder aside, put the new folder at the **same original path**, and copy the old `.runtime` into it before launch. Keep the old copy for rollback. Never merge two databases or replace data while work is running. See the guide for the complete procedure.
 
 ## Build from source
 

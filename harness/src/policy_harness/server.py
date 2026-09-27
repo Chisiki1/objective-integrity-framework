@@ -267,6 +267,17 @@ class AttachmentInput(BaseModel):
 class ShutdownInput(BaseModel):
     model_config = ConfigDict(extra='forbid')
     expected_instance_id: str
+    only_if_idle: StrictBool = False
+    only_if_source_changed: StrictBool = False
+
+
+class ReleaseVersionInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    version: str = Field(pattern=r'^\d+\.\d+\.\d+(?:-beta\.\d+)?$')
+
+
+class ReleaseInstallInput(ReleaseVersionInput):
+    expected_instance_id: str
 
 
 class MessageInput(BaseModel):
@@ -373,6 +384,8 @@ def create_app(data_dir: Path | None = None, engine=None, settings=None, store=N
         app.state.explanations = ExplanationService(runtime_store, getattr(runtime_engine, 'gateway', None))
         app.state.shutting_down = False
         app.state.shutdown_event = asyncio.Event()
+        from .product_updates import ProductUpdates
+        app.state.product_updates = ProductUpdates(ROOT, data_dir)
         try:
             await bind_restart_consumer(app, runtime_engine, runtime_store, data_dir)
             yield
@@ -505,6 +518,8 @@ def create_app(data_dir: Path | None = None, engine=None, settings=None, store=N
                     return JSONResponse({'detail': '操作用の接続情報が一致しません。'}, status_code=403)
                 if request.headers.get('content-type', '').split(';')[0] != 'application/json':
                     return JSONResponse({'detail': 'JSON形式の操作が必要です。'}, status_code=415)
+                if app.state.shutting_down:
+                    return JSONResponse({'detail': 'OIFを再起動しています。再接続後に操作してください。'}, status_code=409)
         response = await call_next(request)
         response.headers.update({
             'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff',
@@ -817,17 +832,84 @@ def create_app(data_dir: Path | None = None, engine=None, settings=None, store=N
         response['submission_id']=submission_id
         return response
 
-    @app.post('/api/shutdown')
-    async def shutdown(payload: ShutdownInput):
+    def busy_tasks():
+        ids = set(app.state.store.active_task_ids(statuses=('running', 'stopping')))
+        ids.update(key for key, handle in getattr(app.state.engine, 'running', {}).items() if not handle.done())
+        return len(ids)
+
+    def loaded_source():
+        manager = getattr(app.state.engine, 'updates', None)
+        return manager.source_status() if manager and hasattr(manager, 'source_status') else {'restart_required': False}
+
+    @app.get('/api/maintenance')
+    async def maintenance():
+        return {'version': __version__, 'instance_id': app.state.instance_id,
+                'launch_id': getattr(app.state, 'launch_id', None),
+                'conditional_shutdown': True, 'active_tasks': busy_tasks(), **loaded_source()}
+
+    def shutdown_ready(payload):
         callback = getattr(app.state, 'request_shutdown', None)
         if callback is None:
             raise HTTPException(409, 'この起動方法は画面からのサービス終了に対応していません。')
         if payload.expected_instance_id != app.state.instance_id:
             raise HTTPException(409, '終了対象のサービスが入れ替わりました。')
+        if payload.only_if_idle and busy_tasks():
+            raise HTTPException(409, '実行中の作業があります。作業が終わってから更新・再起動してください。')
+        return callback
+
+    def request_exit(callback):
         app.state.shutting_down = True
+        # Block a queued practical start even if its HTTP request entered before
+        # this atomic idle check. Existing task handles were checked above.
+        app.state.engine.maintenance_restart_pending = True
         app.state.shutdown_event.set()
         callback()
+
+    @app.post('/api/shutdown')
+    async def shutdown(payload: ShutdownInput):
+        callback = shutdown_ready(payload)
+        if payload.only_if_source_changed and not loaded_source()['restart_required']:
+            return {'status': 'unchanged'}
+        request_exit(callback)
         return {'status': 'shutdown_requested', 'detail': '実行中の作用を保存して終了します。'}
+
+    @app.post('/api/maintenance/restart')
+    async def restart_service(payload: ShutdownInput):
+        if not payload.only_if_idle:
+            raise HTTPException(422, '作業の完了を待って再起動してください。')
+        callback = shutdown_ready(payload)
+        from .product_updates import launch_restart
+        launch_restart(ROOT, data_dir, getattr(app.state, 'launch_id', None))
+        request_exit(callback)
+        return {'status': 'restart_requested'}
+
+    @app.get('/api/app-updates')
+    async def product_update_status():
+        return app.state.product_updates.status()
+
+    @app.post('/api/app-updates/check')
+    async def product_update_check(payload: dict):
+        if set(payload) - {'force'} or not isinstance(payload.get('force', False), bool):
+            raise HTTPException(422, 'Invalid update check')
+        return await asyncio.to_thread(app.state.product_updates.check, force=payload.get('force', False))
+
+    @app.post('/api/app-updates/prepare')
+    async def product_update_prepare(payload: ReleaseVersionInput):
+        try:
+            return await asyncio.to_thread(app.state.product_updates.prepare, payload.version)
+        except (ValueError, OSError) as error:
+            raise HTTPException(409, str(error)) from None
+
+    @app.post('/api/app-updates/install')
+    async def product_update_install(payload: ReleaseInstallInput):
+        callback = shutdown_ready(ShutdownInput(expected_instance_id=payload.expected_instance_id, only_if_idle=True))
+        try:
+            # No await between the final idle check, helper dispatch and exit.
+            app.state.product_updates.install(payload.version, getattr(app.state, 'launch_id', None))
+        except (ValueError, OSError) as error:
+            raise HTTPException(409, str(error)) from None
+        request_exit(callback)
+        return {'status': 'installing', 'close_window': True}
 
     async def read_snapshot(task_id):
         if inspect.iscoroutinefunction(app.state.engine.snapshot):
