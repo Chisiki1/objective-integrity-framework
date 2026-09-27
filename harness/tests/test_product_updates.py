@@ -175,3 +175,66 @@ def test_conditional_shutdown_reply_survives_windows_oem_decoding(monkeypatch,ca
     raw=capsys.readouterr().out.encode('utf-8')
     assert all(c<128 for c in raw)
     assert json.loads(raw.decode('cp932'))['status']=='shutdown_requested'
+
+
+@pytest.mark.parametrize('installed,offered', [('0.3.0b3','0.3.0-beta.3'),('0.3.0b3','0.3.0-beta.2'),('0.3.0','0.3.1-beta.1')])
+def test_persisted_cache_cannot_offer_installed_older_or_wrong_channel(tmp_path,monkeypatch,installed,offered):
+    import time
+    monkeypatch.setattr(updates,'__version__',installed)
+    manager=updates.ProductUpdates(tmp_path/'app',tmp_path/'data',downloader=lambda *_:pytest.fail('Fresh cache should not fetch'))
+    install.atomic(manager.cache,{'state':'available','checked_at':time.time(),'available':{'version':offered}})
+    assert manager.check()['available'] is None
+    assert manager.status()['state']=='current'
+    # The original check receipt is retained; it is interpreted against the
+    # running version rather than silently rewritten as a new network check.
+    assert json.loads(manager.cache.read_bytes())['available']['version']==offered
+
+
+def test_install_rejects_concurrent_preparation_without_waiting_or_substitution(tmp_path,monkeypatch):
+    manager=updates.ProductUpdates(tmp_path/'app',tmp_path/'data')
+    manager.prepared={'version':'0.3.0-beta.3','work':str(tmp_path/'selected')}
+    monkeypatch.setattr(updates,'owned_record',lambda *_:pytest.fail('Busy preparation must be rejected before dispatch'))
+    with manager.lock:
+        with pytest.raises(ValueError,match='being prepared'):manager.install('0.3.0-beta.3','launch')
+    assert manager.prepared['work']==str(tmp_path/'selected')
+
+
+def test_install_checks_selected_plan_identity_under_shared_lock(tmp_path,monkeypatch):
+    root=package(tmp_path/'app','0.3.0-beta.2',{'OIF.exe':'old'})
+    manager=updates.ProductUpdates(root,root/'.runtime')
+    work=manager.directory/'selected';work.mkdir()
+    stage=package(work/'package','0.3.0-beta.4',{'OIF.exe':'different release'})
+    install.make_plan(root,stage,work)
+    manager.prepared={'version':'0.3.0-beta.3','work':str(work)}
+    def owner(*args):assert manager.lock.locked()
+    monkeypatch.setattr(updates,'owned_record',owner)
+    with pytest.raises(ValueError,match='identity changed'):manager.install('0.3.0-beta.3','launch')
+    assert not manager.lock.locked() and not (manager.data/'product-update-pending.json').exists()
+
+
+def test_shutdown_blocks_even_a_queued_maintenance_recovery_task(tmp_path,monkeypatch):
+    from .test_practical_runtime import runtime
+    from policy_harness.models import PolicyError
+    engine,store,gateway,_,task=runtime(tmp_path,[])
+    monkeypatch.setattr(engine.maintenance,'recovery_targets',lambda *_:True)
+    engine.maintenance_restart_pending=True
+    engine.service_shutdown_pending=True
+    try:
+        with pytest.raises(PolicyError,match='再起動'):engine.start_task(task['id'])
+        assert not engine.running and not gateway.calls
+    finally:store.close()
+
+
+def test_recovery_waits_for_windows_files_before_restoring(tmp_path,monkeypatch):
+    root=package(tmp_path/'app','0.3.0-beta.2',{'OIF.exe':'old'})
+    stage=package(tmp_path/'new','0.3.0-beta.3',{'OIF.exe':'new'})
+    data=root/'.runtime';data.mkdir();work=tmp_path/'work';work.mkdir()
+    install.make_plan(root,stage,work);seen=[]
+    original=install.apply_plan
+    monkeypatch.setattr(install,'wait_windows_files',lambda *a:seen.append('unmapped'))
+    def apply(*a,**kw):
+        assert seen==['unmapped'] and kw=={'recover':True}
+        return original(*a,**kw)
+    monkeypatch.setattr(install,'apply_plan',apply)
+    assert install.run_helper(work,data,recover=True,reopen=False)['state']=='prepared'
+    assert (root/'OIF.exe').read_text()=='old'

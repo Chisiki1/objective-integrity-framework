@@ -266,29 +266,27 @@ def _run_helper(work, data_dir, *, recover=False, reopen=True):
     plan = json.loads(plain(work / 'install.json').read_bytes())
     root = plain(plan['root']); pending = data_dir / 'product-update-pending.json'
     try:
-        if not recover:
-            # Runtime owner locks include queued work and outlive API shutdown.
-            from contextlib import ExitStack
-            with ExitStack() as stack:
-                until = time.monotonic() + 90
-                while True:
-                    handles = []
-                    try:
-                        if os.name == 'nt':
-                            import msvcrt
-                            for name in ('service-owner.lock', 'worker-owner.lock'):
-                                h = (data_dir / name).open('a+b'); handles.append(h)
-                                h.seek(0); msvcrt.locking(h.fileno(), msvcrt.LK_NBLCK, 1)
-                        break
-                    except OSError:
-                        for h in handles: h.close()
-                        if time.monotonic() >= until: raise TimeoutError('OIF is still stopping')
-                        time.sleep(.4)
-                for h in handles: stack.callback(h.close)
-                wait_windows_files(root, plan['entries'])
-                result = apply_plan(work)
-        else:
-            result = apply_plan(work, recover=True)
+        # Recovery has the same ownership and file-lock boundaries as install.
+        # The native launcher releases its own EXE before asking us to recover.
+        from contextlib import ExitStack
+        with ExitStack() as stack:
+            until = time.monotonic() + 90
+            while True:
+                handles = []
+                try:
+                    if os.name == 'nt':
+                        import msvcrt
+                        for name in ('service-owner.lock', 'worker-owner.lock'):
+                            h = (data_dir / name).open('a+b'); handles.append(h)
+                            h.seek(0); msvcrt.locking(h.fileno(), msvcrt.LK_NBLCK, 1)
+                    break
+                except OSError:
+                    for h in handles: h.close()
+                    if time.monotonic() >= until: raise TimeoutError('OIF is still stopping')
+                    time.sleep(.4)
+            for h in handles: stack.callback(h.close)
+            wait_windows_files(root, plan['entries'])
+            result = apply_plan(work, recover=recover)
         atomic(data_dir / 'product-update-result.json', {'status': result['state'], 'version': result['to_version'],
                'backup': str(work), 'time': time.time()})
         pending.unlink(missing_ok=True)

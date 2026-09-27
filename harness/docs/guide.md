@@ -54,6 +54,8 @@ If the running service still holds older application files, choose **Restart ser
 
 ### Manual update and full backup
 
+Before updating or restarting, send or clear unsent text and attachments in every chat and the new-task composer. OIF keeps the window open while these drafts or a submission are pending.
+
 1. Finish or stop active work. Close the OIF window. Run `scripts/Stop-Harness.ps1` and wait for confirmed shutdown.
 2. Copy the entire application folder to a backup location. This retains `.runtime`, including task files, settings, protected credentials, learning and recovery records. Keep the same Windows user; credentials are not transferable to another account.
 3. Download the new ZIP and verify its checksum from that release. Extract it separately. Do not start it yet.

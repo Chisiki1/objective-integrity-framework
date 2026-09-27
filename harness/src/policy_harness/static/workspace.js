@@ -42,6 +42,13 @@
   });
   window.addEventListener('resize',renderSidebarWidth);renderSidebarWidth();
   const drafts = new Map(), pendingMessages = new Map();
+  function hasUnsentInputs(){
+    return Boolean($('objective').value.trim()||$('instruction-text').value.trim()||
+      [...state.instructionDrafts.values()].some(d=>d.text?.trim())||
+      [...state.attachmentDrafts.values()].some(d=>d.file)||
+      [...drafts.values()].some(files=>files.length)||state.creationSending||
+      state.instructionSending.size||state.attachmentSending.size||pendingMessages.size);
+  }
   let newAccessConfirmed=false, newAccessMode='workspace', newAccessVersion=0, accessChanging=false;
   const creationDrafts=new Map();
   function resetNewAccess(){newAccessConfirmed=false;newAccessMode='workspace';newAccessVersion++;$('new-access').value='workspace';renderComposer();}
@@ -225,7 +232,7 @@
     const answer=async decision=>{await api('/api/approvals/'+encodeURIComponent(approval.id),{method:'POST',body:JSON.stringify({decision,expected_hash:approval.proposal_hash,reason:say('入力欄でこの操作に回答','Answered this operation in the composer')})});await loadApprovals();await refreshSnapshot();};
     const buttons=node('div','permission-actions');buttons.append(action('許可しない','Deny',()=>answer('reject')),action('今回許可','Allow once',()=>answer('approve'),'primary'));box.append(buttons);$('permission-requests').append(box);
   }
-  globalThis.OIFWorkspace={prepareCreate,creationReceived,renderTasks,renderComposer,renderApproval,submitMessage,hasFiles:id=>queue(id||'new').length>0,listQuery:()=>({... (view==='active'?{}:{view}),... (folder?{folder}:{})})};
+  globalThis.OIFWorkspace={hasUnsentInputs,prepareCreate,creationReceived,renderTasks,renderComposer,renderApproval,submitMessage,hasFiles:id=>queue(id||'new').length>0,listQuery:()=>({... (view==='active'?{}:{view}),... (folder?{folder}:{})})};
   bindInput($('objective'),$('new-file-input'),()=> 'new');bindInput($('instruction-text'),$('message-file-input'),ownerNow);
   $('new-pick').onclick=()=>pick($('new-file-input'),'new');$('message-pick').onclick=()=>pick($('message-file-input'),ownerNow());
   $('instruction-text').addEventListener('input',renderComposer);$('new-task').addEventListener('click',()=>{if(newAccessMode==='full')resetNewAccess();else renderComposer();});

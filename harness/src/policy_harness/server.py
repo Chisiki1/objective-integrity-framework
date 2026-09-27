@@ -168,6 +168,7 @@ async def bind_restart_consumer(app: FastAPI, engine, store, data_dir: Path):
                 'source_version':attestation['source_version'], 'worker_pid':os.getpid(),
                 'message':'審査済み更新を、新しい実行プロセスへ引き継ぎます。'})
         app.state.shutting_down = True
+        app.state.engine.service_shutdown_pending = True
         app.state.shutdown_event.set()
         exit_callback()
 

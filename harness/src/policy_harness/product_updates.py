@@ -157,6 +157,15 @@ class ProductUpdates:
             cached = json.loads(plain(self.cache).read_bytes())
         except (OSError, ValueError):
             cached = {}
+        available = cached.get('available')
+        if available:
+            try:
+                newer = version_key(available['version']) > version_key(__version__)
+                compatible = not version_key(__version__)[3] or version_key(available['version'])[3]
+            except (KeyError, TypeError, ValueError):
+                newer = compatible = False
+            if not newer or not compatible:
+                cached = {**cached, 'available': None, 'state': 'current'}
         installable = (os.name == 'nt' and self.data == self.root / '.runtime'
                        and (self.root / 'application.json').is_file() and (self.root / 'python/python.exe').is_file())
         result = {'current_version': re.sub(r'b(\d+)$', r'-beta.\1', __version__), 'installable': installable, 'release_page': PAGE,
@@ -204,10 +213,28 @@ class ProductUpdates:
             return self.status()
 
     def install(self, version, launch):
-        if not self.prepared or self.prepared['version'] != version: raise ValueError('Prepare this update first')
+        # Another window may be preparing a release in a worker thread. Do not
+        # wait on that download in the event loop, or change the selected work.
+        if not self.lock.acquire(blocking=False):
+            raise ValueError('Another update is being prepared. Wait for it to finish, then select the update again.')
+        try:
+            return self._install_selected(version, launch)
+        finally:
+            self.lock.release()
+
+    def _install_selected(self, version, launch):
+        prepared = dict(self.prepared or {})
+        if prepared.get('version') != version or version_key(version) <= version_key(__version__):
+            raise ValueError('Prepare a newer update first')
+        if version_key(__version__)[3] and not version_key(version)[3]:
+            raise ValueError('Stable installations require a stable update')
         owned_record(self.root, self.data, launch)
-        work = plain(self.prepared['work']); staged = plain(work / 'package')
-        manifest(self.root); manifest(staged)
+        work = plain(prepared['work']); staged = plain(work / 'package')
+        manifest(self.root); metadata, _ = manifest(staged)
+        plan = json.loads(plain(work / 'install.json').read_bytes())
+        if (metadata['version'] != version or plan['to_version'] != version
+                or Path(plan['root']).resolve() != self.root or Path(plan['staged']).resolve() != staged):
+            raise ValueError('Prepared update identity changed')
         runner = plain(staged / 'src/policy_harness/product_install.py')
         pending = plain(self.data / 'product-update-pending.json', missing=True)
         if pending.exists(): raise ValueError('A previous update is still pending')

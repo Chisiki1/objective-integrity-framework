@@ -136,9 +136,23 @@ class PublicIdentifierBoundaries(unittest.TestCase):
         public = PublicIdentifiers(ROOT)
         for row in public.entries:
             raw = (ROOT / row["path"]).read_bytes()
-            self.assertEqual(hashlib.sha256(raw).hexdigest(), row["blob_sha256"].lower())
+            # History retains earlier exact blob declarations. Every public
+            # value must also have a declaration for the current exact bytes.
             self.assertIn(row["value"].encode(), raw)
             self.assertTrue(public.permits(row["path"], raw, row["kind"], row["value"]))
+
+    def test_current_and_historical_blobs_do_not_permit_a_third_version(self):
+        self.git("init", "--quiet")
+        self.git("config", "core.autocrlf", "false")
+        self.commit()
+        changed = self.raw + b"Updated public explanation\n"
+        (self.root / "fixture.txt").write_bytes(changed)
+        self.declare([self.row, dict(self.row, blob_sha256=hashlib.sha256(changed).hexdigest())])
+        self.commit()
+        self.scan("privacy_scan", 0)
+        self.scan("history_scan", 0)
+        (self.root / "fixture.txt").write_bytes(changed + b"Undeclared edit\n")
+        self.scan("privacy_scan", 1)
 
 
 if __name__ == "__main__":

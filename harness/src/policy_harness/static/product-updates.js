@@ -13,6 +13,7 @@
     reconnect:['再接続を待っています。しばらくしてから画面を開き直してください。','Waiting to reconnect. Reopen the page shortly.'],
     preserve:['更新を選ぶとOIFを開き直します。チャット・成果物・接続設定は引き継ぎます。','Choosing Update reopens OIF and keeps your chats, files and connection settings.'],
     busy:['実行中の作業があります。終了後に更新・再起動できます。','Tasks are running. Update or restart after they finish.'],
+    unsent:['未送信の文や添付があります。各チャットと新規作成欄の入力を送信するか、不要な入力を消してから更新・再起動してください。','There is unsent text or an attachment. Send it or clear unwanted drafts in your chats and the new-task composer before updating or restarting.'],
     stale:['更新された本体を読み込む必要があります。作業記録を保持してサービスを再起動します。','The service needs to load the updated application files. Restart it with task records preserved.'],
     source:['ソースからの起動では、配布ページのWindows版から更新できます。','For a source checkout, get the Windows package from the release page.'],
     failed:['前回の更新は完了しませんでした。元のアプリと記録は保持しています。','The last update did not finish. Your previous application and records were retained.'],
@@ -27,6 +28,8 @@
   document.body.append(dialog);
   const find = name => dialog.querySelector('.app-update-'+name);
   let info=null, maintenance=null, working=false, message='', error='';
+  const unsent=()=>Boolean(globalThis.OIFWorkspace?.hasUnsentInputs());
+  function requireSavedInputs(){if(unsent())throw new Error(text('unsent'));}
   async function call(path, body) {
     const options={cache:'no-store'};
     if(body!==undefined){
@@ -43,13 +46,13 @@
     button.textContent=text(stale?'restartNeeded':fresh?'available':'updates');button.classList.toggle('has-update',fresh||stale);
     dialog.querySelector('h2').textContent=text('title');find('close').setAttribute('aria-label',text('close'));
     find('version').textContent=info?text('version')+' '+info.current_version+(fresh?' · '+text('next')+' '+info.available.version:''):'';
-    find('description').textContent=busy?text('busy'):stale?text('stale'):fresh?text('preserve'):'';
+    find('description').textContent=busy?text('busy'):unsent()?text('unsent'):stale?text('stale'):fresh?text('preserve'):'';
     const last=info?.last_result?.status;
     find('status').textContent=error||(message?text(message):last==='failed'?text('failed'):last==='rolled_back'?text('rolledback'):info?.state==='unavailable'?text('offline'):info?.state==='current'?text('current'):!info?.installable&&fresh?text('source'):'');
     const link=find('release');link.textContent=text('releases');link.href=info?.available?.page||info?.release_page||'https://github.com/Chisiki1/objective-integrity-framework/releases';
     find('check').textContent=text('check');find('check').disabled=working;
-    find('restart').textContent=text('restart');find('restart').hidden=!stale;find('restart').disabled=working||busy;
-    find('install').textContent=text('install');find('install').hidden=!fresh||!info?.installable;find('install').disabled=working||busy;
+    find('restart').textContent=text('restart');find('restart').hidden=!stale;find('restart').disabled=working||busy||unsent();
+    find('install').textContent=text('install');find('install').hidden=!fresh||!info?.installable;find('install').disabled=working||busy||unsent();
     find('close').disabled=working;
   }
   async function refresh(force=false){
@@ -63,6 +66,7 @@
   find('restart').onclick=async()=>{
     working=true;message='restarting';error='';render();
     try{
+      requireSavedInputs();
       const before=await call('/api/maintenance');
       await call('/api/maintenance/restart',{expected_instance_id:before.instance_id,only_if_idle:true});
       const deadline=Date.now()+60000;
@@ -76,8 +80,10 @@
   find('install').onclick=async()=>{
     working=true;message='preparing';error='';render();
     try{
+      requireSavedInputs();
       const version=info.available.version;info=await call('/api/app-updates/prepare',{version});
       maintenance=await call('/api/maintenance');
+      requireSavedInputs();
       const result=await call('/api/app-updates/install',{version,expected_instance_id:maintenance.instance_id});
       message='installing';render();
       if(result.close_window)window.chrome?.webview?.postMessage('oif-update-close');

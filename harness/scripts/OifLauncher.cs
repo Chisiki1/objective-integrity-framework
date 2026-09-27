@@ -92,22 +92,45 @@ internal static class OifLauncher {
     internal static string ProfileRoot { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OIF", "Desktop", InstallKey); } }
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)] static extern int SetCurrentProcessExplicitAppUserModelID(string appID);
     [DllImport("user32.dll")] static extern bool AllowSetForegroundWindow(int processId);
-    static bool UpdateInProgress() {
+    static int? HandlePendingUpdate() {
         try {
             string pending = Path.Combine(Root, ".runtime", "product-update-pending.json");
-            if (!File.Exists(pending)) return false;
+            if (!File.Exists(pending)) return null;
             var record = Json.Deserialize<Dictionary<string, object>>(File.ReadAllText(pending));
             string id = Convert.ToString(record["work_id"]);
-            if (!System.Text.RegularExpressions.Regex.IsMatch(id, "^[a-f0-9]{32}$")) return false;
-            string path = Path.Combine(Root, ".runtime", "product-updates", id, "helper.lock");
-            if (!File.Exists(path)) return false;
-            try { using (File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) { } return false; }
-            catch (IOException) { return true; }
-        } catch (Exception error) { Record("Update state: " + error.Message); return false; }
+            if (Convert.ToString(record["schema"]) != "oif-product-update-pending-v1" || !System.Text.RegularExpressions.Regex.IsMatch(id, "^[a-f0-9]{32}$"))
+                throw new InvalidOperationException("The pending update record needs recovery.");
+            string work = Path.Combine(Root, ".runtime", "product-updates", id);
+            string path = Path.Combine(work, "helper.lock");
+            if (File.Exists(path)) {
+                try { using (File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) { } }
+                catch (IOException) { Record("The selected update is in progress; the app will reopen."); return 0; }
+            }
+            string staged = Path.Combine(work, "package");
+            string runner = Path.Combine(staged, "src", "policy_harness", "product_install.py");
+            string actual;
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+                actual = BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(runner))).Replace("-", "");
+            if (!String.Equals(actual, Convert.ToString(record["helper_sha256"]), StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("The pending updater changed. Its backup was retained.");
+            var start = new ProcessStartInfo(Path.Combine(staged, "python", "python.exe"),
+                "-B -I " + Quote(runner) + " --work " + Quote(work) + " --data-dir " + Quote(Path.Combine(Root, ".runtime")) + " --recover");
+            start.WorkingDirectory = staged; start.UseShellExecute = false; start.CreateNoWindow = true; start.WindowStyle = ProcessWindowStyle.Hidden;
+            using (var helper = Process.Start(start)) { Record("Pending update recovery handed to staged helper PID " + helper.Id); }
+            // Exit before rollback replaces this executable. The helper waits
+            // for owner/file locks and reopens the recovered app itself.
+            return 0;
+        } catch (Exception error) {
+            Record("Update recovery: " + error);
+            MessageBox.Show("OIF update recovery needs attention. Records and backups were retained.\n" + error.Message, "OIF", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return 1;
+        }
     }
     [STAThread]
     static int Main(string[] args) {
         bool serviceOnly = Array.IndexOf(args, "--service-only") >= 0;
+        int? pendingExit = HandlePendingUpdate();
+        if (pendingExit.HasValue) return pendingExit.Value;
         if (serviceOnly) {
             try { StartService(); return 0; }
             catch (Exception error) { Record(error.ToString()); return 1; }
@@ -116,9 +139,6 @@ internal static class OifLauncher {
             try { OifShell.SetShortcutIdentity(args[1], AppId); return 0; }
             catch (Exception error) { Record(error.ToString()); return 1; }
         }
-        // A second click must not open another mapped OIF.exe while the staged
-        // installer waits to replace it. The updater reopens the app itself.
-        if (UpdateInProgress()) { Record("The selected update is in progress; the app will reopen."); return 0; }
         SetCurrentProcessExplicitAppUserModelID(AppId);
         Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
         bool created;

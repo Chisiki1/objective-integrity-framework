@@ -152,6 +152,22 @@
       "value": "8cfb640f-667e-4d2c-af3c-75597dda9ef3",
       "reason": "Content-authenticity manifest identity of the published OIF artwork; not a user, task or credential identifier.",
       "provenance": "PNG caBX C2PA metadata: claim_generator_info names OpenAI Media Service API; c2pa.actions.v2 records gpt-image creation. Exact manifest reference retained with the artwork."
+    },
+    {
+      "path": "harness/scripts/Build-Desktop.ps1",
+      "blob_sha256": "02F895966B530BEB27F609A256AFACC6054A8E510984A570795BEDDF900BF40D",
+      "kind": "long_hex_identifier",
+      "value": "F492BBF547D0DA329553B6727435B677579B1E9F91CC9E4A1AD029366D5F23D0",
+      "reason": "Pinned WebView2 SDK package digest.",
+      "provenance": "https://api.nuget.org/v3-flatcontainer/microsoft.web.webview2/1.0.4191.47/microsoft.web.webview2.1.0.4191.47.nupkg"
+    },
+    {
+      "path": "harness/src/policy_harness/updates.py",
+      "blob_sha256": "21BA393745204393EA570DA0CA955A75F8996AFE45F1E9F9FA4F5295F1E82BA1",
+      "kind": "long_hex_identifier",
+      "value": "223921b76ee99bde995b7ff738513eef100fb51d18c93597a113bcffe865b2a7",
+      "reason": "Pinned public tokenizer content digest.",
+      "provenance": "https://openaipublic.blob.core.windows.net/encodings/cl100k_base.tiktoken"
     }
   ]
 }

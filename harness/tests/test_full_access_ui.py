@@ -22,6 +22,17 @@ def full_dom(client, receipt, mode):
  const h=context.hooks;
 """)
     runner=runner.replace(" if(input.mode==='creation-loss'||input.mode==='creation-storage'){", """
+ if(input.mode==='update-drafts'){
+  const get=id=>document.getElementById(id), unsent=()=>r.context.OIFWorkspace.hasUnsentInputs(), seen=[];
+  seen.push(unsent());get('objective').value='new unsent task';seen.push(unsent());get('objective').value='';
+  h.instructionDraft('other-chat').text='other chat draft';seen.push(unsent());h.instructionDraft('other-chat').text='';
+  h.attachmentDraft('other-chat').file={name:'unsent.txt'};seen.push(unsent());h.attachmentDraft('other-chat').file=null;
+  get('new-file-input').files=[{name:'pasted.txt',size:5}];
+  // Select through the actual workspace input listener, retaining its queue.
+  const paste={clipboardData:{files:[{name:'pasted.txt',size:5}]},preventDefault(){}};
+  get('objective').listeners.paste(paste);seen.push(unsent());
+  process.stdout.write(JSON.stringify({seen}));return;
+ }
  if(input.mode.startsWith('full-')){
   h.state.csrf='fixture-csrf';const get=id=>document.getElementById(id);
   async function grant(){get('new-access').value='full';const change=get('new-access').onchange();
@@ -71,3 +82,9 @@ def test_full_confirmation_consumed_by_normal_and_recovered_receipts(creation,mo
     assert actual['fresh']['access_mode']==actual['afterCancel']['access_mode']=='workspace'
     assert 'confirm_full_access' not in actual['fresh'] and 'confirm_full_access' not in actual['afterCancel']
     assert actual['needsConfirmation']
+
+
+def test_update_guard_sees_new_other_chat_and_pasted_attachment_drafts(creation):
+    client,_,_,_=creation
+    receipt=client.post('/api/tasks',json={'objective':'Draft preservation fixture'}).json()
+    assert full_dom(client,receipt,'update-drafts')['seen']==[False,True,True,True,True]

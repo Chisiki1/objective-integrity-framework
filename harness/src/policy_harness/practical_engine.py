@@ -74,6 +74,7 @@ class PracticalEngine:
         self.stop_requested = set()
         self.source_locks = {}
         self.on_restart = None
+        self.service_shutdown_pending = False
         self.maintenance_restart_pending = False
         self.maintenance = Maintenance(self)
         self.maintenance_restart_pending = bool(self.maintenance.recovery_targets())
@@ -131,6 +132,8 @@ class PracticalEngine:
         return task
 
     def start_task(self, task_id, *, retry_context=False):
+        if self.service_shutdown_pending:
+            raise PolicyError('OIFを再起動しています。再接続後に開始してください。')
         if self.maintenance_restart_pending and not self.maintenance.recovery_targets(task_id):
             raise PolicyError('OIFの更新を新しいプロセスへ引き継いでいます。再接続後に開始してください。')
         task = self.store.get_task(task_id)
