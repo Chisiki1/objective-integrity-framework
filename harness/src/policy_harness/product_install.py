@@ -23,12 +23,12 @@ from uuid import uuid4
 PROTECTED = {'.runtime', '.work', '.venv', '.git', '.env', 'settings.json', 'credentials.json'}
 
 
-def filesystem_path(path):
+def filesystem_path(path, *, extended=False):
     """Use extended Windows paths for nested package members, without OS changes."""
     path = Path(path).absolute()
     value = str(path)
     # Leave room for the atomic-write suffix as well as the member itself.
-    if os.name == 'nt' and len(value) >= 200 and not value.startswith('\\\\?\\'):
+    if os.name == 'nt' and (extended or len(value) >= 200) and not value.startswith('\\\\?\\'):
         value = '\\\\?\\UNC\\' + value[2:] if value.startswith('\\\\') else '\\\\?\\' + value
         return Path(value)
     return path

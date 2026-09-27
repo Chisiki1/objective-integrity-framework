@@ -2,6 +2,7 @@
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 import zipfile
@@ -291,3 +292,34 @@ def test_recovery_waits_for_windows_files_before_restoring(tmp_path,monkeypatch)
     monkeypatch.setattr(install,'apply_plan',apply)
     assert install.run_helper(work,data,recover=True,reopen=False)['state']=='prepared'
     assert (root/'OIF.exe').read_text()=='old'
+
+
+@pytest.mark.skipif(os.name!='nt',reason='Windows extended path identity')
+def test_long_installation_root_prepares_and_dispatches_same_location(tmp_path,monkeypatch):
+    base=tmp_path/'installation'
+    while len(str(base))<205:base=base/'nested-application-folder'
+    files={'OIF.exe':b'fixture','python/python.exe':b'fixture',
+           'src/policy_harness/product_install.py':b'fixture'}
+    package(install.filesystem_path(base,extended=True),'0.3.0-beta.2',files)
+    metadata={'schema':'oif-desktop-package-v1','version':'0.3.0-beta.3','members':[
+        {'path':n,'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest().upper()} for n,b in files.items()]}
+    raw=io.BytesIO()
+    with zipfile.ZipFile(raw,'w') as archive:
+        for n,b in {**files,'application.json':json.dumps(metadata).encode()}.items():
+            archive.writestr('OIF-Desktop-0.3.0-beta.3/'+n,b)
+    data=raw.getvalue();manager=updates.ProductUpdates(base,base/'.runtime',downloader=lambda *_:data)
+    offer={'version':'0.3.0-beta.3','url':'fixture','bytes':len(data),'sha256':hashlib.sha256(data).hexdigest().upper()}
+    install.atomic(manager.cache,{'state':'available','available':offer})
+    assert manager.prepare(offer['version'])['prepared']==offer['version']
+    install.atomic(install.plain(base/'.runtime/server-process.json',missing=True),
+                   {'launch_id':'owned','data_dir':str(base/'.runtime'),'executable':str(base/'python/python.exe')})
+    calls=[];monkeypatch.setattr(updates.subprocess,'Popen',lambda *a,**kw:calls.append(a))
+    manager.install(offer['version'],'owned')
+    assert len(calls)==1
+    pending=install.plain(base/'.runtime/product-update-pending.json')
+    assert json.loads(pending.read_bytes())['version']==offer['version']
+    pending.unlink()
+    work=Path(manager.prepared['work']);plan=json.loads((work/'install.json').read_bytes())
+    plan['root']=str(tmp_path/'different-installation');install.atomic(work/'install.json',plan)
+    with pytest.raises(ValueError,match='identity changed'):manager.install(offer['version'],'owned')
+    assert len(calls)==1 and not pending.exists()

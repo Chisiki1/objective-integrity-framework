@@ -18,7 +18,7 @@ import zipfile
 import httpx
 
 from . import __version__
-from .product_install import atomic, digest, make_plan, manifest, member, plain
+from .product_install import atomic, digest, filesystem_path, make_plan, manifest, member, plain
 
 REPOSITORY = 'Chisiki1/objective-integrity-framework'
 RELEASES = 'https://api.github.com/repos/' + REPOSITORY + '/releases?per_page=30'
@@ -233,8 +233,12 @@ class ProductUpdates:
         work = plain(prepared['work']); staged = plain(work / 'package')
         manifest(self.root); metadata, _ = manifest(staged)
         plan = json.loads(plain(work / 'install.json').read_bytes())
+        # An extended Windows IO path can name the same directory as an
+        # ordinary resolved path. Compare both through one canonical spelling.
+        def location(path):
+            return filesystem_path(Path(path).resolve(), extended=True)
         if (metadata['version'] != version or plan['to_version'] != version
-                or Path(plan['root']).resolve() != self.root or Path(plan['staged']).resolve() != staged):
+                or location(plan['root']) != location(self.root) or location(plan['staged']) != location(staged)):
             raise ValueError('Prepared update identity changed')
         runner = plain(staged / 'src/policy_harness/product_install.py')
         pending = plain(self.data / 'product-update-pending.json', missing=True)
