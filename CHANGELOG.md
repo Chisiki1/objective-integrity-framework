@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-beta.3 — 2026-09-28
+
+- Restore new-task sending after the local service restarts by refreshing expired session information.
+- Add an explicit desktop connection recovery action that preserves the current document, draft and attachments.
+- Look up the original submission during connection recovery and reuse its ID on an explicit retry; keep transport failures from silently replaying work.
+- Show validation failures and disconnected status directly instead of reporting every failure as an unknown receipt.
+
 ## 0.3.0-beta.2 — 2026-09-28
 
 - Replace the English and Japanese desktop showcase with matching content and order: shared learning, harness improvement, and actual-use records.

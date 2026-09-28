@@ -1,6 +1,6 @@
-# OIF Desktop showcase · 0.3.0-beta.2
+# OIF Desktop showcase · 0.3.0-beta.3
 
-[Japanese edition](ja/README.md) · [Desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.2/harness/README.md)
+[Japanese edition](ja/README.md) · [Desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.3/harness/README.md)
 
 ## 01 — Refine learned procedures through use and evaluation.
 

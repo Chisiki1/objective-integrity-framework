@@ -20,14 +20,14 @@ internal sealed class OifWindow : Form {
     readonly Panel notice = new Panel();
     readonly Label message = new Label();
     readonly Button retry = new Button();
-    bool initializing, ready, closing;
+    bool initializing, ready, closing, reconnecting;
     static bool loaderConfigured;
     string lastFragment = "";
     readonly JavaScriptSerializer json = new JavaScriptSerializer();
     [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
 
     internal OifWindow(string profilePath, Func<Task<string>> serviceFactory = null) {
-        profile = profilePath; service = serviceFactory ?? (() => Task.Run(() => OifLauncher.StartService()));
+        profile = profilePath; service = serviceFactory ?? (() => Task.Run(() => OifLauncher.StartService(Origin == null ? 0 : Origin.Port)));
         Text = "OIF"; Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         AutoScaleMode = AutoScaleMode.Dpi; AutoScaleDimensions = new SizeF(96, 96);
         ClientSize = new Size(1200, 820); MinimumSize = new Size(640, 480);
@@ -118,11 +118,31 @@ internal sealed class OifWindow : Form {
                     lastFragment = SafeFragment(current.Fragment); SaveWindow();
                 }
             };
-            core.WebMessageReceived += (s, e) => {
-                Uri from;
-                if (!Uri.TryCreate(e.Source, UriKind.Absolute, out from) || !IsLocal(from)) return;
+            core.WebMessageReceived += async (s, e) => {
+                Uri from, currentPage;
+                if (!Uri.TryCreate(e.Source, UriKind.Absolute, out from) || !IsLocal(from) || from.AbsolutePath != "/" ||
+                    !Uri.TryCreate(core.Source, UriKind.Absolute, out currentPage) || !IsLocal(currentPage) || currentPage.AbsolutePath != "/") return;
                 string value;
                 try { value = e.TryGetWebMessageAsString(); } catch (ArgumentException) { return; }
+                const string reconnect = "oif-service-reconnect:";
+                if (value.StartsWith(reconnect, StringComparison.Ordinal)) {
+                    string id = value.Substring(reconnect.Length);
+                    Guid parsed;
+                    if (!Guid.TryParseExact(id, "N", out parsed) || reconnecting) return;
+                    reconnecting = true;
+                    bool ok = false; string detail = null;
+                    try {
+                        var recoveredUrl = new Uri(await service());
+                        if (!IsLocal(recoveredUrl) || recoveredUrl.AbsolutePath != "/") throw new InvalidOperationException("The recovered service address changed. Your input remains in this window.");
+                        ok = true;
+                    } catch (Exception error) { detail = error.Message; OifLauncher.Record("Service reconnect: " + error); }
+                    finally { reconnecting = false; }
+                    if (!closing && Browser != null && !Browser.IsDisposed && Browser.CoreWebView2 == core) {
+                        try { await core.ExecuteScriptAsync("window.dispatchEvent(new CustomEvent('oif-service-restored',{detail:" + json.Serialize(new { id = id, ok = ok, message = detail }) + "}));"); }
+                        catch (Exception error) { OifLauncher.Record("Service reconnect reply: " + error.Message); }
+                    }
+                    return;
+                }
                 if (value == "oif-update-close") { Close(); return; }
                 if (value != "oif-theme:dark" && value != "oif-theme:light") return;
                 int dark = value.EndsWith(":dark") ? 1 : 0;

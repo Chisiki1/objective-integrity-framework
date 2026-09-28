@@ -1,4 +1,4 @@
-# OIF Desktop · 0.3.0-beta.2
+# OIF Desktop · 0.3.0-beta.3
 
 **An agent workspace that keeps the goal in view and carries useful experience into the next task.**
 
@@ -6,7 +6,7 @@ OIF combines a Windows desktop app, a persistent task engine and a shared learni
 
 ## Start in three steps
 
-1. Download **OIF-Desktop-0.3.0-beta.2-windows-x64.zip** from the [beta release](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.2).
+1. Download **OIF-Desktop-0.3.0-beta.3-windows-x64.zip** from the [beta release](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.3).
 2. Extract the complete folder into a writable location. Open **OIF.exe**. Keep its `python`, `desktop`, `src`, `policy` and `scripts` folders beside it.
 3. Open **Settings**, choose an OpenAI-compatible provider and model, enter its API key, then start a task. OpenRouter also has a browser sign-in route. Availability and model capabilities depend on the provider.
 
@@ -32,6 +32,8 @@ Next, ask for a small research report with public sources, or a change to a file
 The [desktop guide](docs/guide.md) covers settings, recovery, long tasks, learning and updates. [Japanese guide](docs/ja.md).
 
 ## Data and updates
+
+If a new task cannot be sent, the notice explains whether the local service is disconnected or the request was rejected. **Restore connection** keeps the current input and attachments, reconnects the desktop service if needed, and checks the original submission ID. It does not resend the request. If no receipt exists, choose **Start work** to send it. An expired session refreshes automatically.
 
 Task records, workspace files and encrypted provider credentials live in `.runtime` beside the app. Credentials use Windows user-bound protection. Back up this folder while the service is stopped. Closing the window alone does not stop the service; use `scripts/Stop-Harness.ps1` before a backup or update. Keep the same Windows account and original installation path when restoring.
 

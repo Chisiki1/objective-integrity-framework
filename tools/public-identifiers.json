@@ -168,6 +168,14 @@
       "value": "223921b76ee99bde995b7ff738513eef100fb51d18c93597a113bcffe865b2a7",
       "reason": "Pinned public tokenizer content digest.",
       "provenance": "https://openaipublic.blob.core.windows.net/encodings/cl100k_base.tiktoken"
+    },
+    {
+      "path": "harness/tests/test_ui_preferences.py",
+      "blob_sha256": "2FEF481BCF718BCAE1635FE9843B76217B71C4D54B25E50C83960BF26E3F915C",
+      "kind": "long_hex_identifier",
+      "value": "20D25566050BFAD17D0C22B77FF59B1C04BA8BE8CECE0A9377058D2A2902F573",
+      "reason": "Checks the shipped OIF logo bytes.",
+      "provenance": "harness/src/policy_harness/static/oif-outline.png"
     }
   ]
 }

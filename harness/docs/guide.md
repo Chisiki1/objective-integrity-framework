@@ -1,6 +1,6 @@
 # OIF Desktop guide
 
-Version **0.3.0-beta.2** · [Quick start](../README.md) · [Japanese](ja.md)
+Version **0.3.0-beta.3** · [Quick start](../README.md) · [Japanese](ja.md)
 
 ## A task from request to result
 
@@ -39,6 +39,8 @@ Chats have independent task state and can run concurrently. Stop affects the sel
 Closing the desktop window keeps the local service and running tasks alive. To shut the service down, finish or stop active tasks and run `scripts/Stop-Harness.ps1` from the app folder. It validates process ownership and requests graceful shutdown. A failed shutdown is not permission to overwrite a live database. Logs are retained under `.runtime`; support reports should omit credentials and private task contents.
 
 ## Back up, update and restore
+
+If a new task cannot be sent, the notice explains whether the local service is disconnected or the request was rejected. **Restore connection** keeps the current input and attachments, reconnects the desktop service if needed, and checks the original submission ID. It does not resend the request. If no receipt exists, choose **Start work** to send it. An expired session refreshes automatically.
 
 The application must stay in a writable folder. The complete Windows ZIP contains the app and its private Python environment. It is not a single-file executable.
 

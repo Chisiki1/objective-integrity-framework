@@ -1,10 +1,10 @@
 # OIF Desktop ガイド
 
-バージョン **0.3.0-beta.2** · [English](guide.md)
+バージョン **0.3.0-beta.3** · [English](guide.md)
 
 ## 起動
 
-1. [β版リリース](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.2)から **OIF-Desktop-0.3.0-beta.2-windows-x64.zip** を取得します。
+1. [β版リリース](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.3)から **OIF-Desktop-0.3.0-beta.3-windows-x64.zip** を取得します。
 2. ZIP全体を書き込み可能なフォルダーに展開し、**OIF.exe** を開きます。Pythonは同梱されています。EXEだけを別の場所に移動しないでください。
 3. 設定でプロバイダー・モデル・APIキーを指定し、作業を始めます。OpenRouterにはブラウザーでのサインイン経路もあります。OAuthが全プロバイダーに対応するわけではありません。
 
@@ -40,6 +40,8 @@ APIキーは現在のWindowsユーザー向けに保護されます。タスク�
 
 ## 停止と復旧
 
+新しい作業を送信できない時は、サービスの接続切れか入力の問題かを通知に表示します。「接続を復旧」は入力・添付を残したまま必要に応じてサービスに接続し直し、元の送信IDで受領記録を確認します。この操作では再送しません。受領記録がなければ「作業を開始」で送信できます。期限切れの接続情報は自動で更新します。
+
 複数チャットを同時に進められます。停止は選択したタスクに作用し、記録は残ります。再開は保存された境界から行います。作用が不明な操作は再実行前に確認してください。チャットの表示を開き直すために他のチャットを再起動する必要はありません。
 
 ウィンドウを閉じてもサービスと進行中の作業は継続します。サービス自体を止める時は、作業を完了または停止し、アプリの `scripts/Stop-Harness.ps1` を実行します。所有しているプロセスを検証して正常終了を要求します。終了が確認できない状態でデータベースを置き換えないでください。
@@ -74,4 +76,4 @@ Windows x64とPracticalEngineが対象です。自動テストは再現可能な
 
 ## 紹介画像
 
-[日本語の紹介画像3枚](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.2/docs/showcase/ja/README.md)も公開しています。リリースの紹介画像ZIPには英語版と日本語版を収録しています。
+[日本語の紹介画像3枚](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.3/docs/showcase/ja/README.md)も公開しています。リリースの紹介画像ZIPには英語版と日本語版を収録しています。

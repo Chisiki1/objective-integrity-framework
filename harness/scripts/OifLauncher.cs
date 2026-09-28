@@ -14,7 +14,7 @@ using System.Runtime.InteropServices;
 [assembly: System.Reflection.AssemblyTitle("OIF")]
 [assembly: System.Reflection.AssemblyDescription("OIF desktop application")]
 [assembly: System.Reflection.AssemblyVersion("0.3.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersion("0.3.0-beta.2")]
+[assembly: System.Reflection.AssemblyInformationalVersion("0.3.0-beta.3")]
 
 internal static class OifLauncher {
     internal static readonly string Root = AppDomain.CurrentDomain.BaseDirectory;
@@ -31,7 +31,8 @@ internal static class OifLauncher {
     static Dictionary<string, object> ReadRecord() {
         return Json.Deserialize<Dictionary<string, object>>(File.ReadAllText(Path.Combine(Root, ".runtime", "server-process.json")));
     }
-    internal static string StartService() {
+    internal static string StartService(int requiredPort = 0) {
+        if (requiredPort < 0 || requiredPort > 65535) throw new ArgumentOutOfRangeException("requiredPort");
         Record("Desktop launch requested");
         string script = Path.Combine(Root, "scripts", "Start-Harness.ps1");
         if (!File.Exists(script) || (!File.Exists(Path.Combine(Root, "python", "python.exe")) && !File.Exists(Path.Combine(Root, ".venv", "Scripts", "python.exe"))))
@@ -47,7 +48,8 @@ internal static class OifLauncher {
                 catch (AbandonedMutexException) { acquired = true; }
                 if (!acquired) throw new InvalidOperationException("Another launch is in progress. Please wait, then open OIF again.");
                 var start = new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "WindowsPowerShell", "v1.0", "powershell.exe"),
-                    "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File " + Quote(script));
+                    "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File " + Quote(script) +
+                    (requiredPort == 0 ? "" : " -Port " + requiredPort.ToString(System.Globalization.CultureInfo.InvariantCulture)));
                 start.WorkingDirectory = Root; start.UseShellExecute = false; start.CreateNoWindow = true;
                 start.WindowStyle = ProcessWindowStyle.Hidden; start.RedirectStandardOutput = true; start.RedirectStandardError = true;
                 using (var process = Process.Start(start)) {

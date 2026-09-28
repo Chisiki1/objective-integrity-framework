@@ -68,13 +68,60 @@ async function explainEvidence(event){
   }catch(error){if(serial===state.explanationSerial)target.textContent=tr('解説を取得できませんでした。原記録はそのまま確認できます。')+' '+readableMessage(error.message);}
   finally{if(serial===state.explanationSerial)$('evidence-explain').disabled=false;}
 }
-async function api(path, options={}) {
+let sessionRefresh=null,serviceReconnect=null;
+function connectionState(connected){
+  state.connectionKey=connected?'ローカル接続中':'接続を確認してください';
+  $('connection').textContent=tr(state.connectionKey);
+  $('connection').classList.toggle('online',connected);$('connection').classList.toggle('error',!connected);
+}
+async function renewSession(){
+  if(sessionRefresh)return sessionRefresh;
+  sessionRefresh=(async()=>{
+    const page=await fetch('/',{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(8000)});
+    if(!page.ok)throw new Error(tr('サービスへの接続を確認してください。'));
+    const response=await fetch('/api/session',{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(8000)});
+    if(!response.ok)throw new Error(tr('サービスへの接続を確認してください。'));
+    const session=await response.json();
+    if(typeof session.csrf_token!=='string'||!session.csrf_token||typeof session.instance_id!=='string')throw new Error(tr('responseMismatch'));
+    state.csrf=session.csrf_token;state.instanceId=session.instance_id;connectionState(true);
+  })();
+  try{return await sessionRefresh;}catch(error){connectionState(false);error.connectionLost=true;throw error;}finally{sessionRefresh=null;}
+}
+async function restoreConnection(){
+  if(serviceReconnect)return serviceReconnect;
+  serviceReconnect=(async()=>{
+    note(uiMessage('connectionRestoring'));
+    try{await renewSession();}
+    catch(error){
+      if(!globalThis.chrome?.webview?.postMessage)throw error;
+      // Explicit service-only recovery. Keep this document, draft and attachments.
+      await new Promise((resolve,reject)=>{
+        const id=crypto.randomUUID().replaceAll('-','');
+        const done=event=>{if(event.detail?.id!==id)return;clearTimeout(timer);window.removeEventListener('oif-service-restored',done);event.detail.ok?resolve():reject(new Error(event.detail.message||tr('connectionUnavailable')));};
+        const timer=setTimeout(()=>{window.removeEventListener('oif-service-restored',done);reject(new Error(tr('connectionUnavailable')));},100000);
+        window.addEventListener('oif-service-restored',done);
+        globalThis.chrome.webview.postMessage('oif-service-reconnect:'+id);
+      });
+      await renewSession();
+    }
+    connectTaskList();await refreshTaskList();
+  })();
+  try{return await serviceReconnect;}finally{serviceReconnect=null;}
+}
+async function api(path, options={}, refreshed=false) {
   const order=++state.requestSerial;
   const headers = {...options.headers};
   if(options.method && options.method!=='GET'){headers['Content-Type']='application/json';headers['X-CSRF-Token']=state.csrf;}
-  const response = await fetch(path,{...options,headers,credentials:'same-origin',cache:'no-store'});
+  let response;
+  try{response=await fetch(path,{...options,headers,credentials:'same-origin',cache:'no-store'});}
+  catch(error){connectionState(false);const failure=new Error(tr('connectionUnavailable'));failure.connectionLost=true;throw failure;}
   const data = await response.json();
   if(data&&typeof data==='object')state.responseOrders.set(data,order);
+  // These responses come from local security before endpoint dispatch. Never
+  // repeat a mutation after a transport failure or an ambiguous server error.
+  if(!refreshed&&(response.status===401||(response.status===403&&data.detail==='操作用の接続情報が一致しません。'))){
+    await renewSession();return api(path,options,true);
+  }
   if(!response.ok){const message=response.status===401&&state.taskId?tr('接続情報を更新するには「表示を更新」を押してください。入力中の内容は保持しています。'):typeof data.detail==='string'?data.detail:pretty(data.detail || data);const error=new Error(message);error.status=response.status;error.kind=data.kind;throw error;}
   return data;
 }
@@ -102,30 +149,40 @@ async function showCreationReceipt(receipt,entry){
   else await selectTask(receipt.task.id);
   acknowledgeSubmission(entry.id);
 }
-async function recoverCreation(entry,{open=true}={}){
+async function recoverCreation(entry,{open=true,generation=state.generation}={}){
   const receipt=await api('/api/submissions/'+encodeURIComponent(entry.id));creationReceipt(receipt,entry.id);
   entry.task_id=receipt.task.id;saveSubmission(entry);
-  if(open)await showCreationReceipt(receipt,entry);
+  if(open&&generation===state.generation)await showCreationReceipt(receipt,entry);
   else note(uiMessage('creationReceived'),{key:'受理済みの作業を開く',run:()=>showCreationReceipt(receipt,entry).catch(error=>note(error.message))});
+}
+async function reconnectCreation(entry,generation){
+  try{
+    await restoreConnection();
+    await recoverCreation(entry,{generation});
+  }catch(error){note(error.status===404?uiMessage('creationNotFound'):error.message,{key:'接続を復旧',run:()=>reconnectCreation(entry,generation)});}
 }
 async function submitTask(event){
   event.preventDefault();if(state.creationSending)return;
   const text=$('objective').value,generation=state.generation;if(!text.trim())return;
   state.creationSending=true;$('submit-task').disabled=true;note('');
-  let entry,persisted=false,prepared;
+  let entry,persisted=false,prepared,phase='prepare';
   try{
     prepared=await globalThis.OIFWorkspace?.prepareCreate();
     const payload={objective:text,...(prepared?.data||{})};
     const bytes=new TextEncoder().encode(JSON.stringify(payload));
     const payload_hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
-    entry=pendingSubmissions().find(x=>x.payload_hash===payload_hash)||{id:crypto.randomUUID().replaceAll('-',''),payload_hash};
+    phase='storage';entry=pendingSubmissions().find(x=>x.payload_hash===payload_hash)||{id:crypto.randomUUID().replaceAll('-',''),payload_hash};
     saveSubmission(entry);persisted=true;prepared?.bindSubmission(entry.id);
-    if(entry.task_id){await recoverCreation(entry,{open:generation===state.generation});return;}
+    phase='send';
+    if(entry.task_id){await recoverCreation(entry,{generation});return;}
     const receipt=await api('/api/tasks',{method:'POST',body:JSON.stringify({...payload,submission_id:entry.id})});
     creationReceipt(receipt,entry.id);entry.task_id=receipt.task.id;saveSubmission(entry);
     if(generation===state.generation){await showCreationReceipt(receipt,entry);if($('objective').value===text)$('objective').value='';}
     else note(uiMessage('creationReceived'),{key:'受理済みの作業を開く',run:()=>showCreationReceipt(receipt,entry).catch(error=>note(error.message))});
-  }catch(error){note(entry?.task_id?uiMessage('creationReceived'):persisted?uiMessage('creationUnknown'):uiMessage('creationStorageUnavailable'),persisted?{key:'送信結果を確認',run:()=>recoverCreation(entry).catch(error=>note(error.status===404?uiMessage('creationNotFound'):error.message))}:null);}
+  }catch(error){
+    const message=entry?.task_id?uiMessage('creationReceived'):error.connectionLost?uiMessage('connectionUnavailable'):persisted?(error.status?error.message:uiMessage('creationUnknown')):phase==='storage'?uiMessage('creationStorageUnavailable'):error.message;
+    note(message,persisted?{key:error.connectionLost?'接続を復旧':'送信結果を確認',run:()=>reconnectCreation(entry,generation)}:null);
+  }
   finally{state.creationSending=false;$('submit-task').disabled=false;}
 }
 function rememberSnapshot(snapshot){
@@ -364,8 +421,10 @@ async function refreshTaskList(){
   catch(error){note(error.message);}finally{state.listRefreshing=false;}
 }
 function connectTaskList(){
-  state.listStream?.close();state.listStream=new EventSource('/api/task-list/events');
-  state.listStream.addEventListener('changed',refreshTaskList);
+  state.listStream?.close();const stream=new EventSource('/api/task-list/events');state.listStream=stream;
+  stream.addEventListener('changed',refreshTaskList);
+  stream.addEventListener('open',()=>{if(state.listStream===stream)connectionState(true);});
+  stream.addEventListener('error',()=>{if(state.listStream===stream)connectionState(false);});
 }
 window.addEventListener('beforeunload',()=>state.listStream?.close());
 function showRecoveryTask(task,detail,receipt=null){

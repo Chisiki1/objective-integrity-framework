@@ -14,6 +14,12 @@ from policy_harness import product_updates as updates
 from .test_server import harness
 
 
+@pytest.fixture(autouse=True)
+def installed_fixture_version(monkeypatch):
+    # Synthetic beta.2 installations stay independent of the shipped version.
+    monkeypatch.setattr(updates, '__version__', '0.3.0b2')
+
+
 def package(root, version, files):
     root.mkdir(parents=True, exist_ok=True)
     rows=[]

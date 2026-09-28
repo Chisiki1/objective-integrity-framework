@@ -47,11 +47,11 @@ function runtime(){
  for(const name of ['base_url','model','review_model','api_mode','reasoning_effort','model_context_tokens','max_output_tokens','web_provider','web_base_url','model_api_key','web_api_key'])document.getElementById('settings-form').elements[name]=new Element('input');
  const calls=[],pending=[],deferredGets=[],windowEvents={},streams=[];let current=input.initial,onPost,getDeferred=false;const posted=new Promise(resolve=>onPost=resolve);
  class FileReader{readAsDataURL(file){this.result='data:application/octet-stream;base64,'+(input.base64||'eA==');queueMicrotask(()=>this.onload());}}
- const context={document,console,Map,Set,URL,Blob,FileReader,TextEncoder,AbortController,TextDecoderStream,crypto:{subtle:require('crypto').webcrypto.subtle,randomUUID:()=>input.createReceipt?.submission_id||require('crypto').randomUUID()},navigator:{languages:input.languages||['ja-JP']},sessionStorage:{getItem:k=>session[k]??null,setItem(k,v){if(input.sessionDenied)throw new Error('Denied');session[k]=v;}},localStorage:{getItem(k){if(input.storageDenied)throw new Error('Denied');return storage[k]??null;},setItem(k,v){if(input.storageDenied)throw new Error('Denied');storage[k]=v;}},window:{addEventListener(name,fn){windowEvents[name]=fn;}},history:{replaceState(){}},location:{hash:'',pathname:'/'},EventSource:class{constructor(path){this.path=path;this.closed=false;streams.push(this);}addEventListener(){}close(){this.closed=true;}},
+ const context={document,console,Map,Set,URL,Blob,FileReader,TextEncoder,AbortController,AbortSignal,TextDecoderStream,crypto:{subtle:require('crypto').webcrypto.subtle,randomUUID:()=>input.createReceipt?.submission_id||require('crypto').randomUUID()},navigator:{languages:input.languages||['ja-JP']},sessionStorage:{getItem:k=>session[k]??null,setItem(k,v){if(input.sessionDenied)throw new Error('Denied');session[k]=v;}},localStorage:{getItem(k){if(input.storageDenied)throw new Error('Denied');return storage[k]??null;},setItem(k,v){if(input.storageDenied)throw new Error('Denied');storage[k]=v;}},window:{addEventListener(name,fn){windowEvents[name]=fn;}},history:{replaceState(){}},location:{hash:'',pathname:'/'},EventSource:class{constructor(path){this.path=path;this.closed=false;streams.push(this);}addEventListener(){}close(){this.closed=true;}},
   fetch:async(path,options={})=>{const pathname=path.split('?')[0];calls.push({path,options});if(options.method==='POST'){const response=new Promise((resolve,reject)=>pending.push(value=>value?.transportError?reject(new Error('synthetic response loss')):resolve({ok:true,status:200,json:async()=>value})));onPost();return response;}if(input.deferSnapshot&&!getDeferred&&pathname==='/api/tasks/'+input.initial.task.id){getDeferred=true;return new Promise(resolve=>deferredGets.push(value=>resolve({ok:true,status:200,json:async()=>value})));}if(path.startsWith('/api/submissions/')&&input.lookupMissing)return {ok:false,status:404,json:async()=>({detail:'No saved receipt'})};const value=path==='/api/session'?{csrf_token:'fixture-csrf',instance_id:'fixture-instance'}:path==='/api/approvals'?{approvals:[]}:path==='/api/tasks'?{tasks:[(input.created||current).task]}:path.startsWith('/api/submissions/')?input.createReceipt:input.created&&pathname.endsWith(input.created.task.id)?input.created:input.other&&pathname.endsWith(input.other.task.id)?input.other:current;return {ok:true,status:200,json:async()=>value};}};
  context.windowEvents=windowEvents;vm.createContext(context);vm.runInContext(input.i18n,context);vm.runInContext(input.presentation,context);vm.runInContext(input.conversation,context);vm.runInContext(input.records,context);
  const app=input.app.replace(/\nboot\(\);\s*$/,'\n');if(app===input.app)throw new Error('Explicit boot boundary missing');
- vm.runInContext(app+'\nglobalThis.hooks={state,renderSnapshot,renderEvents,renderApprovals,submitInstruction,submitAttachment,selectTask,instructionDraft,attachmentDraft,showDetails,renderSettingsStatus,refreshSnapshot,appendEvent,recoverCreation,pendingSubmissions,boot};',context);
+ vm.runInContext(app+'\nglobalThis.hooks={state,renderSnapshot,renderEvents,renderApprovals,submitInstruction,submitAttachment,selectTask,instructionDraft,attachmentDraft,showDetails,renderSettingsStatus,refreshSnapshot,appendEvent,recoverCreation,pendingSubmissions,boot,reconnectCreation};',context);
  const h=context.hooks;
  function select(snapshot){current=snapshot;h.state.taskId=snapshot.task.id;h.state.tasks=[snapshot.task,...(input.other?[input.other.task]:[])];h.state.csrf='fixture-csrf';h.renderSnapshot(snapshot);}
  function type(text){document.getElementById('instruction-text').value=text;document.getElementById('instruction-text').listeners.input();}
@@ -61,6 +61,35 @@ function runtime(){
 }
 (async()=>{
  const r=runtime(),{h,document}=r;
+ if(input.mode==='creation-auth'||input.mode==='creation-rejected'){
+  const original=r.context.fetch;let rejected=false;
+  r.context.fetch=async(path,options={})=>{
+   if(path==='/api/tasks'&&options.method==='POST'&&!rejected){rejected=true;r.calls.push({path,options});return {ok:false,status:input.rejection.status,json:async()=>input.rejection.body};}
+   return original(path,options);
+  };
+  h.state.csrf='expired-token';document.getElementById('objective').value=input.startPrompt;
+  const send=document.getElementById('task-form').listeners.submit({preventDefault(){}});
+  if(input.mode==='creation-auth'){await r.posted;r.pending.shift()(input.createReceipt);}
+  await send;
+  process.stdout.write(JSON.stringify({calls:r.calls,session,taskId:h.state.taskId,draft:document.getElementById('objective').value,notice:h.state.noticeMessage}));return;
+ }
+ if(input.mode==='creation-reconnect'){
+  h.state.csrf='old';document.getElementById('objective').value=input.startPrompt;
+  const send=document.getElementById('task-form').listeners.submit({preventDefault(){}});
+  await r.posted;r.pending.shift()({transportError:true});await send;
+  const entry=h.pendingSubmissions()[0],before=JSON.parse(JSON.stringify(entry)),generation=h.state.generation;
+  const original=r.context.fetch;let alive=false,nativeCalls=0,onLookup,releaseLookup;
+  const lookupStarted=new Promise(resolve=>onLookup=resolve);
+  r.context.fetch=async(path,options={})=>{if(!alive)throw Error('offline');if(input.navigateDuringLookup&&path.startsWith('/api/submissions/'))return new Promise(resolve=>{releaseLookup=async()=>resolve(await original(path,options));onLookup();});return original(path,options);};
+  r.context.setTimeout=setTimeout;r.context.clearTimeout=clearTimeout;
+  r.context.window.removeEventListener=name=>delete r.context.windowEvents[name];
+  r.context.chrome={webview:{postMessage(message){nativeCalls++;alive=true;const id=message.split(':')[1];r.context.windowEvents['oif-service-restored']({detail:{id,ok:true}});}}};
+  if(input.navigateAway){h.state.generation++;document.getElementById('objective').value='newer unsent input';}
+  const reconnect=h.reconnectCreation(entry,generation);
+  if(input.navigateDuringLookup){await lookupStarted;h.state.generation++;document.getElementById('objective').value='newer unsent input';await releaseLookup();}
+  await reconnect;
+  process.stdout.write(JSON.stringify({calls:r.calls,nativeCalls,before,session,taskId:h.state.taskId,draft:document.getElementById('objective').value,notice:h.state.noticeMessage}));return;
+ }
  if(input.mode==='creation-loss'||input.mode==='creation-storage'){
   h.state.csrf='fixture-csrf';document.getElementById('objective').value=input.startPrompt;
   const send=document.getElementById('task-form').listeners.submit({preventDefault(){}});
@@ -637,7 +666,7 @@ def test_missing_creation_receipt_after_refresh_stays_pending_without_auto_post(
     assert not any(c['options'].get('method') == 'POST' for c in actual['recoveryCalls'])
     assert actual['session'] == actual['retained']['session']
     assert actual['taskId'] is None and actual['newDraft'] == ''
-    assert 'No receipt is available yet' in actual['notice']
+    assert 'This request has not been received' in actual['notice']
 
 
 def test_creation_is_not_sent_if_recovery_identity_cannot_be_saved(harness):
@@ -646,6 +675,63 @@ def test_creation_is_not_sent_if_recovery_identity_cannot_be_saved(harness):
                         mode='creation-storage', sessionDenied=True, startPrompt='retained unsent draft')
     assert actual['calls'] == [] and actual['session'] == {}
     assert actual['draft'] == 'retained unsent draft' and 'nothing was sent' in actual['notice']
+
+
+@pytest.mark.parametrize('status', [401, 403])
+def test_new_task_refreshes_expired_session_before_retrying_same_identity(harness, status):
+    client, store, engine, identity, app = harness
+    prompt = '  retained draft after service restart\n  '
+    payload = {'objective': prompt, 'submission_id': 'a' * 32}
+    cookie = client.cookies.get(server.COOKIE)
+    token = client.headers['X-CSRF-Token']
+    if status == 401:
+        client.cookies.clear()
+    else:
+        client.headers['X-CSRF-Token'] = 'expired'
+    rejected = client.post('/api/tasks', json=payload)
+    assert rejected.status_code == status and len(store.list_tasks()) == 1
+    client.cookies.set(server.COOKIE, cookie)
+    client.headers['X-CSRF-Token'] = token
+    receipt = client.post('/api/tasks', json=payload).json()
+    created = client.get('/api/tasks/' + receipt['task']['id']).json()
+    actual, _ = run_dom(client, client.get('/api/tasks/' + identity).json(),
+                        mode='creation-auth', startPrompt=prompt, created=created, createReceipt=receipt,
+                        rejection={'status': status, 'body': rejected.json()})
+    posts = [x for x in actual['calls'] if x['options'].get('method') == 'POST']
+    assert len(posts) == 2 and posts[0]['options']['body'] == posts[1]['options']['body']
+    assert posts[1]['options']['headers']['X-CSRF-Token'] == 'fixture-csrf'
+    assert [x['path'] for x in actual['calls']][1:3] == ['/', '/api/session']
+    assert actual['taskId'] == created['task']['id'] and actual['draft'] == ''
+    assert len(store.list_tasks()) == 2 and json.loads(actual['session']['oif.pending-submissions']) == []
+
+
+def test_new_task_shows_validation_failure_without_session_retry(harness):
+    client, _, _, identity, _ = harness
+    actual, _ = run_dom(client, client.get('/api/tasks/' + identity).json(),
+                        mode='creation-rejected', startPrompt='retained input',
+                        rejection={'status': 422, 'body': {'detail': 'The requested attachment is too large.'}})
+    assert len(actual['calls']) == 1 and actual['draft'] == 'retained input'
+    assert actual['notice'] == 'The requested attachment is too large.'
+    assert len(json.loads(actual['session']['oif.pending-submissions'])) == 1
+
+
+@pytest.mark.parametrize('missing,navigate,late', [(True, False, False), (False, False, False), (False, True, False), (False, False, True)])
+def test_explicit_native_reconnect_preserves_input_and_looks_up_without_replaying(harness, missing, navigate, late):
+    client, _, _, identity, _ = harness
+    prompt = '  keep this unsent text\n  '
+    receipt = client.post('/api/tasks', json={'objective': prompt}).json()
+    created = client.get('/api/tasks/' + receipt['task']['id']).json()
+    actual, _ = run_dom(client, client.get('/api/tasks/' + identity).json(),
+                        mode='creation-reconnect', startPrompt=prompt, created=created, createReceipt=receipt,
+                        lookupMissing=missing, navigateAway=navigate, navigateDuringLookup=late)
+    assert actual['nativeCalls'] == 1
+    assert len([c for c in actual['calls'] if c['options'].get('method') == 'POST']) == 1
+    assert actual['draft'] == ('newer unsent input' if navigate or late else prompt)
+    assert actual['taskId'] == (None if missing or navigate or late else created['task']['id'])
+    saved = json.loads(actual['session']['oif.pending-submissions'])
+    assert bool(saved) == (missing or navigate or late)
+    if saved:
+        assert saved[0]['id'] == actual['before']['id'] and saved[0]['payload_hash'] == actual['before']['payload_hash']
 
 
 def test_successful_program_keeps_cleanup_warning_in_progress(harness):

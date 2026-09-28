@@ -33,13 +33,18 @@ globalThis.OIFI18n = (() => {
     '受理済みの作業を開く':'Open the received task','送信結果を確認':'Check submission',
     creationStorageUnavailable:'The submission recovery ID could not be saved. Allow session storage and try again; nothing was sent.',
     creationUnknown:'Receipt is unconfirmed. Your draft and submission ID are retained. Check the submission or send the same draft again to recover this task.',
-    creationNotFound:'No receipt is available yet. Enter the same request to continue with its saved submission ID.',
+    creationNotFound:'Connected. This request has not been received. Your input is retained; choose Start work to send it with the same submission ID.',
+    '接続を復旧':'Restore connection',
+    connectionRestoring:'Restoring the connection. Your input and attachments are retained.',
+    connectionUnavailable:'The local OIF service is disconnected. Your input is retained. Restore the connection to check whether the request was received.',
     creationReceived:'The request was received. Open its saved task to continue.'
   });
   Object.assign(ja,{
     creationStorageUnavailable:'送信の復旧IDを保存できません。セッションの保存を許可してから送信してください。まだ送信していません。',
     creationUnknown:'受領を確認できません。入力と送信IDは保持しています。「送信結果を確認」または同じ入力の送信で、この作業に戻れます。',
-    creationNotFound:'受領記録はまだ見つかりません。同じ依頼を入力すると、保存した送信IDで確認を続けます。',
+    creationNotFound:'接続できました。この依頼はまだ受け付けられていません。入力は保持しています。「作業開始」で同じ送信IDを使って送信できます。',
+    connectionRestoring:'接続を復旧しています。入力と添付ファイルは保持しています。',
+    connectionUnavailable:'OIFのサービスとの接続が切れています。入力は保持しています。「接続を復旧」で送信結果を確認できます。',
     creationReceived:'依頼を受領しました。保存された作業を開いて続けられます。'
   });
   Object.assign(en,{
