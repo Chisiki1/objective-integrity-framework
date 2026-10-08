@@ -15,6 +15,34 @@ from tests.test_providers import FakeSettings, FakePolicy, envelope
 from tests.test_usability_learning import lesson
 
 
+@pytest.mark.asyncio
+async def test_single_tool_uses_same_response_message_without_inventing_purpose():
+    original = {'action': 'tools', 'message': 'Save the observed findings to report.md',
+                'tools': [{'name': 'file_write', 'arguments': {'path': 'report.md', 'text': 'Observed findings'}}]}
+    gateway = ModelGateway(FakeSettings(), FakePolicy(), transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, json=envelope(json.dumps(original)))))
+    answer, meta = await gateway.generate('parent', 'next_action', {'task_id': 't'}, PracticalStep)
+    assert answer.tools[0].purpose == original['message']
+    assert answer.tools[0].arguments == original['tools'][0]['arguments']
+    assert meta['response_normalization']['source'] == 'message'
+    assert 'purpose' not in original['tools'][0]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('change', ['multiple', 'empty', 'missing-message', 'unknown-tool'])
+async def test_purpose_normalization_does_not_accept_ambiguous_or_invalid_actions(change):
+    original = {'action': 'tools', 'message': 'Save findings',
+                'tools': [{'name': 'file_write', 'arguments': {'path': 'report.md', 'text': 'Observed'}}]}
+    if change == 'multiple': original['tools'] *= 2
+    elif change == 'empty': original['tools'][0]['purpose'] = ''
+    elif change == 'missing-message': original.pop('message')
+    else: original['tools'][0]['name'] = 'arbitrary_execution'
+    gateway = ModelGateway(FakeSettings(), FakePolicy(), transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, json=envelope(json.dumps(original)))))
+    with pytest.raises(ProviderError):
+        await gateway.generate('parent', 'next_action', {'task_id': 't'}, PracticalStep)
+
+
 def incomplete_step():
     answer = steps(tool('file_write', path='second.txt', text='world'))
     note = lesson()

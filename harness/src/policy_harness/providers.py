@@ -844,9 +844,12 @@ class ModelGateway:
         metadata['requested_reasoning']={'mode':'provider_default' if values.get('reasoning_effort') is None else 'configured','effort':values.get('reasoning_effort')}
         try:
             value = _strict_json(text)
-            from .practical_models import PracticalStep, parse_practical_step
+            from .practical_models import PracticalStep, parse_practical_step, normalize_practical_step
             if wire_record is None and schema is PracticalStep:
-                validated, deferred = parse_practical_step(value, strict=True)
+                normalized, adjustment = normalize_practical_step(value)
+                validated, deferred = parse_practical_step(normalized, strict=True)
+                if adjustment:
+                    metadata['response_normalization'] = adjustment
                 if deferred:
                     metadata['optional_learning_rejection'] = deferred
             else:
@@ -978,7 +981,8 @@ class _Article(HTMLParser):
 
 
 class WebCollector:
-    RESPONSE_ANALYSIS_VERSION = 'web-response-analysis-v1'
+    RESPONSE_ANALYSIS_VERSION = 'web-response-analysis-v2'
+    RESPONSE_ANALYSIS_VERSIONS = frozenset({'web-response-analysis-v1', RESPONSE_ANALYSIS_VERSION})
 
     @classmethod
     def execution_contract(cls):
@@ -1011,9 +1015,13 @@ class WebCollector:
         return view
 
     @classmethod
-    def _analyze_response(cls, record, raw, headers):
+    def _analyze_response(cls, record, raw, headers, *, version=None):
         """R01 internal processing: no I/O, acceptance, permission or model call."""
-        analysis = {'version': cls.RESPONSE_ANALYSIS_VERSION, 'response_sha256': record['sha256'],
+        version = version or cls.RESPONSE_ANALYSIS_VERSION
+        if version not in cls.RESPONSE_ANALYSIS_VERSIONS:
+            raise WebAcquisitionError('Unsupported saved response analysis version; no replay.')
+        legacy = version == 'web-response-analysis-v1'
+        analysis = {'version': version, 'response_sha256': record['sha256'],
             'state': 'not_attempted', 'content_adopted': False,
             'response_representation': cls._response_representation(headers)}
         status = record.get('http_status', 0)
@@ -1038,26 +1046,36 @@ class WebCollector:
                 analysis.update(state='succeeded', kind='search_results', urls=list(dict.fromkeys(urls)))
                 return analysis
             content_type = headers.get('content-type', '').lower()
-            if not any(kind in content_type for kind in ('text/', 'application/json', 'application/xml', 'application/xhtml+xml')):
-                raise WebAcquisitionError('This content format needs a controlled extraction capability.')
-            encoding = re.search(r'charset=([\w-]+)', content_type)
-            try:
-                decoded = raw.decode(encoding.group(1) if encoding else 'utf-8')
-            except (UnicodeError, LookupError):
-                raise WebAcquisitionError('The page encoding needs explicit handling; text was not silently replaced.') from None
+            document = None
+            if legacy:
+                # Revalidate old evidence using its original parser contract.
+                # New structure/encoding support must not rewrite old judgments.
+                if not any(kind in content_type for kind in ('text/', 'application/json', 'application/xml', 'application/xhtml+xml')):
+                    raise WebAcquisitionError('This content format needs a controlled extraction capability.')
+                encoding = re.search(r'charset=([\w-]+)', content_type)
+                try:
+                    decoded = raw.decode(encoding.group(1) if encoding else 'utf-8')
+                except (UnicodeError, LookupError):
+                    raise WebAcquisitionError('The page encoding needs explicit handling; text was not silently replaced.') from None
+            else:
+                from .web_evidence import decode_text, document_structure
+                decoded = decode_text(raw, content_type)
+                document = document_structure(decoded, record['url'], content_type)
             title = record['url']
             if 'html' in content_type:
                 article = _Article(); article.feed(decoded)
                 decoded = '\n'.join(article.text); title = ' '.join(article.title) or title
-            if not decoded.strip():
+            if not decoded.strip() and document is None:
                 raise WebAcquisitionError('The acquisition contained no usable text.')
             analysis.update(state='succeeded', kind='extracted_page', source={
                 'id': record['id'], 'url': record['url'], 'title': title, 'text': decoded,
                 'retrieved_at': record['finished_at'], 'sha256': hashlib.sha256(decoded.encode('utf-8')).hexdigest(),
                 'response_sha256': record['sha256'], 'source_kind': 'retrieved-public-page',
-                'untrusted_evidence': True, 'truncated': False})
+                'untrusted_evidence': True, 'truncated': False,
+                **({'content_type': content_type} if not legacy else {}),
+                **({'document': document} if document is not None else {})})
         except (ValueError, KeyError, TypeError, AttributeError, WebAcquisitionError) as exc:
-            reason = str(exc) if isinstance(exc, WebAcquisitionError) else 'The search response was malformed.'
+            reason = str(exc) if isinstance(exc, WebAcquisitionError) or (not legacy and record.get('kind') != 'search') else 'The search response was malformed.'
             analysis.update(state='failed', error_reason=reason)
         return analysis
 
@@ -1099,14 +1117,42 @@ class WebCollector:
                 or analysis['state'] == 'failed' else 'not_applicable')
         return self._record_view(current, known)
 
+    def read_saved_page(self, task_id, operation_id, source):
+        """Read an exact source response in this task; never refetch or execute it."""
+        journal = getattr(self, 'acquisition_store', None)
+        if journal is None:
+            raise WebAcquisitionError('Saved Web responses are unavailable.')
+        for saved in journal.web_operation_exchanges(task_id, operation_id):
+            detail = saved.get('record', {})
+            if detail.get('id') != source.get('id'):
+                continue
+            original, raw, headers, known = self._saved_response(detail)
+            if (original.get('task_id') != task_id or original.get('operation_id') != operation_id
+                    or original.get('kind') != 'fetch' or original.get('method') != 'GET'
+                    or original.get('sha256') != source.get('response_sha256')
+                    or original.get('status') != 'succeeded' or not 200 <= original.get('http_status', 0) < 300):
+                raise WebAcquisitionError('Saved Web source binding differs; no refetch.')
+            from .web_evidence import decode_text, document_structure
+            content_type = headers.get('content-type', '')
+            decoded = decode_text(raw, content_type)
+            value = {'url': original['url'], 'content_type': content_type, 'text': decoded,
+                     'response_sha256': original['sha256'], 'source_id': original['id'],
+                     'document': document_structure(decoded, original['url'], content_type)}
+            self._credential_input(value, additional=known)
+            return value
+        raise WebAcquisitionError('The exact saved Web source is unavailable; no refetch.')
+
     def validate_saved_response_analysis(self, original_detail, current_detail):
         """Re-derive content from saved raw bytes, not self-stated new hashes."""
         original, raw, headers, known = self._saved_response(original_detail)
         observed_at = current_detail.get('response_analysis', {}).get('analyzed_at')
         if not isinstance(observed_at, str) or not observed_at:
             return False
-        expected_analysis = dict(self._analyze_response(original, raw, headers), analyzed_at=observed_at)
-        expected = dict(original, response_analysis_version=self.RESPONSE_ANALYSIS_VERSION,
+        version = current_detail.get('response_analysis_version')
+        if version not in self.RESPONSE_ANALYSIS_VERSIONS:
+            return False
+        expected_analysis = dict(self._analyze_response(original, raw, headers, version=version), analyzed_at=observed_at)
+        expected = dict(original, response_analysis_version=version,
             response_analysis=expected_analysis,
             extraction_status=expected_analysis['state'] if expected_analysis.get('kind') == 'extracted_page'
                 or expected_analysis['state'] == 'failed' else 'not_applicable')
@@ -1191,10 +1237,13 @@ class WebCollector:
             raise WebAcquisitionError('The saved protected Web exchange could not be read or validated; no replay occurred.') from None
 
     async def _after_exchange(self, record, records, evaluate, raw, headers, known):
-        if record.get('response_analysis_version') == self.RESPONSE_ANALYSIS_VERSION and 'response_analysis' not in record:
+        version = record.get('response_analysis_version')
+        if version is not None and version not in self.RESPONSE_ANALYSIS_VERSIONS:
+            raise WebAcquisitionError('Unsupported saved response analysis version; no replay.')
+        if version in self.RESPONSE_ANALYSIS_VERSIONS and 'response_analysis' not in record:
             # The raw response is already durable. Complete pure local processing
             # before its after-judgment; a crash/review failure reuses this result.
-            analysis = dict(self._analyze_response(record, raw, headers), analyzed_at=now())
+            analysis = dict(self._analyze_response(record, raw, headers, version=version), analyzed_at=now())
             record = dict(record, response_analysis=analysis,
                 extraction_status=analysis['state'] if analysis.get('kind') == 'extracted_page'
                     or analysis['state'] == 'failed' else 'not_applicable')
@@ -1345,7 +1394,9 @@ class WebCollector:
                 continue
             analysis = record.get('response_analysis')
             if analysis is not None:
-                if analysis.get('version') != self.RESPONSE_ANALYSIS_VERSION or analysis.get('response_sha256') != record['sha256']:
+                if (analysis.get('version') not in self.RESPONSE_ANALYSIS_VERSIONS
+                        or analysis.get('version') != record.get('response_analysis_version')
+                        or analysis.get('response_sha256') != record['sha256']):
                     raise WebAcquisitionError('Saved response analysis binding differs; no replay.')
                 if analysis.get('state') != 'succeeded' or analysis.get('kind') != 'extracted_page':
                     raise WebAcquisitionError(analysis.get('error_reason', 'Response was not extracted as a page.'), metadata={'acquisitions': context['records']})
@@ -1393,6 +1444,12 @@ class WebCollector:
             raise
 
     async def _collect(self, query: str, *, phase: str, task_id: str, operation_id: str, evaluate=None) -> dict:
+        explicit_urls = None
+        if isinstance(query, list) and phase == 'task_research':
+            if not query or any(not isinstance(url, str) or not re.fullmatch(r'https://[^\s<>\"]+', url) for url in query):
+                raise ConfigurationRequired('A URL list must contain only complete public HTTPS URLs.')
+            explicit_urls = list(dict.fromkeys(query))
+            query = '\n'.join(query)
         if not isinstance(query, str) or not query.strip():
             raise ConfigurationRequired("Web collection requires a query or an authoritative public URL.")
         _validate_public_text(query)
@@ -1406,8 +1463,9 @@ class WebCollector:
             'scope':'one exchange is not the entire collection; complete sources are returned after extraction'}
         context = dict(values=values, records=records, evaluate=evaluate, task_id=task_id, operation_id=operation_id, phase=phase,collection_context=collection)
         started = time.monotonic()
-        if provider == "public_url":
-            urls = list(dict.fromkeys(re.findall(r"https://[^\s<>\"\]\)]+", query)))
+        search_performed = explicit_urls is None and provider != 'public_url'
+        if not search_performed:
+            urls = explicit_urls if explicit_urls is not None else list(dict.fromkeys(re.findall(r"https://[^\s<>\"\]\)]+", query)))
             if not urls:
                 raise ConfigurationRequired("public_url acquires supplied public URLs; it cannot perform a keyword search. Supply an authoritative URL or configure search.")
         else:
@@ -1427,7 +1485,8 @@ class WebCollector:
                 raise WebAcquisitionError("Search endpoint redirects require explicit configuration; credentials were not forwarded.", metadata={"acquisitions": records})
             analysis = record.get('response_analysis')
             if analysis is not None:
-                if (analysis.get('version') != self.RESPONSE_ANALYSIS_VERSION
+                if (analysis.get('version') not in self.RESPONSE_ANALYSIS_VERSIONS
+                        or analysis.get('version') != record.get('response_analysis_version')
                         or analysis.get('response_sha256') != record['sha256']):
                     raise WebAcquisitionError('Saved search analysis binding differs; no replay.')
                 if analysis.get('state') != 'succeeded' or analysis.get('kind') != 'search_results':
@@ -1444,9 +1503,11 @@ class WebCollector:
                     raise WebAcquisitionError('The search response was malformed.', metadata={'acquisitions': records}) from None
             urls = list(dict.fromkeys(urls))
         sources = []
+        failures = []
         completed_targets = []
         collection.update(planned_urls=urls,remaining_urls=list(urls))
         for url in urls:
+            before = len(records)
             try:
                 source = await self._fetch(url, **context)
                 previous = next((item for item in sources if item['id'] == source['id']), None)
@@ -1460,7 +1521,18 @@ class WebCollector:
                     completed_targets=list(completed_targets),
                     remaining_urls=[u for u in urls if u not in completed])
             except WebAcquisitionError as exc:
-                raise WebAcquisitionError(str(exc), metadata={"acquisitions": records, "sources": sources, "collection_context": dict(collection)}) from None
+                # A definite HTTP error on an ordinary read must not discard good
+                # pages or prevent independent later URLs. Unknown effects,
+                # credential holds and legacy reviewed exchanges still stop here.
+                last = records[-1] if len(records) > before else {}
+                if (phase == 'task_research' and evaluate is None and last.get('transport_completed')
+                        and last.get('http_status', 0) >= 400 and not last.get('records_withheld')
+                        and str(exc) == f"Web acquisition returned HTTP {last.get('http_status')}."):
+                    failures.append({'url': url, 'http_status': last['http_status'], 'reason': str(exc)})
+                    collection['failed_targets'] = list(failures)
+                    continue
+                raise WebAcquisitionError(str(exc), metadata={"acquisitions": records, "sources": sources,
+                    "failures": failures, "collection_context": dict(collection)}) from None
         if not sources:
-            raise WebAcquisitionError("No retrieved sources were available; Web collection is incomplete.", metadata={"acquisitions": records})
-        return {"query": query, "sources": sources, "collection_context": dict(collection), "elapsed_seconds": time.monotonic() - started, "provider": provider, "search_performed": provider != "public_url", "acquisitions": records, "evaluation_callback_used": evaluate is not None, "coverage": "returned-URLs-only; semantic sufficiency requires parent disposition"}
+            raise WebAcquisitionError("No retrieved sources were available; Web collection is incomplete.", metadata={"acquisitions": records, "sources": [], "failures": failures, "collection_context": dict(collection)})
+        return {"query": query, "sources": sources, "failures": failures, "collection_context": dict(collection), "elapsed_seconds": time.monotonic() - started, "provider": provider, "search_performed": search_performed, "acquisitions": records, "evaluation_callback_used": evaluate is not None, "coverage": "partial" if failures else "returned-URLs-only; semantic sufficiency requires parent disposition"}

@@ -176,6 +176,30 @@
       "value": "20D25566050BFAD17D0C22B77FF59B1C04BA8BE8CECE0A9377058D2A2902F573",
       "reason": "Checks the shipped OIF logo bytes.",
       "provenance": "harness/src/policy_harness/static/oif-outline.png"
+    },
+    {
+      "path": "harness/tests/test_providers.py",
+      "blob_sha256": "66116F81F1098789129E705CE6C1A4066F092B2B409FD10ECA35A33817D701D8",
+      "kind": "email",
+      "value": "password@example.org",
+      "reason": "Synthetic reserved-domain test data for private-source rejection.",
+      "provenance": "Provider redaction regression fixtures; example.org is reserved for examples."
+    },
+    {
+      "path": "harness/tests/test_providers.py",
+      "blob_sha256": "66116F81F1098789129E705CE6C1A4066F092B2B409FD10ECA35A33817D701D8",
+      "kind": "email",
+      "value": "pass@example.org",
+      "reason": "Synthetic reserved-domain test data for private-source rejection.",
+      "provenance": "Provider redaction regression fixtures; example.org is reserved for examples."
+    },
+    {
+      "path": "harness/tests/test_providers.py",
+      "blob_sha256": "66116F81F1098789129E705CE6C1A4066F092B2B409FD10ECA35A33817D701D8",
+      "kind": "email",
+      "value": "person@example.org",
+      "reason": "Synthetic reserved-domain test data for private-source rejection.",
+      "provenance": "Provider redaction regression fixtures; example.org is reserved for examples."
     }
   ]
 }

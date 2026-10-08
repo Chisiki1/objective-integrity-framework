@@ -13,6 +13,45 @@ from tests.test_practical_runtime import runtime, steps, tool, finish, run
 from tests.test_usability_learning import lesson
 
 
+def test_large_web_source_does_not_hide_later_pages_and_original_is_unchanged():
+    raw = {'status': 'succeeded', 'effect': 'confirmed', 'data': {'acquisitions': [],
+        'sources': [{'url': 'https://example.org/sitemap', 'text': 'a' * 440000},
+                    {'url': 'https://example.org/terms', 'text': 'Personal data retention terms'}]}}
+    view = bounded_result(raw, tool='web_fetch')
+    sources = view['data']['sources']
+    assert sources[0]['total_text_chars'] == 440000 and len(sources[0]['text']) < 10000
+    assert sources[1]['text'] == 'Personal data retention terms'
+    assert len(raw['data']['sources'][0]['text']) == 440000
+    assert len(canonical(view)) < 12000
+
+
+@pytest.mark.asyncio
+async def test_raw_web_history_reaches_model_without_refetch(tmp_path):
+    import httpx
+    from policy_harness.providers import WebCollector
+    from tests.test_providers import FakeSettings, public_resolver
+    calls = []
+    html = '<title>Page</title><script>const contactEndpoint="/contact/send";</script>'
+    def handle(request):
+        calls.append(request)
+        return httpx.Response(200, headers={'content-type': 'text/html'}, text=html)
+    engine, store, gateway, _, task = runtime(tmp_path, [
+        steps(tool('web_fetch', query='https://example.org/contact')),
+        steps(tool('history_read', start=0, view='web_response', query='contactEndpoint')),
+        finish()])
+    web = WebCollector(FakeSettings(), transport=httpx.MockTransport(handle), resolver=public_resolver)
+    web.acquisition_store = store; engine.web = web
+    await run(engine, store, task)
+    record = store.operations(task['id'])[1]['result']
+    assert record['status'] == 'succeeded' and '/contact/send' in record['data']['text']
+    assert len(calls) == 1
+    original = store.operations(task['id'])[0]['result']['data']['sources'][0]
+    assert 'contactEndpoint' not in original['text']
+    with pytest.raises(PolicyError):
+        history_page(store, task['id'], {'start': 1, 'view': 'web_response'}, web=web)
+    store.close()
+
+
 def measured_gateway(gateway, threshold=1200):
     # Deterministic pressure fixture, independent of any network tokenizer.
     gateway.measure_input = lambda role, phase, payload, schema: {

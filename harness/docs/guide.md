@@ -1,6 +1,6 @@
 # OIF Desktop guide
 
-Version **0.3.0-beta.3** · [Quick start](../README.md) · [Japanese](ja.md)
+Version **0.3.0-beta.4** · [Quick start](../README.md) · [Japanese](ja.md)
 
 ## A task from request to result
 
@@ -17,6 +17,14 @@ Settings holds provider endpoints, model names and named roles/profiles. Use an 
 Access is explicit in the composer. Workspace mode confines ordinary file tools to the task folder. Confirmation mode asks before covered changes and communication. Read-only restricts mutations. Full access allows broader native file and command operations after its confirmation; choose it only for work you intend to authorize. Changing a selection applies to subsequent actions, not to already-issued effects.
 
 Keys are protected for the current Windows user. Model requests send the information needed for the task to the configured provider. Public research sends queries to the configured research route. Do not place credentials in instructions or lesson text. See the repository's privacy documentation for the separate framework distribution.
+
+## Web research
+
+Choose **Public URLs** for direct public HTTPS pages. Keyword search uses Brave or Tavily with the corresponding API key in Settings. The page reader returns text plus observed links, form fields, script URLs and page metadata. It follows model-selected links under the same public-network checks; collecting a link does not execute it or submit a form.
+
+Large pages receive separate excerpts so one sitemap cannot hide the other results. The agent can search or page through the saved text, structured details and original HTML/JavaScript with `history_read`; reading a saved response makes no new network request. A definite HTTP error leaves successful sources available and permits the other requested pages to be retrieved. Unknown effects and credential checks keep their existing recovery boundaries.
+
+This reader does not run JavaScript or sign in. Dynamic content, runtime network requests and form submission behavior require separate observation. Reports should distinguish what the saved pages establish from what remains unobserved.
 
 ## How learning carries forward
 

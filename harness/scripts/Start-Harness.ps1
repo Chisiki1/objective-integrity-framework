@@ -14,9 +14,18 @@ $lock = [IO.File]::Open($lockPath, [IO.FileMode]::OpenOrCreate, [IO.FileAccess]:
 try {
     if (Test-Path -LiteralPath $processFile) {
         $saved = Get-Content -LiteralPath $processFile -Raw | ConvertFrom-Json
+        if ($saved.data_dir -ne $harnessData -or $saved.executable -ne $harnessPython -or $saved.launch_id -notmatch '^[a-f0-9]{32}$' -or -not $saved.start_ticks) {
+            throw 'The saved process record does not belong to this installation. No process was changed. Preserve and inspect server-process.json.'
+        }
         $existing = Get-Process -Id $saved.pid -ErrorAction SilentlyContinue
+        if ($existing -and $existing.StartTime.ToUniversalTime().Ticks -ne [long]$saved.start_ticks) {
+            # Windows can reuse the PID after OIF exits. This is a different
+            # process, so never send it shutdown or use it as the service.
+            $existing.Dispose()
+            $existing = $null
+        }
         if ($existing) {
-            if ($saved.data_dir -ne $harnessData -or $saved.executable -ne $harnessPython -or $saved.launch_id -notmatch '^[a-f0-9]{32}$' -or $existing.StartTime.ToUniversalTime().Ticks -ne [long]$saved.start_ticks -or $existing.Path -ne $saved.executable) {
+            if ($existing.Path -ne $saved.executable) {
                 throw 'The saved process identity no longer matches. No process was changed. Preserve and inspect server-process.json.'
             }
             $ownedHandle = $existing.Handle

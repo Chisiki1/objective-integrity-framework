@@ -46,7 +46,8 @@ TOOLS = {
     'web_fetch': {'query': 'public search query or exact public HTTPS URL(s)'},
     'history_read': {'start': 'zero-based operation index', 'count': 'optional, 1..20',
                      'offset': 'optional character offset', 'max_chars': 'optional, at most 12000',
-                     'view': 'result (default), index (fields), record (full original)',
+                     'view': 'result (default), index (fields), record (full original), web_response (saved raw HTML/JS; no network)',
+                     'source': 'with web_response only: zero-based source index, default 0; count must be 1',
                      'field': 'optional JSON field path such as stdout, data.text or data.sources.0.text',
                      'query': 'optional phrase; returns matching excerpts without rereading the whole result'},
     'knowledge_read': {'query': "search this task's earlier outcomes and relevant shared procedures; other tasks' original messages and results stay private"},
@@ -320,7 +321,7 @@ class PracticalEngine:
         if settings is not None:
             provider = settings.get().get('web_provider', 'none')
             if provider == 'public_url':
-                tools['web_fetch'] = {'query': 'One or more exact public HTTPS URLs. This provider does NOT accept keyword searches. Use authoritative pages or documented public search API URLs; inspect returned source links before following them.'}
+                tools['web_fetch'] = {'query': 'A string containing exact public HTTPS URL(s), or a list of such URLs. This provider does NOT accept keyword searches. Follow observed document.links and document.scripts rather than guessing paths. For raw HTML/JS use history_read(view=web_response, source=index, query=phrase); for large sitemaps or responses search saved fields with query before paging. Forms/links are static evidence; scripts are not executed. Do not send pages through unrelated proxy services to work around extraction. State what needs browser interaction or login when it is unobserved.'}
             elif provider == 'none':
                 tools['web_fetch'] = {'unavailable': 'No Web provider is configured. Do not call this tool or claim current Web evidence; explain the missing capability when external research is required.'}
         return tools
@@ -600,10 +601,12 @@ class PracticalEngine:
                     raise PolicyError('web_fetch accepts only query')
                 data = await self.web.collect(operation.args['query'], phase='task_research',
                                               task_id=task['id'], operation_id=operation.id)
-                result = OperationResult(operation_id=operation.id, status='succeeded', effect='confirmed', data=data)
+                result = OperationResult(operation_id=operation.id, status='failed' if data.get('failures') else 'succeeded',
+                    effect='confirmed', data=data,
+                    stderr='Some pages could not be retrieved; successful sources remain available.' if data.get('failures') else '')
             elif operation.kind == 'history_read':
                 result = OperationResult(operation_id=operation.id, status='succeeded',
-                    data=history_page(self.store, task['id'], operation.args, exclude_operation=operation.id))
+                    data=history_page(self.store, task['id'], operation.args, exclude_operation=operation.id, web=self.web))
             elif operation.kind == 'knowledge_read':
                 if set(operation.args) != {'query'} or not isinstance(operation.args['query'], str):
                     raise PolicyError('knowledge_read requires a query')
@@ -670,6 +673,7 @@ class PracticalEngine:
                                effect='unknown' if unknown else 'confirmed' if dispatched else 'none', stderr=reason,
                                data={'reason': reason, 'external_request_effect': 'unknown' if unknown else 'observed' if dispatched else 'not_dispatched',
                                      'acquisition_ids': list(observations), 'observation': metadata,
+                                     'sources': metadata.get('sources', []),
                                      'replayed': False})
 
     def _record_result(self, task, operation, result):

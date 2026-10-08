@@ -1,6 +1,6 @@
 [project]
 name = "hermes-policy-harness"
-version = "0.3.0b3"
+version = "0.3.0b4"
 description = "OIF desktop harness with persistent objectives, reusable learning and controlled self-improvement"
 requires-python = ">=3.12,<3.13"
 dependencies = [

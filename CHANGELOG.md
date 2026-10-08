@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0-beta.4 — 2026-10-09
+
+- Web evidence now includes observed links, form fields, script URLs and page metadata. Saved raw HTML and JavaScript can be searched or read in bounded ranges without refetching.
+- Large pages receive separate context excerpts; successful pages remain available when another requested URL returns an HTTP error.
+- Explicit URL lists are accepted for practical research. A single tool missing its purpose field can use the explicit message in the same response; original responses, arguments and permission checks are preserved.
+- The Windows launcher preserves an exited service record and starts normally when Windows has reused its process ID. It never stops the unrelated process.
+
 ## 0.3.0-beta.3 — 2026-09-28
 
 - Restore new-task sending after the local service restarts by refreshing expired session information.

@@ -4,7 +4,7 @@
 
 Keep the objective intact. Turn experience into better next actions.
 
-Version **0.3.0-beta.3** · [Download](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.3) · [Changelog](CHANGELOG.md) · [Japanese guide](docs/ja/README.md).
+Version **0.3.0-beta.4** · [Download](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.4) · [Changelog](CHANGELOG.md) · [Japanese guide](docs/ja/README.md).
 
 [![CI](https://github.com/Chisiki1/objective-integrity-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/Chisiki1/objective-integrity-framework/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
@@ -19,7 +19,7 @@ Use it as a five-minute review discipline, project-local guidance, a reusable ag
 
 The framework now has a **dedicated Windows agent workspace**. Keep instructions and results together, preview artifacts, reuse shared lessons across chats, and improve the harness through a controlled verification and recovery path.
 
-**[Download Windows x64](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.3)** · [Desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.3/harness/README.md) · [Learning and updates](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.3/harness/docs/guide.md) · [Japanese desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.3/harness/docs/ja.md)
+**[Download Windows x64](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.4)** · [Desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.4/harness/README.md) · [Learning and updates](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.4/harness/docs/guide.md) · [Japanese desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.4/harness/docs/ja.md)
 
 Extract the full ZIP, open **OIF.exe**, and configure your model in Settings. Python is included. The desktop uses the installed WebView2 Runtime. Ordinary file work needs no Docker; isolated execution and harness-code verification use Docker. The framework and skills-only downloads remain available.
 
@@ -31,11 +31,13 @@ Work then follows one discipline: one owner per objective, actions recorded befo
 
 ## What's New
 
+**0.3.0-beta.4 (2026-10-09):** Web research retains page links, forms and scripts, reads saved HTML directly, and keeps useful pages when another URL fails. Startup recovers after a previous service PID is reused.
+
 **0.3.0-beta.3 (2026-09-28):** recover a lost local connection while retaining the unsent request and attachments. Expired sessions refresh automatically; receipt checks avoid duplicate tasks.
 
 **0.3.0-beta.2 (2026-09-28):** refreshed English and Japanese showcase images, focused on shared learning, harness improvement and actual-use records. The same six images are included in the current documentation and downloads.
 
-**0.3.0-beta.1 (2026-09-28):** the first public Windows desktop harness, persistent multi-chat execution, bounded context and record retrieval, artifact previews, access modes, shared learning with revision/merge/retirement, and controlled code-update verification. The public policy is self-contained. See the [desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.3/harness/docs/guide.md) for behavior and beta scope.
+**0.3.0-beta.1 (2026-09-28):** the first public Windows desktop harness, persistent multi-chat execution, bounded context and record retrieval, artifact previews, access modes, shared learning with revision/merge/retirement, and controlled code-update verification. The public policy is self-contained. See the [desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.4/harness/docs/guide.md) for behavior and beta scope.
 
 
 **0.2.1 update (2026-09-11):** consistency and clarity follow-up — stale card descriptions fixed across the docs and packaged guidance, adapters and samples aligned, and a concise "How It Works" overview added (see [CHANGELOG](CHANGELOG.md)).

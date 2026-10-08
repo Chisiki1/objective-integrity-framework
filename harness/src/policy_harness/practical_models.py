@@ -76,6 +76,22 @@ class PracticalStep(StrictModel):
         return self
 
 
+def normalize_practical_step(value):
+    """Reuse an explicit single-operation message, without inventing intent.
+
+    This only relocates model-authored text. Multiple operations, empty purpose,
+    malformed arguments and absent messages still require model correction.
+    """
+    if (isinstance(value, dict) and value.get('action') == 'tools'
+            and isinstance(value.get('tools'), list) and len(value['tools']) == 1
+            and isinstance(value['tools'][0], dict) and 'purpose' not in value['tools'][0]
+            and isinstance(value.get('message'), str) and value['message'].strip()):
+        return {**value, 'tools': [{**value['tools'][0], 'purpose': value['message']}]}, {
+            'field': 'tools.0.purpose', 'source': 'message',
+            'reason': 'Single operation uses the explicit message from the same original response; arguments and authority unchanged.'}
+    return value, None
+
+
 def parse_practical_step(value, *, strict=True):
     """Defer malformed optional learning without relaxing the action schema.
 

@@ -1,10 +1,10 @@
 # OIF Desktop ガイド
 
-バージョン **0.3.0-beta.3** · [English](guide.md)
+バージョン **0.3.0-beta.4** · [English](guide.md)
 
 ## 起動
 
-1. [β版リリース](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.3)から **OIF-Desktop-0.3.0-beta.3-windows-x64.zip** を取得します。
+1. [β版リリース](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.4)から **OIF-Desktop-0.3.0-beta.4-windows-x64.zip** を取得します。
 2. ZIP全体を書き込み可能なフォルダーに展開し、**OIF.exe** を開きます。Pythonは同梱されています。EXEだけを別の場所に移動しないでください。
 3. 設定でプロバイダー・モデル・APIキーを指定し、作業を始めます。OpenRouterにはブラウザーでのサインイン経路もあります。OAuthが全プロバイダーに対応するわけではありません。
 
@@ -27,6 +27,14 @@ Windows 10/11 x64と[WebView2 Evergreen Runtime](https://developer.microsoft.com
 入力欄で権限を選びます。作業フォルダーの権限では通常のファイル操作をタスクの作業領域に制限します。確認するモード、読み取り専用、確認付きのフルアクセスもあります。フルアクセスは領域外のネイティブ操作も可能になるため、意図した作業に使用してください。権限の変更は次の操作から適用されます。
 
 APIキーは現在のWindowsユーザー向けに保護されます。タスクに必要な情報は設定したモデルプロバイダーへ送信されます。調査では設定した調査経路へ公開の検索語を送ります。指示や学習メモに秘密情報を入れないでください。
+
+## Web調査
+
+公開HTTPSページを直接読む場合は「公開URL」を選びます。キーワード検索には、設定画面でBraveまたはTavilyと対応するAPIキーを指定します。ページの本文に加えて、実在するリンク、フォーム項目、スクリプトURL、ページ情報を取得します。モデルが選んだリンク先も同じ公開ネットワークの検査を通します。リンクの取得だけでスクリプトを実行したり、フォームを送信したりしません。
+
+大きなページは個別に抜粋し、サイトマップだけで他の取得結果が埋もれないようにします。保存済み本文・構造情報・元のHTMLやJavaScriptは、`history_read`で検索・部分読み取りできます。保存済み応答の読み取りでは再通信しません。確定したHTTPエラーがあっても取得済みのページを保持し、同時に依頼された他のURLは取得できます。作用が不明な場合や秘密情報の検査では、従来の復旧上の制約を維持します。
+
+この取得機能ではJavaScript実行やログインを行いません。動的な表示、実行時の通信、フォーム送信の動作は別途確認が必要です。報告では取得済みページで確認した事実と未確認の範囲を区別します。
 
 ## 自己改善と共有
 
@@ -76,4 +84,4 @@ Windows x64とPracticalEngineが対象です。自動テストは再現可能な
 
 ## 紹介画像
 
-[日本語の紹介画像3枚](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.3/docs/showcase/ja/README.md)も公開しています。リリースの紹介画像ZIPには英語版と日本語版を収録しています。
+[日本語の紹介画像3枚](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.4/docs/showcase/ja/README.md)も公開しています。リリースの紹介画像ZIPには英語版と日本語版を収録しています。

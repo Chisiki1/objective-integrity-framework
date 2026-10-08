@@ -330,11 +330,11 @@ async def test_saved_analysis_precedes_after_judgment_and_resumes_without_http_o
     store = Store(tmp_path); task = store.create_task('Read exact evidence', ['Review the extracted result'])
     requests = []; web = collector(store, requests); observed = []
     analyze = web._analyze_response
-    def after_durable_response(record, raw, headers):
+    def after_durable_response(record, raw, headers, *, version=None):
         saved = store.record_get('web_exchange', record['exchange_id'])
         assert saved['stage'] == 'response' and base64.b64decode(saved['raw_base64']) == raw
         assert 'response_analysis' not in saved['record']
-        return analyze(record, raw, headers)
+        return analyze(record, raw, headers, version=version)
     monkeypatch.setattr(web, '_analyze_response', after_durable_response)
     async def interrupted(stage, record):
         if stage == 'after':

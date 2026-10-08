@@ -327,3 +327,175 @@ async def test_fragment_normalization_keeps_escaped_path_and_query_bytes():
     assert requests[0].url.raw_path == b'/a%23b?q=%23open'
     assert result['sources'][0]['requested_url'] == target
     assert result['sources'][0]['url'] == target.partition('#')[0]
+
+
+async def test_page_structure_and_saved_raw_response_are_real_evidence(tmp_path):
+    from policy_harness.store import Store
+    calls = []
+    html = ('<title>Contact</title><base href="/ja/"><a href="privacy">Privacy terms</a>'
+            '<script src="app.js"></script><script>const endpoint="/api/contact";</script>'
+            '<form action="send" method="post"><input type="email" name="email" required>'
+            '<input type="hidden" value="not-in-summary"></form>')
+    def handle(request):
+        calls.append(request)
+        return httpx.Response(200, headers={'content-type': 'text/html'}, text=html)
+    store = Store(tmp_path)
+    web = WebCollector(FakeSettings(), transport=httpx.MockTransport(handle), resolver=public_resolver)
+    web.acquisition_store = store
+    data = await web.collect('https://example.org/contact', phase='task_research', task_id='one', operation_id='op')
+    source = data['sources'][0]
+    assert source['document']['links'][0]['url'] == 'https://example.org/ja/privacy'
+    assert source['document']['scripts'][0]['url'] == 'https://example.org/ja/app.js'
+    form = source['document']['forms'][0]
+    assert form['action'] == 'https://example.org/ja/send' and form['method'] == 'POST'
+    assert form['fields'][0]['required'] and form['fields'][0]['type'] == 'email'
+    assert 'not-in-summary' not in json.dumps(source)
+    assert web.read_saved_page('one', 'op', source)['text'] == html
+    assert len(calls) == 1
+    with pytest.raises(WebAcquisitionError, match='unavailable'):
+        web.read_saved_page('other-task', 'op', source)
+    with pytest.raises(WebAcquisitionError, match='binding differs'):
+        web.read_saved_page('one', 'op', dict(source, response_sha256='0' * 64))
+    web.settings.keys['model_api_key'] = '/api/contact'
+    with pytest.raises(WebAcquisitionError, match='credential'):
+        web.read_saved_page('one', 'op', source)
+    assert len(calls) == 1
+    store.close()
+
+
+@pytest.mark.parametrize('content_type,text', [
+    ('application/javascript; charset="UTF-8"', 'fetch("/api/contact")'),
+    ('text/html', '<script src="app.js"></script>'),
+])
+async def test_script_response_and_empty_app_shell_remain_inspectable(content_type, text):
+    web = WebCollector(FakeSettings(), transport=httpx.MockTransport(lambda r:
+        httpx.Response(200, headers={'content-type': content_type}, text=text)), resolver=public_resolver)
+    source = (await web.collect('https://example.org/app', phase='task_research', task_id='t', operation_id='o'))['sources'][0]
+    if 'javascript' in content_type:
+        assert source['text'] == text
+    else:
+        assert source['text'] == '' and source['document']['scripts'][0]['url'] == 'https://example.org/app.js'
+
+
+async def test_http_failure_retains_successes_and_continues_independent_research_urls():
+    calls = []
+    def handle(request):
+        calls.append(request.url.path)
+        return httpx.Response(404 if request.url.path == '/missing' else 200,
+                              headers={'content-type': 'text/plain'}, text=request.url.path)
+    web = WebCollector(FakeSettings(), transport=httpx.MockTransport(handle), resolver=public_resolver)
+    result = await web.collect('https://example.org/first https://example.org/missing https://example.org/last',
+                               phase='task_research', task_id='t', operation_id='o')
+    assert calls == ['/first', '/missing', '/last']
+    assert [s['text'] for s in result['sources']] == ['/first', '/last']
+    assert result['coverage'] == 'partial' and result['failures'][0]['http_status'] == 404
+    assert len(result['acquisitions']) == 3
+    # Reviewed legacy operations retain their own before/after stop contract.
+    calls.clear()
+    async def evaluate(stage, detail): pass
+    with pytest.raises(WebAcquisitionError):
+        await web.collect('https://example.org/missing https://example.org/last', phase='task_research',
+                          task_id='t', operation_id='other', evaluate=evaluate)
+    assert calls == ['/missing']
+
+
+async def test_url_list_is_equivalent_to_explicit_url_string_without_search():
+    requests = []
+    def handle(request):
+        requests.append(request.url.path)
+        return httpx.Response(200, headers={'content-type': 'text/plain'}, text='source')
+    web = WebCollector(FakeSettings(), transport=httpx.MockTransport(handle), resolver=public_resolver)
+    result = await web.collect(['https://example.org/one', 'https://example.org/two'],
+                               phase='task_research', task_id='t', operation_id='o')
+    assert requests == ['/one', '/two'] and not result['search_performed']
+    with pytest.raises(ConfigurationRequired):
+        await web.collect(['https://example.org/one', 'search terms'], phase='task_research', task_id='t', operation_id='bad')
+    assert len(requests) == 2
+
+
+@pytest.mark.parametrize('provider', ['public_url', 'brave', 'tavily'])
+async def test_explicit_url_list_preserves_url_bytes_and_does_not_search(provider):
+    requests = []
+    def handle(request):
+        requests.append(request)
+        return httpx.Response(200, headers={'content-type': 'text/plain'}, text='source')
+    web = WebCollector(FakeSettings(web_provider=provider), transport=httpx.MockTransport(handle), resolver=public_resolver)
+    targets = ['https://example.org/wiki/Foo_(bar)', 'https://example.org/a]b?q=%23open#section']
+    result = await web.collect(targets + [targets[0]], phase='task_research', task_id='t', operation_id='o')
+    assert [s['requested_url'] for s in result['sources']] == targets
+    assert [r.url.raw_path for r in requests] == [b'/wiki/Foo_(bar)', b'/a]b?q=%23open']
+    assert all(r.headers['host'] == 'example.org' and 'authorization' not in r.headers for r in requests)
+    assert not result['search_performed']
+
+
+@pytest.mark.parametrize('target', ['https://127.0.0.1/x', 'https://user:pass@example.org/',
+                                     'https://example.org/#token=opaque'])
+async def test_explicit_url_list_keeps_private_target_guards(target):
+    async def never_dns(host):
+        pytest.fail('Refused list target must not reach DNS')
+    web = WebCollector(FakeSettings(), resolver=never_dns)
+    with pytest.raises(WebAcquisitionError):
+        await web.collect([target], phase='task_research', task_id='t', operation_id='o')
+
+
+async def test_saved_v1_analysis_and_transition_reopen_without_network_or_rewriting(tmp_path):
+    from copy import deepcopy
+    from policy_harness.store import Store, digest
+    class LegacyWeb(WebCollector):
+        RESPONSE_ANALYSIS_VERSION = 'web-response-analysis-v1'
+    calls = []
+    def handle(request):
+        calls.append(request)
+        return httpx.Response(200, headers={'content-type': 'text/html'},
+                              text='<title>Old page</title><a href="/terms">Terms</a>')
+    store = Store(tmp_path)
+    legacy = LegacyWeb(FakeSettings(), transport=httpx.MockTransport(handle), resolver=public_resolver)
+    legacy.acquisition_store = store
+    args = dict(phase='task_research', task_id='t', operation_id='o')
+    first = await legacy.collect('https://example.org/page', **args)
+    saved = deepcopy(store.records('web_exchange')[0])
+    source = first['sources'][0]
+    assert source['text'] == 'Old page\nTerms' and 'document' not in source and 'content_type' not in source
+    store.close()
+    store = Store(tmp_path)
+    current = WebCollector(FakeSettings(), transport=httpx.MockTransport(handle), resolver=public_resolver)
+    current.acquisition_store = store
+    resumed = await current.collect('https://example.org/page', **args)
+    assert resumed['sources'] == first['sources'] and len(calls) == 1
+    assert store.records('web_exchange') == [saved]
+    # A historical transition starts from a pre-analysis callback. Its v1
+    # judgment must still validate exactly against the original response bytes.
+    old = deepcopy(saved)
+    for key in ('response_analysis', 'response_analysis_version'):
+        old['record'].pop(key)
+    old['record']['extraction_status'] = 'not_yet_performed'
+    store.record('web_exchange', old['id'], old)
+    legacy.acquisition_store = store
+    detail = legacy.saved_response_analysis(old['record'])
+    assert detail['response_analysis']['version'] == 'web-response-analysis-v1'
+    assert current.validate_saved_response_analysis(old['record'], detail)
+    forged = deepcopy(detail)
+    forged['response_analysis']['source']['title'] = 'Invented title'
+    assert not current.validate_saved_response_analysis(old['record'], forged)
+    store.record('web_work', detail['id'] + ':after', {
+        'id': detail['id'] + ':after', 'detail': detail, 'analysis_transition': {
+            'original_detail_sha256': digest(old['record']), 'current_detail_sha256': digest(detail)}})
+    transitioned = await current.collect('https://example.org/page', **args)
+    assert transitioned['sources'] == first['sources'] and len(calls) == 1
+    assert store.records('web_exchange') == [old]
+    assert current.read_saved_page('t', 'o', source)['document']['links'][0]['url'] == 'https://example.org/terms'
+    store.close()
+
+
+@pytest.mark.parametrize('content_type,body', [
+    ('text/html', b'<script src="app.js"></script>'),
+    ('application/javascript', b'fetch("/api/contact")'),
+    ('text/plain; charset="latin-1"', b'caf\xe9'),
+])
+def test_v1_extraction_failures_keep_original_meaning(content_type, body):
+    import hashlib
+    record = dict(id='old', kind='fetch', url='https://example.org/page', status='succeeded',
+                  http_status=200, finished_at='saved-time', sha256=hashlib.sha256(body).hexdigest())
+    old = WebCollector._analyze_response(record, body, {'content-type': content_type}, version='web-response-analysis-v1')
+    new = WebCollector._analyze_response(record, body, {'content-type': content_type})
+    assert old['state'] == 'failed' and new['state'] == 'succeeded'
