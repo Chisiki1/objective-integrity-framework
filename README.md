@@ -31,7 +31,9 @@ Work then follows one discipline: one owner per objective, actions recorded befo
 
 ## What's New
 
-**0.3.0-beta.5 (2026-10-09):** Web research retains page links, forms and scripts, reads saved HTML directly, and keeps useful pages when another URL fails. Startup recovers after a previous service PID is reused.
+**0.3.0-beta.5 (2026-10-09):** Recover Web tasks held by response-size limits without repeating their requests. Inspect large JavaScript files with bounded reads and search saved sources for several literal terms at once. Incomplete content is clearly marked.
+
+**0.3.0-beta.4 (2026-10-09):** Web research retains page links, forms and scripts, reads saved HTML directly, and keeps useful pages when another URL fails. Startup recovers after a previous service PID is reused.
 
 **0.3.0-beta.3 (2026-09-28):** recover a lost local connection while retaining the unsent request and attachments. Expired sessions refresh automatically; receipt checks avoid duplicate tasks.
 
