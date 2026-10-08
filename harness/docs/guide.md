@@ -1,6 +1,6 @@
 # OIF Desktop guide
 
-Version **0.3.0-beta.4** · [Quick start](../README.md) · [Japanese](ja.md)
+Version **0.3.0-beta.5** · [Quick start](../README.md) · [Japanese](ja.md)
 
 ## A task from request to result
 
@@ -23,6 +23,8 @@ Keys are protected for the current Windows user. Model requests send the informa
 Choose **Public URLs** for direct public HTTPS pages. Keyword search uses Brave or Tavily with the corresponding API key in Settings. The page reader returns text plus observed links, form fields, script URLs and page metadata. It follows model-selected links under the same public-network checks; collecting a link does not execute it or submit a form.
 
 Large pages receive separate excerpts so one sitemap cannot hide the other results. The agent can search or page through the saved text, structured details and original HTML/JavaScript with `history_read`; reading a saved response makes no new network request. A definite HTTP error leaves successful sources available and permits the other requested pages to be retrieved. Unknown effects and credential checks keep their existing recovery boundaries.
+
+For a large JavaScript file, the agent can request a per-response limit with <code>web_fetch(max_bytes=8000000)</code>, up to 8 MB, while the saved default stays unchanged. Reaching a known byte limit preserves a searchable prefix marked incomplete and permits independent pages to continue. <code>history_read(view=web_response, query=["fetch(", "sendBeacon", "localStorage"])</code> searches several literal terms together. Missing matches in a prefix do not establish their absence in the whole file. Recovery of an older size-limit hold verifies the retained bytes without replaying that request.
 
 This reader does not run JavaScript or sign in. Dynamic content, runtime network requests and form submission behavior require separate observation. Reports should distinguish what the saved pages establish from what remains unobserved.
 

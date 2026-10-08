@@ -1,6 +1,6 @@
-# OIF Desktop 紹介画像 · 0.3.0-beta.4
+# OIF Desktop 紹介画像 · 0.3.0-beta.5
 
-[English](../README.md) · [日本語ガイド](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.4/harness/docs/ja.md)
+[English](../README.md) · [日本語ガイド](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.5/harness/docs/ja.md)
 
 ## 01 — 学習した手順を、実行と評価で更新する。
 

@@ -14,7 +14,7 @@ using System.Runtime.InteropServices;
 [assembly: System.Reflection.AssemblyTitle("OIF")]
 [assembly: System.Reflection.AssemblyDescription("OIF desktop application")]
 [assembly: System.Reflection.AssemblyVersion("0.3.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersion("0.3.0-beta.4")]
+[assembly: System.Reflection.AssemblyInformationalVersion("0.3.0-beta.5")]
 
 internal static class OifLauncher {
     internal static readonly string Root = AppDomain.CurrentDomain.BaseDirectory;

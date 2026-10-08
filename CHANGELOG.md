@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0-beta.5 — 2026-10-09
+
+- A known Web response-size limit no longer holds an entire task as an unknown operation. Recovery authenticates the retained bytes and keeps the original failure without replaying its request.
+- Oversized public responses retain a searchable prefix, explicitly marked incomplete. Independent requested pages can still be collected.
+- Large JavaScript reads can request up to 8 MB per response without changing saved settings. Saved source can be searched for up to eight literal terms in one bounded read; static source inspection does not execute scripts or establish runtime behavior.
+
 ## 0.3.0-beta.4 — 2026-10-09
 
 - Web evidence now includes observed links, form fields, script URLs and page metadata. Saved raw HTML and JavaScript can be searched or read in bounded ranges without refetching.

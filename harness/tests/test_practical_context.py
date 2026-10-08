@@ -52,6 +52,156 @@ async def test_raw_web_history_reaches_model_without_refetch(tmp_path):
     store.close()
 
 
+@pytest.mark.asyncio
+async def test_large_js_prefix_is_searchable_and_later_urls_continue(tmp_path):
+    import httpx
+    from policy_harness.providers import WebCollector
+    from tests.test_providers import FakeSettings, public_resolver
+    requests = []
+    prefix = b'fetch("/api");navigator.sendBeacon("/metrics");localStorage.getItem("theme");'
+    script = prefix + '日'.encode() * 50
+    limit = len(prefix) + 4  # One complete Japanese character and one partial.
+    def handle(request):
+        requests.append(str(request.url))
+        return httpx.Response(200, headers={'content-type': 'application/javascript'},
+                              content=script if request.url.path == '/app.js' else b'const later="read";')
+    engine, store, gateway, _, task = runtime(tmp_path, [
+        steps(tool('web_fetch', query=['https://example.org/app.js', 'https://example.org/other.js'])),
+        steps(tool('history_read', start=0, view='web_response', query=['fetch(', 'sendBeacon', 'localStorage'])),
+        finish(), {'verdict': 'accept', 'findings': [], 'rationale': 'Reports partial source and observed matches only'}])
+    web = WebCollector(FakeSettings(web_max_response_bytes=limit), transport=httpx.MockTransport(handle), resolver=public_resolver)
+    web.acquisition_store = store; engine.web = web
+    await run(engine, store, task)
+    assert store.get_task(task['id'])['status'] == 'completed'
+    rows = store.operations(task['id'])
+    result = rows[0]['result']
+    assert result['status'] == 'failed' and result['effect'] == 'confirmed'
+    sources = result['data']['sources']
+    assert len(requests) == 2 and len(sources) == 2
+    assert sources[0]['truncated'] and sources[0]['body_complete'] is False
+    assert sources[0]['text'].endswith('日') and sources[0]['received_bytes'] == limit
+    assert not sources[1]['truncated'] and 'later=' in sources[1]['text']
+    history = rows[1]['result']['data']
+    assert history['search_mode'].startswith('case-insensitive')
+    assert history['source_coverage'][0]['body_complete'] is False
+    assert {m['query'] for m in json.loads(history['text'])['matches']} == {'fetch(', 'sendBeacon', 'localStorage'}
+    projection = bounded_result(result, tool='web_fetch')
+    assert projection['data']['sources'][0]['truncated'] is True
+    assert 'absence' in projection['data']['sources'][0]['coverage_note']
+    assert gateway.calls[2][2]['history'][1]['result']['data']['source_coverage'][0]['body_complete'] is False
+    store.close()
+
+
+@pytest.mark.asyncio
+async def test_old_size_failure_reconciles_without_replay_and_keeps_original(tmp_path):
+    import copy
+    import httpx
+    from policy_harness.providers import WebCollector
+    from policy_harness.practical_engine import Held
+    from tests.test_providers import FakeSettings, public_resolver
+    calls = []
+    def handle(request):
+        calls.append(request)
+        return httpx.Response(200, headers={'content-type': 'application/javascript'}, text='fetch("/api");' * 20)
+    engine, store, _, _, task = runtime(tmp_path, [
+        steps(tool('web_fetch', query='https://example.org/app.js')), finish(),
+        {'verdict': 'accept', 'findings': [], 'rationale': 'Known incomplete source is explicit'}])
+    web = WebCollector(FakeSettings(web_max_response_bytes=55), transport=httpx.MockTransport(handle), resolver=public_resolver)
+    web.acquisition_store = store; engine.web = web
+    await run(engine, store, task)
+    row = store.operations(task['id'])[0]; identity = row['operation']['id']
+    saved = store.web_operation_exchanges(task['id'], identity)[0]
+    for field in ('read_stopped', 'response_limit_bytes'):
+        saved['record'].pop(field, None)  # Older failed exchanges have no new markers.
+    store.record('web_exchange', saved['id'], saved)
+    original = copy.deepcopy(row['result'])
+    original.update(status='unknown', effect='unknown',
+                    data={'observation': {'acquisitions': [saved['record']]}, 'sources': []})
+    store.update_operation(identity, result=original, status='recovery_required')
+    recovered = await engine._recover_operation(task, store.get_operation(identity))
+    assert recovered.status == 'failed' and recovered.effect == 'confirmed'
+    assert recovered.data['replayed'] is False and len(calls) == 1
+    assert 'fetch(' in history_page(store, task['id'], {'start': 0, 'view': 'web_response', 'query': 'fetch'}, web=web)['text']
+    assert store.records('practical_result_history')[0]['result'] == original
+    assert store.record_get('web_exchange', saved['id']) == saved
+    # A matching error string alone is insufficient: changed saved bytes stay held.
+    damaged = copy.deepcopy(saved); damaged['partial_base64'] = 'eA=='
+    store.record('web_exchange', saved['id'], damaged)
+    store.update_operation(identity, result=original, status='recovery_required')
+    with pytest.raises(Held, match='still unknown'):
+        await engine._recover_operation(task, store.get_operation(identity))
+    assert len(calls) == 1
+    store.close()
+
+
+@pytest.mark.asyncio
+async def test_explicit_js_read_budget_is_bounded_and_does_not_change_settings(tmp_path):
+    import httpx
+    from policy_harness.providers import WebCollector, ConfigurationRequired
+    from tests.test_providers import FakeSettings, public_resolver
+    settings = FakeSettings(web_max_response_bytes=16)
+    requests = []
+    script = 'const important="tail";'
+    def handle(request):
+        requests.append(request)
+        return httpx.Response(200, headers={'content-type': 'application/javascript'}, text=script)
+    web = WebCollector(settings, transport=httpx.MockTransport(handle), resolver=public_resolver)
+    web.acquisition_store = Store(tmp_path)
+    result = await web.collect('https://example.org/app.js', phase='task_research', task_id='t', operation_id='op', max_bytes=128)
+    assert result['sources'][0]['text'] == script and result['sources'][0]['truncated'] is False
+    assert result['sources'][0]['received_bytes'] == len(script) and result['sources'][0]['response_limit_bytes'] == 128
+    assert settings.get()['web_max_response_bytes'] == 16 and len(requests) == 1
+    for maximum in (0, True, 8000001, '8000000'):
+        with pytest.raises(ConfigurationRequired, match='max_bytes'):
+            await web.collect('https://example.org/app.js', phase='task_research', task_id='t', operation_id='invalid', max_bytes=maximum)
+    with pytest.raises(ConfigurationRequired, match='max_bytes'):
+        await web.collect('https://example.org/app.js', phase='pre', task_id='t', operation_id='invalid', max_bytes=128)
+    assert len(requests) == 1
+    web.acquisition_store.close()
+
+
+@pytest.mark.asyncio
+async def test_incomplete_network_response_still_holds(tmp_path):
+    import httpx
+    from policy_harness.providers import WebCollector
+    from tests.test_providers import FakeSettings, public_resolver
+    class Interrupted(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            yield b'const prefix=1;'
+            raise httpx.ReadTimeout('No response continuation')
+    engine, store, _, _, task = runtime(tmp_path, [steps(tool('web_fetch', query='https://example.org/app.js'))])
+    web = WebCollector(FakeSettings(), transport=httpx.MockTransport(lambda r:
+        httpx.Response(200, headers={'content-type': 'application/javascript'}, stream=Interrupted())), resolver=public_resolver)
+    web.acquisition_store = store; engine.web = web
+    await run(engine, store, task)
+    result = store.operations(task['id'])[0]['result']
+    assert result['status'] == result['effect'] == 'unknown'
+    assert store.get_task(task['id'])['status'] == 'held'
+    assert result['data']['known_response_limits'] == []
+    store.close()
+
+
+@pytest.mark.asyncio
+async def test_oversized_http_error_is_known_and_does_not_become_a_page(tmp_path):
+    import httpx
+    from policy_harness.providers import WebCollector
+    from tests.test_providers import FakeSettings, public_resolver
+    engine, store, _, _, task = runtime(tmp_path, [
+        steps(tool('web_fetch', query=['https://example.org/missing', 'https://example.org/good'])),
+        finish(), {'verdict': 'accept', 'findings': [], 'rationale': 'Only successful page is used'}])
+    web = WebCollector(FakeSettings(web_max_response_bytes=16),
+        transport=httpx.MockTransport(lambda r: httpx.Response(404 if r.url.path == '/missing' else 200,
+            headers={'content-type': 'text/plain'}, text='not found ' * 100 if r.url.path == '/missing' else 'actual page')),
+        resolver=public_resolver)
+    web.acquisition_store = store; engine.web = web
+    await run(engine, store, task)
+    result = store.operations(task['id'])[0]['result']
+    assert result['status'] == 'failed' and result['effect'] == 'confirmed'
+    assert [s['text'] for s in result['data']['sources']] == ['actual page']
+    assert store.get_task(task['id'])['status'] == 'completed'
+    store.close()
+
+
 def measured_gateway(gateway, threshold=1200):
     # Deterministic pressure fixture, independent of any network tokenizer.
     gateway.measure_input = lambda role, phase, payload, schema: {

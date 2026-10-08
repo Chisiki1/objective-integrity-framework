@@ -43,13 +43,14 @@ TOOLS = {
                    'files': 'optional list of supporting UTF-8 files; entrypoint is always included', 'timeout_seconds': 'optional, 1..600'},
     'run_tests': {'arguments': 'pytest argv, e.g. [test_math.py, -q]',
                   'files': 'optional source/config list', 'timeout_seconds': 'optional, 1..600'},
-    'web_fetch': {'query': 'public search query or exact public HTTPS URL(s)'},
+    'web_fetch': {'query': 'public search query or exact public HTTPS URL(s)',
+                  'max_bytes': 'optional per-response byte limit, 1..8000000; default is the configured limit. Use a larger explicit read only when needed, e.g. a large observed JS bundle. Partial sources are marked truncated; they cannot prove absence in the whole file.'},
     'history_read': {'start': 'zero-based operation index', 'count': 'optional, 1..20',
                      'offset': 'optional character offset', 'max_chars': 'optional, at most 12000',
                      'view': 'result (default), index (fields), record (full original), web_response (saved raw HTML/JS; no network)',
                      'source': 'with web_response only: zero-based source index, default 0; count must be 1',
                      'field': 'optional JSON field path such as stdout, data.text or data.sources.0.text',
-                     'query': 'optional phrase; returns matching excerpts without rereading the whole result'},
+                     'query': 'optional phrase or list of 1..8 literal terms (up to 200 characters each); case-insensitive, not a regular expression. Returns bounded matching excerpts, useful for fetch/sendBeacon/cookie/localStorage in saved JS. No script execution.'},
     'knowledge_read': {'query': "search this task's earlier outcomes and relevant shared procedures; other tasks' original messages and results stay private"},
     'attachment_read': {'source': 'index in sources', 'offset': 'optional character offset', 'max_chars': 'optional, at most 32000'},
 }
@@ -321,7 +322,7 @@ class PracticalEngine:
         if settings is not None:
             provider = settings.get().get('web_provider', 'none')
             if provider == 'public_url':
-                tools['web_fetch'] = {'query': 'A string containing exact public HTTPS URL(s), or a list of such URLs. This provider does NOT accept keyword searches. Follow observed document.links and document.scripts rather than guessing paths. For raw HTML/JS use history_read(view=web_response, source=index, query=phrase); for large sitemaps or responses search saved fields with query before paging. Forms/links are static evidence; scripts are not executed. Do not send pages through unrelated proxy services to work around extraction. State what needs browser interaction or login when it is unobserved.'}
+                tools['web_fetch'] = {**tools['web_fetch'], 'query': 'A string containing exact public HTTPS URL(s), or a list of such URLs. This provider does NOT accept keyword searches. Follow observed document.links and document.scripts rather than guessing paths. For raw HTML/JS use history_read(view=web_response, source=index, query=phrase or list of terms); for large sitemaps or responses search saved fields with query before paging. Forms/links are static evidence; scripts are not executed. Do not send pages through unrelated proxy services to work around extraction. State what needs browser interaction or login when it is unobserved.'}
             elif provider == 'none':
                 tools['web_fetch'] = {'unavailable': 'No Web provider is configured. Do not call this tool or claim current Web evidence; explain the missing capability when external research is required.'}
         return tools
@@ -597,10 +598,11 @@ class PracticalEngine:
             elif operation.kind in MAINTENANCE_TOOLS:
                 result = await self.maintenance.execute(task, operation)
             elif operation.kind == 'web_fetch':
-                if set(operation.args) != {'query'}:
-                    raise PolicyError('web_fetch accepts only query')
+                if 'query' not in operation.args or set(operation.args) - {'query', 'max_bytes'}:
+                    raise PolicyError('web_fetch requires query and accepts optional max_bytes')
                 data = await self.web.collect(operation.args['query'], phase='task_research',
-                                              task_id=task['id'], operation_id=operation.id)
+                                              task_id=task['id'], operation_id=operation.id,
+                                              **({'max_bytes': operation.args['max_bytes']} if 'max_bytes' in operation.args else {}))
                 result = OperationResult(operation_id=operation.id, status='failed' if data.get('failures') else 'succeeded',
                     effect='confirmed', data=data,
                     stderr='Some pages could not be retrieved; successful sources remain available.' if data.get('failures') else '')
@@ -667,13 +669,21 @@ class PracticalEngine:
             if record.get('task_id') == task['id'] and record.get('operation_id') == operation.id:
                 observations[record['id']] = record
         dispatched = [r for r in observations.values() if r.get('http_dispatched') or r.get('network_dispatched')]
+        read_limits = (self.web.response_limit_evidence(task['id'], operation.id)
+                       if hasattr(self.web, 'response_limit_evidence') else {'known_ids': [], 'sources': []})
         unknown = any(r.get('status') in {'prepared', 'started', 'unknown'}
-                      or (r.get('http_dispatched') and not r.get('transport_completed')) for r in dispatched)
+                      or (r.get('http_dispatched') and not r.get('transport_completed')
+                          and r.get('id') not in read_limits['known_ids']) for r in dispatched)
+        sources = list(metadata.get('sources', []))
+        for source in read_limits['sources']:
+            if not any(s.get('id') == source['id'] for s in sources):
+                sources.append(source)
+        metadata = dict(metadata, sources=sources, acquisitions=list(observations.values()))
         return OperationResult(operation_id=operation.id, status='unknown' if unknown else 'failed',
                                effect='unknown' if unknown else 'confirmed' if dispatched else 'none', stderr=reason,
                                data={'reason': reason, 'external_request_effect': 'unknown' if unknown else 'observed' if dispatched else 'not_dispatched',
                                      'acquisition_ids': list(observations), 'observation': metadata,
-                                     'sources': metadata.get('sources', []),
+                                     'sources': sources, 'known_response_limits': read_limits['known_ids'],
                                      'replayed': False})
 
     def _record_result(self, task, operation, result):

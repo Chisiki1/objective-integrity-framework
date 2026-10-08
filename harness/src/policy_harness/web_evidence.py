@@ -3,7 +3,8 @@ from html.parser import HTMLParser
 from urllib.parse import urljoin, urlsplit
 
 
-def decode_text(raw, content_type):
+def decode_text(raw, content_type, *, partial=False):
+    import codecs
     import re
     if not any(kind in content_type.lower() for kind in (
             'text/', 'application/json', 'application/xml', 'application/xhtml+xml',
@@ -11,7 +12,12 @@ def decode_text(raw, content_type):
         raise ValueError('This content format needs a controlled extraction capability.')
     charset = re.search(r'charset=[\"\']?([\w-]+)', content_type, re.IGNORECASE)
     try:
-        return raw.decode(charset.group(1) if charset else 'utf-8')
+        encoding = charset.group(1) if charset else 'utf-8'
+        if partial:
+            # A known byte limit may split a character. Keep all complete
+            # characters and retain the exact original bytes separately.
+            return codecs.getincrementaldecoder(encoding)(errors='strict').decode(raw, final=False)
+        return raw.decode(encoding)
     except (UnicodeError, LookupError):
         raise ValueError('The page encoding needs explicit handling; text was not silently replaced.') from None
 
@@ -105,7 +111,9 @@ def source_overview(source, index, *, budget=2200):
     """Give each source its own space so a large first page cannot hide later pages."""
     from .store import canonical
     text = source.get('text', '')
-    result = {k: source[k] for k in ('url', 'requested_url', 'title', 'retrieved_at', 'content_type') if k in source}
+    result = {k: source[k] for k in ('url', 'requested_url', 'title', 'retrieved_at', 'content_type',
+                                    'truncated', 'body_complete', 'received_bytes', 'response_limit_bytes',
+                                    'coverage_note') if k in source}
     result.update(source=index, total_text_chars=len(text), text=text[:budget // 2])
     document = source.get('document')
     if document:

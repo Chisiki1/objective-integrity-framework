@@ -1,19 +1,19 @@
 # Releases and downloads
 
-Use the [desktop beta release](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.4)
-for a fixed, inspectable version. The current version is **0.3.0-beta.4**. The framework
+Use the [desktop beta release](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.5)
+for a fixed, inspectable version. The current version is **0.3.0-beta.5**. The framework
 and skills-only plugin share that version; `main` can contain later development.
 
 ## Choose one download
 
-- **OIF-Desktop-0.3.0-beta.4-windows-x64.zip** — the ready-to-open Windows app. Extract all files and open OIF.exe. [Guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.4/harness/README.md).
-- **OIF-Showcase-0.3.0-beta.4.zip** — labelled example images and their captions.
+- **OIF-Desktop-0.3.0-beta.5-windows-x64.zip** — the ready-to-open Windows app. Extract all files and open OIF.exe. [Guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.5/harness/README.md).
+- **OIF-Showcase-0.3.0-beta.5.zip** — labelled example images and their captions.
 
 
 | Asset | Use it for | Requirements |
 |---|---|---|
-| `objective-integrity-framework-0.3.0-beta.4.zip` | Full source, documentation, examples and optional executable runtime | Reading needs no runtime; Python 3.10+ with standard-library `sqlite3` for the tools |
-| `objective-integrity-0.3.0-beta.4.zip` | Self-contained Objective Integrity skill, references and practice cases | A compatible plugin host; no Python, API key, server or OIF account |
+| `objective-integrity-framework-0.3.0-beta.5.zip` | Full source, documentation, examples and optional executable runtime | Reading needs no runtime; Python 3.10+ with standard-library `sqlite3` for the tools |
+| `objective-integrity-0.3.0-beta.5.zip` | Self-contained Objective Integrity skill, references and practice cases | A compatible plugin host; no Python, API key, server or OIF account |
 | `SHA256SUMS.txt` | Check downloaded ZIPs and `release.json` | A SHA-256 utility |
 | `release.json` | Exact source commit/tree, artifact hashes, sizes and builder identities | Any text or JSON reader |
 
@@ -28,7 +28,7 @@ Download `SHA256SUMS.txt` from the **same version's release** as your ZIP. On
 PowerShell, print the file's hash and compare it with the matching filename's row:
 
 ```powershell
-Get-FileHash .\objective-integrity-framework-0.3.0-beta.4.zip -Algorithm SHA256
+Get-FileHash .\objective-integrity-framework-0.3.0-beta.5.zip -Algorithm SHA256
 Get-Content .\SHA256SUMS.txt
 ```
 
@@ -45,7 +45,7 @@ project's HTTPS release page and tagged commit to establish their source.
 
 ## Start, update and recover
 
-For the Windows desktop package, use **Updates → Update and restart** when offered. Installation is optional and waits until tasks are idle. The [desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.4/harness/docs/guide.md#back-up-update-and-restore) covers package verification, preserved data, local modifications and recovery. Source installations use the manual procedure.
+For the Windows desktop package, use **Updates → Update and restart** when offered. Installation is optional and waits until tasks are idle. The [desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.5/harness/docs/guide.md#back-up-update-and-restore) covers package verification, preserved data, local modifications and recovery. Source installations use the manual procedure.
 
 For the full archive, open its top-level folder and follow the [quick start](../README.md#quick-start)
 or [adoption guide](adoption.md). The demo, installation and test temporary roots
@@ -65,10 +65,10 @@ rollback route if recovery is needed; do not overwrite edited files by hand.
 ## Version compatibility and support
 
 OIF uses `MAJOR.MINOR.PATCH` versions and `v`-prefixed release tags. The current
-tag is **v0.3.0-beta.4**; the first versioned tag was **v0.1.1**, following the earlier
+tag is **v0.3.0-beta.5**; the first versioned tag was **v0.1.1**, following the earlier
 untagged 0.1.0 plugin package. This beta adds the Windows desktop harness.
 Framework records keep their existing schemas. Desktop data uses its own local
-store and the documented [backup/update/restore procedure](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.4/harness/docs/guide.md#back-up-update-and-restore).
+store and the documented [backup/update/restore procedure](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.5/harness/docs/guide.md#back-up-update-and-restore).
 
 During 0.x development, minor versions may change interfaces; patch versions are
 intended for compatible corrections. The framework CI covers Windows and Linux

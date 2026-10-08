@@ -981,6 +981,8 @@ class _Article(HTMLParser):
 
 
 class WebCollector:
+    RESPONSE_LIMIT_REASON = 'Web response exceeded the configured byte limit; partial content was not accepted as a source.'
+    MAX_REQUEST_BYTES = 8_000_000
     RESPONSE_ANALYSIS_VERSION = 'web-response-analysis-v2'
     RESPONSE_ANALYSIS_VERSIONS = frozenset({'web-response-analysis-v1', RESPONSE_ANALYSIS_VERSION})
 
@@ -1126,6 +1128,14 @@ class WebCollector:
             detail = saved.get('record', {})
             if detail.get('id') != source.get('id'):
                 continue
+            if source.get('source_kind') == 'retrieved-public-response-prefix':
+                original, raw, headers, known = self._saved_response_limit(saved, task_id, operation_id)
+                expected = self._response_prefix(original, raw, headers, known)
+                if (source.get('response_sha256') != expected['response_sha256']
+                        or source.get('sha256') != expected['sha256']
+                        or source.get('truncated') is not True or source.get('body_complete') is not False):
+                    raise WebAcquisitionError('Saved partial Web source binding differs; no refetch.')
+                return dict(expected, source_id=original['id'])
             original, raw, headers, known = self._saved_response(detail)
             if (original.get('task_id') != task_id or original.get('operation_id') != operation_id
                     or original.get('kind') != 'fetch' or original.get('method') != 'GET'
@@ -1141,6 +1151,72 @@ class WebCollector:
             self._credential_input(value, additional=known)
             return value
         raise WebAcquisitionError('The exact saved Web source is unavailable; no refetch.')
+
+    def _saved_response_limit(self, saved, task_id, operation_id):
+        """Authenticate a definite local GET byte limit, including older records."""
+        detail = saved.get('record', {})
+        original = self._load_exchange(saved)
+        record = original.get('record', {})
+        known = self._credential_input()
+        if (original.get('stage') != 'failed' or self._record_view(record, known) != detail
+                or record.get('task_id') != task_id or record.get('operation_id') != operation_id
+                or record.get('phase') != 'task_research' or record.get('kind') != 'fetch'
+                or record.get('method') != 'GET' or record.get('status') != 'failed'
+                or not 200 <= record.get('http_status', 0) < 600
+                or record.get('http_dispatched') is not True or record.get('partial') is not True
+                or record.get('error_family') != 'WebAcquisitionError'
+                or record.get('error_reason') != self.RESPONSE_LIMIT_REASON):
+            raise WebAcquisitionError('Saved response does not establish a definite read limit; no replay.')
+        try:
+            raw = base64.b64decode(original['partial_base64'], validate=True)
+            if not raw or len(raw) != record.get('bytes') or hashlib.sha256(raw).hexdigest() != record.get('sha256'):
+                raise ValueError()
+            headers = original['headers']
+        except (ValueError, KeyError, TypeError):
+            raise WebAcquisitionError('Saved partial response bytes changed or are unavailable; no replay.') from None
+        self._credential_input(raw.decode('utf-8', errors='surrogateescape'), headers, record, additional=known)
+        return record, raw, headers, known
+
+    def _response_prefix(self, record, raw, headers, known):
+        from .web_evidence import decode_text, document_structure
+        if not 200 <= record.get('http_status', 0) < 300:
+            raise WebAcquisitionError('A non-success response prefix is not a page source.')
+        content_type = headers.get('content-type', '')
+        decoded = decode_text(raw, content_type, partial=True)
+        source = {'id': record['id'], 'url': record['url'], 'title': record['url'], 'text': decoded,
+                  'retrieved_at': record['finished_at'], 'sha256': hashlib.sha256(decoded.encode('utf-8')).hexdigest(),
+                  'response_sha256': record['sha256'], 'source_kind': 'retrieved-public-response-prefix',
+                  'content_type': content_type, 'untrusted_evidence': True, 'truncated': True,
+                  'body_complete': False, 'received_bytes': len(raw),
+                  'coverage_note': 'Only this saved prefix was read. Missing matches do not establish absence in the full file. '
+                      'Search the prefix with history_read; if the remainder is needed, choose a new web_fetch with max_bytes up to 8000000.',
+                  'document': document_structure(decoded, record['url'], content_type)}
+        self._credential_input(source, additional=known)
+        return source
+
+    def response_limit_evidence(self, task_id, operation_id):
+        """Recover known limits from authenticated saved bytes, without any I/O to the Web."""
+        journal = getattr(self, 'acquisition_store', None)
+        result = {'known_ids': [], 'sources': [], 'unverified_ids': []}
+        if journal is None:
+            return result
+        for saved in journal.web_operation_exchanges(task_id, operation_id):
+            detail = saved.get('record', {})
+            if detail.get('error_reason') != self.RESPONSE_LIMIT_REASON:
+                continue
+            try:
+                record, raw, headers, known = self._saved_response_limit(saved, task_id, operation_id)
+            except (WebAcquisitionError, ConfigurationRequired, ValueError, TypeError, KeyError):
+                result['unverified_ids'].append(detail.get('id'))
+                continue
+            result['known_ids'].append(record['id'])
+            try:
+                result['sources'].append(self._response_prefix(record, raw, headers, known))
+            except (ValueError, WebAcquisitionError):
+                # A definite acquisition limit can be known even when its
+                # retained format cannot be decoded. Never invent usable text.
+                pass
+        return result
 
     def validate_saved_response_analysis(self, original_detail, current_detail):
         """Re-derive content from saved raw bytes, not self-stated new hashes."""
@@ -1292,7 +1368,8 @@ class WebCollector:
         key=digest({'task_id':task_id,'operation_id':operation_id,'phase':phase,'method':method,'url':url,'query':query,'body':body})
         saved=journal.record_get('web_exchange',key) if journal else None
         record = {"id": uuid4().hex, "task_id": task_id, "operation_id": operation_id, "phase": phase, "method": method, "url": url, "kind": "search" if query is not None else "fetch", "prepared_at": now(), "status": "prepared", "network_dispatched": False, "resolved_address": None, "provider_usage": None, "cost": None}
-        record.update(response_analysis_version=self.RESPONSE_ANALYSIS_VERSION, web_provider=values['web_provider'])
+        record.update(response_analysis_version=self.RESPONSE_ANALYSIS_VERSION, web_provider=values['web_provider'],
+                      response_limit_bytes=values['web_max_response_bytes'])
         record['collection_context']=dict(collection_context or {})
         if query is not None:
             record["query"] = query
@@ -1338,11 +1415,15 @@ class WebCollector:
                 async with client.stream(method, target, headers=outgoing, json=body, extensions={"sni_hostname": host}) as response:
                     response_headers = dict(response.headers)
                     record["http_status"] = response.status_code
+                    limit = values["web_max_response_bytes"]
+                    # Do not buffer several stream chunks before observing them:
+                    # a later timeout/cancellation must retain every received byte.
                     async for piece in response.aiter_bytes():
-                        data.extend(piece)
-                        if len(data) > values["web_max_response_bytes"]:
-                            record["partial"] = True
-                            raise WebAcquisitionError("Web response exceeded the configured byte limit; partial content was not accepted as a source.")
+                        remaining = max(0, limit - len(data))
+                        data.extend(piece[:remaining])
+                        if len(piece) > remaining:
+                            record.update(partial=True, response_limit_bytes=limit, read_stopped='response_byte_limit')
+                            raise WebAcquisitionError(self.RESPONSE_LIMIT_REASON)
             record.update(status="succeeded" if 200 <= response.status_code < 400 else "failed", finished_at=now(), elapsed_seconds=time.monotonic() - started, bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
             record.update(transport_completed=True,response_body_available=bool(data),redirect=300<=response.status_code<400,
                 body_accepted_as_source=False,extraction_status='not_yet_performed')
@@ -1405,7 +1486,8 @@ class WebCollector:
                         or source['sha256'] != hashlib.sha256(source['text'].encode('utf-8')).hexdigest()):
                     raise WebAcquisitionError('Saved extracted source binding differs; no replay.')
                 self._credential_input(source, requested_url)
-                return dict(source, requested_url=requested_url)
+                return dict(source, requested_url=requested_url, body_complete=True, received_bytes=record['bytes'],
+                            **({'response_limit_bytes': record['response_limit_bytes']} if 'response_limit_bytes' in record else {}))
             content_type = headers.get("content-type", "").lower()
             if not any(kind in content_type for kind in ("text/", "application/json", "application/xml", "application/xhtml+xml")):
                 raise WebAcquisitionError("This content format needs a controlled extraction capability.", metadata={"acquisitions": context["records"]})
@@ -1425,10 +1507,10 @@ class WebCollector:
             self._credential_input(decoded, title, url, requested_url)
             return {"id": record["id"], "requested_url": requested_url, "url": url, "title": title, "text": decoded, "retrieved_at": record["finished_at"], "sha256": hashlib.sha256(decoded.encode("utf-8")).hexdigest(), "response_sha256": record["sha256"], "source_kind": "retrieved-public-page", "untrusted_evidence": True, "truncated": False}
 
-    async def collect(self, query: str, *, phase: str, task_id: str, operation_id: str, evaluate=None) -> dict:
+    async def collect(self, query: str, *, phase: str, task_id: str, operation_id: str, evaluate=None, max_bytes=None) -> dict:
         known = _required_credentials(self.settings)
         try:
-            result = await self._collect(query, phase=phase, task_id=task_id, operation_id=operation_id, evaluate=evaluate)
+            result = await self._collect(query, phase=phase, task_id=task_id, operation_id=operation_id, evaluate=evaluate, max_bytes=max_bytes)
             self._credential_input(result, additional=known)
             return result
         except (WebAcquisitionError, ConfigurationRequired) as exc:
@@ -1443,7 +1525,7 @@ class WebCollector:
                                           metadata=ModelGateway._scrub_metadata(metadata, current)) from None
             raise
 
-    async def _collect(self, query: str, *, phase: str, task_id: str, operation_id: str, evaluate=None) -> dict:
+    async def _collect(self, query: str, *, phase: str, task_id: str, operation_id: str, evaluate=None, max_bytes=None) -> dict:
         explicit_urls = None
         if isinstance(query, list) and phase == 'task_research':
             if not query or any(not isinstance(url, str) or not re.fullmatch(r'https://[^\s<>\"]+', url) for url in query):
@@ -1454,6 +1536,10 @@ class WebCollector:
             raise ConfigurationRequired("Web collection requires a query or an authoritative public URL.")
         _validate_public_text(query)
         values = self.settings.get()
+        if max_bytes is not None:
+            if phase != 'task_research' or evaluate is not None or type(max_bytes) is not int or not 1 <= max_bytes <= self.MAX_REQUEST_BYTES:
+                raise ConfigurationRequired('max_bytes must be 1..8000000 for an ordinary Web read.')
+            values = dict(values, web_max_response_bytes=max_bytes)
         self._credential_input(query)
         provider = values["web_provider"]
         if provider == "none":
@@ -1525,6 +1611,17 @@ class WebCollector:
                 # pages or prevent independent later URLs. Unknown effects,
                 # credential holds and legacy reviewed exchanges still stop here.
                 last = records[-1] if len(records) > before else {}
+                if phase == 'task_research' and evaluate is None and str(exc) == self.RESPONSE_LIMIT_REASON:
+                    evidence = self.response_limit_evidence(task_id, operation_id)
+                    if last.get('id') in evidence['known_ids']:
+                        for prefix in evidence['sources']:
+                            if prefix['id'] == last['id'] and not any(s['id'] == prefix['id'] for s in sources):
+                                sources.append(dict(prefix, requested_url=url))
+                        failures.append({'url': url, 'http_status': last['http_status'],
+                                         'reason': 'Response size limit reached; only the retained prefix is available.',
+                                         'code': 'response_byte_limit', 'received_bytes': last['bytes']})
+                        collection['failed_targets'] = list(failures)
+                        continue
                 if (phase == 'task_research' and evaluate is None and last.get('transport_completed')
                         and last.get('http_status', 0) >= 400 and not last.get('records_withheld')
                         and str(exc) == f"Web acquisition returned HTTP {last.get('http_status')}."):
