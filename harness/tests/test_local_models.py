@@ -199,14 +199,19 @@ async def test_source_schema_offers_only_pending_instruction_quotes_at_actual_pr
         assert changed['properties']['sources']['minItems']==1
         assert changed['properties']['sources']['items']['enum']==[1]
         assert changed['properties']['quote']['minLength']==1
-        assert 'enum' not in changed['properties']['quote']
+        choices=changed['properties']['quote'].get('enum')
+        if choices:
+            assert all(0<len(q)<=120 and q in payload['sources'][1]['text'] for q in choices)
+        assert schema['$defs']['AcceptanceChoice']['oneOf'][0]['properties']['sources']['maxItems']==0
+        assert 'retain' in changed['properties']['disposition']['enum']
+        quote=choices[0] if choices else 'Create calc.py'
         assert 'sources' in changed['required']
         return httpx.Response(200,json={'model':'local-qwen','choices':[{'finish_reason':'stop','message':{'content':json.dumps({
             'objective':'Create and execute calc.py','sources':[{'source':1,'classification':'add','reason':'New user work'}],
             'criteria':[{'original':None,'disposition':'add','criterion':'Execute calc.py','sources':[1],
-                         'quote':'Create calc.py','reason':'User requested actual execution','verification':'run_code'}]})}}]})
+                         'quote':quote,'reason':'User requested actual execution','verification':'run_code'}]})}}]})
     answer,_=await ModelGateway(settings,Policy(),transport=httpx.MockTransport(handle)).generate('parent','source_reconciliation',payload,PracticalSourcePlan)
-    assert answer.criteria[0].verification=='run_code' and answer.criteria[0].quote=='Create calc.py'
+    assert answer.criteria[0].verification=='run_code' and answer.criteria[0].quote in payload['sources'][1]['text']
     assert PracticalSourcePlan.model_json_schema()==original_schema
     # Long valid sources still permit a short exact excerpt with a small
     # output budget. The schema never repeats the instruction text.
@@ -214,6 +219,7 @@ async def test_source_schema_offers_only_pending_instruction_quotes_at_actual_pr
     settings.update({'max_output_tokens':1024})
     long_schema=response_schema(PracticalSourcePlan,payload)
     assert len(json.dumps(long_schema)) < len(json.dumps(original_schema))*2
+    assert 'enum' not in long_schema['$defs']['AcceptanceChoice']['oneOf'][1]['properties']['quote']
     answer,_=await ModelGateway(settings,Policy(),transport=httpx.MockTransport(handle)).generate('parent','source_reconciliation',payload,PracticalSourcePlan)
     assert answer.criteria[0].quote in payload['sources'][1]['text']
     payload['sources'][1]['kind']='attachment'

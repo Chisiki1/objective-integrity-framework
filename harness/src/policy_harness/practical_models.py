@@ -120,11 +120,24 @@ def response_schema(schema, payload=None):
             base = value['$defs']['AcceptanceChoice']
             retained = deepcopy(base)
             retained['properties']['disposition'] = {'const': 'retain'}
+            retained['properties']['sources'].update(maxItems=0)
             changed = deepcopy(base)
-            changed['properties']['disposition'] = {'enum': ['add', 'replace', 'withdraw']}
+            changed['properties']['disposition'] = {'enum': ['retain', 'add', 'replace', 'withdraw']}
             changed['properties']['sources'].update(minItems=1, items={'type': 'integer', 'enum': sorted({s['index'] for s in instructions})})
             changed['properties']['quote'].update(minLength=1)
             changed['required'] = list(dict.fromkeys([*changed['required'], 'sources', 'quote']))
+            # Short requests offer literal excerpts instead of making the model
+            # retype them. Bound both the catalog and each selected excerpt;
+            # long input still permits any short exact quote via the controller.
+            if sum(len(s['text'].encode('utf-8')) for s in instructions) <= 4096:
+                import re
+                excerpts = []
+                for source in instructions:
+                    for sentence in re.split(r'(?<=[。！？!?])|\n|(?<=\.) (?=[A-Z])', source['text']):
+                        excerpts.extend(part for start in range(0, len(sentence), 120)
+                                        if (part := sentence[start:start + 120].strip()))
+                if excerpts:
+                    changed['properties']['quote']['enum'] = list(dict.fromkeys(excerpts))
             value['$defs']['AcceptanceChoice'] = {'oneOf': [retained, changed]}
     return value
 
