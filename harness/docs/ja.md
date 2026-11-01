@@ -1,10 +1,10 @@
 # OIF Desktop ガイド
 
-バージョン **0.4.0** · [English](guide.md)
+バージョン **0.4.1** · [English](guide.md)
 
 ## 起動
 
-1. [リリース](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.4.0)から **OIF-Desktop-0.4.0-windows-x64.zip** を取得します。
+1. [リリース](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.4.1)から **OIF-Desktop-0.4.1-windows-x64.zip** を取得します。
 2. ZIP全体を書き込み可能なフォルダーに展開し、**OIF.exe** を開きます。Pythonは同梱されています。EXEだけを別の場所に移動しないでください。
 3. 設定で接続先・モデルを指定し、必要な場合はAPIキーを入力して作業を始めます。OpenRouterにはブラウザーでのサインイン経路もあります。OAuthが全プロバイダーに対応するわけではありません。
 
@@ -110,4 +110,4 @@ Windows x64とPracticalEngineが対象です。自動テストは再現可能な
 
 ## 紹介画像
 
-[日本語の紹介画像3枚](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.4.0/docs/showcase/ja/README.md)も公開しています。リリースの紹介画像ZIPには英語版と日本語版を収録しています。
+[日本語の紹介画像3枚](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.4.1/docs/showcase/ja/README.md)も公開しています。リリースの紹介画像ZIPには英語版と日本語版を収録しています。

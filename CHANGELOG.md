@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1 — 2026-11-02
+
+- Stabilize the concurrent-response budget test by waiting for all fixture requests to settle, including a deliberately delayed response case. Keep the byte-limit and request-count assertions.
+- Start the observation-stop regression after page activity is confirmed, and check that the browser context, browser and driver all close.
+- Application behavior, access controls and existing task data are unchanged. Update English and Japanese release documentation together.
+
 ## 0.4.0 — 2026-11-02
 
 - Keep completed request evidence as background and focus follow-up responses on current work; require every new instruction to bind to acceptance criteria.

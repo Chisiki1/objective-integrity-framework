@@ -397,22 +397,27 @@ async def test_actual_browser_redirect_cannot_escape_public_broker(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_browser_stop_closes_observation_and_retains_partial_result(tmp_path):
+async def test_browser_stop_closes_observation_and_retains_partial_result(tmp_path,monkeypatch):
     require_browser()
+    from playwright.async_api import Page
     engine,store,_,_,task=runtime(tmp_path,[])
     Path(task['workspace'],'index.html').write_text('<body>start<script>setInterval(()=>localStorage.setItem("tick",String(Date.now())),50)</script></body>',encoding='utf-8')
     operation=engine._operation('cancel-browser','browser_inspect',dict(path='index.html',wait_ms=10000),'Observe then stop')
-    entered=asyncio.Event();loop=asyncio.get_running_loop();guards=[]
-    def before_request():
-        guards.append(True)
-        # Initial admission precedes driver startup. Stop after the local
-        # page route is entered, so this exercises an actual running browser.
-        if len(guards)>1:loop.call_soon_threadsafe(entered.set)
-    handle=asyncio.create_task(engine.browser.inspect(task,operation,before_request))
+    entered=asyncio.Event();loop=asyncio.get_running_loop()
+    actual_wait=Page.wait_for_timeout
+    async def observation_started(page,milliseconds):
+        # Stop an observing page, after navigation and actual JavaScript. Route
+        # admission alone can still be in the middle of browser navigation.
+        await page.wait_for_function("localStorage.getItem('tick') !== null")
+        loop.call_soon_threadsafe(entered.set)
+        await actual_wait(page,milliseconds)
+    monkeypatch.setattr(Page,'wait_for_timeout',observation_started)
+    handle=asyncio.create_task(engine.browser.inspect(task,operation,lambda:None))
     await asyncio.wait_for(entered.wait(),15);handle.cancel()
     with pytest.raises(asyncio.CancelledError):await asyncio.wait_for(handle,15)
     result=engine.browser.recover(operation)
-    assert result.data['interrupted'] and result.status=='failed'
+    assert result.data['interrupted'] and result.status=='failed',json.dumps(result.model_dump(),indent=2)
+    assert result.data['cleanup']==dict(context='closed',browser='closed',driver='closed'),json.dumps(result.model_dump(),indent=2)
     assert result.data['finished_at'] and not any(x.startswith('cleanup:') for x in result.data['limits'])
     store.close()
 
@@ -558,7 +563,7 @@ async def test_late_route_during_cleanup_cannot_start_http_or_change_saved_obser
     web.acquisition_store=store;engine.web=web;engine.browser=BrowserObserver(store,web)
     op=engine._operation('late-route','browser_inspect',dict(url='https://site.example/',wait_ms=0),'Observe and close')
     result=await engine.browser.inspect(task,op,lambda:None)
-    assert result.status=='succeeded' and aborted==['late'] and calls==['/'],result
+    assert result.status=='succeeded' and aborted==['late'] and calls==['/'],json.dumps(result.model_dump(),indent=2)
     assert not any(x['url'].endswith('/late') for x in result.data['network'])
     saved=engine.browser.recover(op).model_dump()
     await asyncio.sleep(.1)
