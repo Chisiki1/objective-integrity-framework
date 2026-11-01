@@ -30,7 +30,7 @@ from .attachments import source_view, image_type
 from .practical_learning import PracticalLearning
 from .practical_context import PracticalContext, history_page
 from .updates import UpdateError
-from .task_focus import completed, current_focus, reconcile_focus, requirement_update, completion_evidence
+from .task_focus import completed, current_focus, reconcile_focus, requirement_update, completion_evidence, project_completion
 from .browser_observation import BrowserObserver, availability as browser_availability
 
 
@@ -1131,6 +1131,12 @@ class PracticalEngine:
 
     async def _finish(self, task, answer, call):
         rows = self.store.operation_headers(task['id'])
+        proposed=answer
+        answer=project_completion(task,proposed,rows)
+        if answer.model_dump()!=proposed.model_dump():
+            self.store.record('completion_projection',call,dict(task_id=task['id'],source_hash=task['source_hash'],
+                original=proposed.model_dump(),projected=answer.model_dump(),
+                basis='Current observed artifact paths and matching write/read hashes only; no tool repeated or source criterion changed'))
         evidence = completion_evidence(task, answer, rows)
         if any(not row.get('result') or row['result']['effect'] == 'unknown'
                or row['result']['status'] in {'pending', 'unknown'} for row in rows if row['status'] != 'superseded'):

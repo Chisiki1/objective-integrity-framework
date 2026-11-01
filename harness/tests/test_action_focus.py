@@ -12,7 +12,7 @@ from policy_harness.browser_observation import BrowserObserver, arguments, avail
 from policy_harness.models import OperationResult, PolicyError
 from policy_harness.practical_models import PracticalStep, ToolRequest, WorkRequirement
 from policy_harness.providers import WebCollector
-from policy_harness.task_focus import completion_evidence, current_focus, requirement_update
+from policy_harness.task_focus import completion_evidence, current_focus, requirement_update, project_completion
 from tests.test_practical_runtime import runtime, run, steps, tool, finish
 from tests.test_providers import FakeSettings
 
@@ -136,6 +136,48 @@ async def test_native_created_artifact_requires_current_execution_and_subsequent
     with pytest.raises(PolicyError,match='current instruction'):completion_evidence(task,answer,rows)
     rows[0]['source_hash']=task['source_hash']
     with pytest.raises(PolicyError,match='declared deliverable'):completion_evidence(task,answer,list(reversed(rows)))
+    store.close()
+
+
+@pytest.mark.asyncio
+async def test_omitted_output_list_and_write_reference_finish_without_repeating_actual_file_work(tmp_path):
+    requests=steps(tool('file_write',path='ready.txt',text='ready'),tool('file_read',path='ready.txt'))
+    requests['requirements']=[dict(criterion=0,verification='artifact')]
+    answer=dict(action='complete',message='ready.txt is saved and verified.',artifacts=[],
+                acceptance=[dict(criterion=0,evidence='Verified saved contents by reading',operation_indices=[1])])
+    engine,store,gateway,_,task=runtime(tmp_path,[requests,answer])
+    await run(engine,store,task)
+    final=store.get_task(task['id'])
+    assert final['status']=='completed' and Path(task['workspace'],'ready.txt').read_bytes()==b'ready'
+    assert len(store.operations(task['id']))==2 and len(gateway.calls)==2
+    assert final['final']['artifacts'][0]['relative_path']=='ready.txt'
+    assert set(final['final']['acceptance'][0]['operation_indices'])=={0,1}
+    projection=store.records('completion_projection')[0]
+    assert projection['original']['artifacts']==[] and projection['original']['acceptance'][0]['operation_indices']==[1]
+    assert projection['projected']['artifacts']==['ready.txt']
+    store.close()
+
+
+@pytest.mark.parametrize('variant',['old-source','different-file','different-hash','failed-write','unknown-write','read-before-write','no-indices','multiple-outputs'])
+def test_completion_projection_never_invents_file_proof_or_selects_ambiguous_outputs(tmp_path,variant):
+    engine,store,_,_,task=runtime(tmp_path,[])
+    task['state']['work_focus']=requirement_update(task,[WorkRequirement(criterion=0,verification='artifact')])
+    import copy
+    write=dict(source_hash=task['source_hash'],operation=dict(kind='file_write'),result=dict(status='succeeded',effect='confirmed',artifacts=[dict(path='ready.txt',sha256='a'*64)]))
+    read=copy.deepcopy(write);read['operation']['kind']='file_read';rows=[write,read]
+    answer=PracticalStep(action='complete',message='Ready',acceptance=[dict(criterion=0,evidence='read',operation_indices=[1])])
+    if variant=='old-source':write['source_hash']='old'
+    elif variant=='different-file':write['result']['artifacts'][0]['path']='other.txt'
+    elif variant=='different-hash':write['result']['artifacts'][0]['sha256']='b'*64
+    elif variant=='failed-write':write['result']['status']='failed'
+    elif variant=='unknown-write':write['result']['effect']='unknown'
+    elif variant=='read-before-write':rows.reverse();answer.acceptance[0].operation_indices=[0]
+    elif variant=='no-indices':answer.acceptance[0].operation_indices=[]
+    elif variant=='multiple-outputs':
+        other=copy.deepcopy(write);other['result']['artifacts'][0]['path']='other.txt';rows.append(other);answer.acceptance[0].operation_indices=[0,2]
+    projected=project_completion(task,answer,rows)
+    assert not projected.artifacts
+    with pytest.raises(PolicyError):completion_evidence(task,projected,rows)
     store.close()
 
 

@@ -65,6 +65,43 @@ def requirement_update(task, proposed):
     return dict(focus, requirements=requirements,interpretation_corrections=corrections)
 
 
+def project_completion(task, answer, rows):
+    """Recover presentation references from exact current recorded file proof.
+
+    A model may cite the final read but omit its preceding write or output list.
+    Link only the same path AND bytes; never infer success, intent or a new action.
+    """
+    result=answer.model_copy(deep=True)
+    focus=current_focus(task);paths=set();workspace=Path(task['workspace'])
+    def current(row):
+        proof=row.get('result') or {}
+        return row.get('source_hash')==task['source_hash'] and proof.get('status')=='succeeded' and proof.get('effect')!='unknown'
+    def artifacts(row):
+        return {(artifact_path(workspace,a['path'],full_access=True),a.get('sha256'))
+                for a in (row.get('result') or {}).get('artifacts',[]) if a.get('path') and a.get('sha256')}
+    for evidence in result.acceptance:
+        if evidence.criterion not in focus['active'] or focus['requirements'].get(str(evidence.criterion))!='artifact':continue
+        cited=list(evidence.operation_indices)
+        for ordinal in cited:
+            if not 0<=ordinal<len(rows) or not current(rows[ordinal]) or rows[ordinal]['operation']['kind']!='file_read':continue
+            read=artifacts(rows[ordinal])
+            for prior in range(ordinal-1,-1,-1):
+                row=rows[prior]
+                if current(row) and row['operation']['kind']=='file_write' and read.intersection(artifacts(row)):
+                    if prior not in evidence.operation_indices:evidence.operation_indices.append(prior)
+                    break
+        native=False
+        for ordinal in sorted(evidence.operation_indices):
+            if not 0<=ordinal<len(rows) or not current(rows[ordinal]):continue
+            row=rows[ordinal];kind=row['operation']['kind']
+            if kind=='exec' and row['result'].get('data',{}).get('execution')=='native':native=True
+            if kind=='file_write' or (kind=='file_read' and native):paths.update(p for p,_ in artifacts(row))
+    # More than one candidate needs an explicit model selection. Never replace
+    # an existing selection, or expose native control stream files as outputs.
+    if not result.artifacts and len(paths)==1:result.artifacts=sorted(paths)
+    return result
+
+
 def completion_evidence(task, answer, rows):
     focus = current_focus(task)
     supplied = {e.criterion: e for e in answer.acceptance}
@@ -105,7 +142,7 @@ def completion_evidence(task, answer, rows):
             raise PolicyError(f'Criterion {index} requires observed {mode} evidence. Supply successful operation_indices; explaining that work was not performed cannot complete it.')
         if mode == 'artifact' and not delivered.intersection(
                 artifact_path(Path(task['workspace']),p,full_access=True) for p in answer.artifacts):
-            raise PolicyError('Requested file creation needs a declared deliverable produced by its cited current action; an unrelated old file is not evidence')
+            raise PolicyError('Requested file creation needs a declared deliverable produced by its cited current action. Include the output path in artifacts and cite its write/execution plus readback indices. Preserve successful files; correct this response without repeating the tools.')
     merged = {int(i): e for i,e in focus['carried'].items()}
     merged.update({i:e.model_dump() for i,e in supplied.items() if i in required})
     return [merged[i] for i in range(len(task['acceptance']))]
