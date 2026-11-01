@@ -67,7 +67,8 @@ class LearningAssessment(StrictModel):
 
 class PracticalStep(StrictModel):
     action: Literal['tools', 'complete', 'blocked']
-    tools: list[ToolRequest] = Field(default_factory=list, max_length=16)
+    tools: list[ToolRequest] = Field(default_factory=list, max_length=16,
+        description='For action=tools, include at least one {name, arguments: {…}, purpose}. All tool parameters go INSIDE arguments. For complete/blocked, return an empty tools array. A message about a planned action does not execute it.')
     message: str = Field(min_length=1)
     acceptance: list[CriterionEvidence] = Field(default_factory=list)
     artifacts: list[str] = Field(default_factory=list)
@@ -85,6 +86,28 @@ class PracticalStep(StrictModel):
         if any(tool.name in {'harness_apply', 'harness_rollback'} for tool in self.tools) and len(self.tools) != 1:
             raise ValueError('harness_apply/harness_rollback requires its own single-tool step because it restarts the process')
         return self
+
+
+def response_schema(schema):
+    """Constrain generation as well as validating it at the controller boundary.
+
+    Pydantic's after-validator is not part of JSON Schema. Express its action /
+    tools invariant for providers that support constrained JSON generation.
+    This does not repair responses or invent operations.
+    """
+    from copy import deepcopy
+    value = schema.model_json_schema()
+    if schema is PracticalStep:
+        definitions = value.pop('$defs', {})
+        branches = []
+        for action in ('tools', 'complete', 'blocked'):
+            branch = deepcopy(value)
+            branch['properties']['action'] = {'type': 'string', 'const': action}
+            branch['required'] = [*branch['required'], 'tools']
+            branch['properties']['tools'].update({'minItems': 1} if action == 'tools' else {'maxItems': 0})
+            branches.append(branch)
+        value = {'$defs': definitions, 'oneOf': branches}
+    return value
 
 
 def normalize_practical_step(value):

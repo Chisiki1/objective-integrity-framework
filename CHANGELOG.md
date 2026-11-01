@@ -7,6 +7,7 @@
 - Add isolated browser observation for public HTTPS pages and task-local HTML: executed JavaScript, rendered text, console errors, network attempts, cookies and storage, with explicit passive-observation limits.
 - Describe actual native/container/Web capabilities separately. Include the browser driver, use installed Edge/Chrome on Windows, and preserve existing permissions, task history and original results.
 - Update English and Japanese usage and release documentation together.
+- Request schema-constrained output for local models, retain a compatibility setting, and distinguish confirmed browser shutdown from container-cleanup warnings.
 
 ## 0.3.0 — 2026-11-02
 

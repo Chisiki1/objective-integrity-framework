@@ -314,6 +314,8 @@ async def test_actual_browser_redirect_cannot_escape_public_broker(tmp_path):
     result=await engine._perform(task,ToolRequest(name='browser_inspect',arguments={'url':'https://site.example/','wait_ms':200},purpose='Observe redirected page'),'browser-redirect')
     assert result.status=='succeeded',result.stderr
     assert result.data['rendered_text']=='redirected'
+    event=next(e for e in reversed(store.events(task['id'])) if e['stage']=='execution')
+    assert not event['detail'].get('cleanup'), 'Successful browser close must not become a container-removal warning'
     assert len(calls)==3 and all('93.184.216.34' in x for x in calls)
     assert any('127.0.0.1' in str(x.get('redirect','')) and x['disposition']=='blocked' for x in result.data['network'])
     store.close()

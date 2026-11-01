@@ -758,3 +758,20 @@ def test_friendly_progress_hides_full_and_abbreviated_fingerprints(harness):
     done=subprocess.run([shutil.which('node'),'-e',runner],input=json.dumps({'script':client.get('/static/presentation.js').text,'values':values}),text=True,capture_output=True,encoding='utf-8',check=True)
     actual=json.loads(done.stdout)
     assert all(v=='ファイルの照合情報（詳細に保存）' for v in actual)
+
+
+@pytest.mark.parametrize('status,browser,driver,expected', [
+    ('succeeded','closed','closed',False), ('unknown','unconfirmed','closed',True),
+    ('succeeded','closed','unconfirmed',True), ('unknown','closed','closed',True)])
+def test_saved_browser_close_receipt_is_not_a_container_cleanup_warning(harness,status,browser,driver,expected):
+    if not shutil.which('node'):pytest.skip('Node presentation fixture unavailable')
+    client,*_=harness
+    event={'stage':'execution','status':status,'detail':{'kind':'browser_inspect','purpose':'表示を確認',
+        'cleanup':{'removed':None,'reason':'Cleanup result requires inspection'},
+        'result':{'status':status,'effect':'confirmed' if status=='succeeded' else 'unknown',
+                  'data':{'cleanup':{'context':'unconfirmed','browser':browser,'driver':driver}}}}}
+    runner="const fs=require('fs'),vm=require('vm');const v=JSON.parse(fs.readFileSync(0,'utf8'));vm.runInThisContext(v.script);const before=JSON.stringify(v.event);process.stdout.write(JSON.stringify({important:OIFPresentation.important(v.event),view:OIFPresentation.describe(v.event,null,''),unchanged:before===JSON.stringify(v.event)}));"
+    done=subprocess.run([shutil.which('node'),'-e',runner],input=json.dumps({'script':client.get('/static/presentation.js').text,'event':event}),text=True,capture_output=True,encoding='utf-8',check=True)
+    actual=json.loads(done.stdout)
+    assert actual['unchanged'] and actual['important']==expected
+    assert ('後片付け' in actual['view']['overview'])==expected

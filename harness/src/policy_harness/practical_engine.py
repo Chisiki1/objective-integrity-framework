@@ -779,6 +779,11 @@ class PracticalEngine:
         self.store.update_operation(operation.id, result=result.model_dump(),
                                     status='result_recorded' if result.status not in {'unknown', 'pending'} else 'recovery_required')
         cleanup = result.data.get('cleanup')
+        if operation.kind == 'browser_inspect' and isinstance(cleanup, dict):
+            # Browser close acknowledgements use a different contract from
+            # container removal. Closing the parent also closes its contexts.
+            uncertain = [k for k in ('browser', 'driver') if cleanup.get(k) == 'unconfirmed']
+            cleanup = {'removed': not uncertain, 'reason': 'Browser cleanup unconfirmed: ' + ', '.join(uncertain)}
         warning = ({'cleanup': {'removed': cleanup.get('removed'),
                                'reason': str(cleanup.get('reason') or 'Cleanup result requires inspection')[:1000]}}
                    if isinstance(cleanup, dict) and cleanup.get('removed') is not True else {})

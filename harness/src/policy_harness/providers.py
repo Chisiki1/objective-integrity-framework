@@ -145,6 +145,7 @@ def request_configuration(values: dict, role: str) -> dict:
                 'provider': values.get('base_url'),
                 'model': values.get('review_model') if role == 'reviewer' and values.get('review_model') else values.get('model'),
                 'api_mode': values.get('api_mode'), 'reasoning_effort': values.get('reasoning_effort'),
+                'structured_output': values.get('structured_output', 'auto'),
                 'user_agent': values.get('user_agent'), 'model_selection': deepcopy(values.get('model_selection'))}}
 
 
@@ -656,7 +657,7 @@ class ModelGateway:
                 'context_tokens': values.get('model_context_tokens') or 0,
                 'output_tokens': values.get('max_output_tokens') or 0}
 
-    async def _request(self, values: dict, key: str, role: str, task_id: str, messages: list[dict], *, response_binding=None, scrub_secrets=()) -> tuple[str, dict]:
+    async def _request(self, values: dict, key: str, role: str, task_id: str, messages: list[dict], *, response_binding=None, scrub_secrets=(), response_schema=None) -> tuple[str, dict]:
         scrub_secrets = self._scrub_secrets((*scrub_secrets, key))
         binding = response_binding or self._response_binding(task_id, role, 'direct-request', messages)
         model = values.get("review_model") if role == "reviewer" and values.get("review_model") else values["model"]
@@ -672,11 +673,15 @@ class ModelGateway:
         if key:
             headers['Authorization'] = 'Bearer ' + key
         body = {"model": model, "messages": messages, "stream": False, "max_tokens": values["max_output_tokens"], "response_format": {"type": "json_object"}}
+        output_mode = values.get('structured_output', 'auto')
+        if response_schema is not None and (output_mode == 'json_schema' or (output_mode == 'auto' and local_model_endpoint(values['base_url']))):
+            body['response_format'] = {'type': 'json_schema', 'json_schema': {
+                'name': 'oif_response', 'schema': response_schema, 'strict': False}}
         if values.get("reasoning_effort") is not None:
             body["reasoning_effort"] = values["reasoning_effort"]
         started = time.monotonic()
         binding = dict(binding, request_sha256=digest(body))
-        metadata = {"provider": values["base_url"], "requested_model": model, "policy_hash": binding['policy_hash'], "role": role, "request_id": binding['id'], "input_token_estimate": tokens, "token_count_method": counting, "usage": None, "cost": None, "truncated": False}
+        metadata = {"provider": values["base_url"], "requested_model": model, "policy_hash": binding['policy_hash'], "role": role, "request_id": binding['id'], "input_token_estimate": tokens, "token_count_method": counting, "usage": None, "cost": None, "truncated": False, 'response_format': body['response_format']['type']}
         try:
             async with httpx.AsyncClient(transport=self._transport, trust_env=False, follow_redirects=False, timeout=values["request_timeout_seconds"]) as client:
                 response = await client.post(values["base_url"].rstrip("/") + "/chat/completions", headers=headers, json=body)
@@ -739,7 +744,7 @@ class ModelGateway:
             metadata.update(error_family=type(exc).__name__)
             raise ProviderError('Model response processing failed; retain the recorded observation before choosing any further request.', metadata=self._error_metadata(metadata, scrub_secrets)) from None
 
-    async def _deepagents(self, values, key, role, task_id, messages, *, response_binding=None, scrub_secrets=()) -> tuple[str, dict]:
+    async def _deepagents(self, values, key, role, task_id, messages, *, response_binding=None, scrub_secrets=(), response_schema=None) -> tuple[str, dict]:
         from deepagents import create_deep_agent
         from langchain.agents.middleware import AgentMiddleware
         from langchain_core.language_models import BaseChatModel
@@ -772,7 +777,7 @@ class ModelGateway:
                     if kind is None or not isinstance(message.content, (str, list)):
                         raise ProviderError("Unexpected Deep Agents message type.")
                     converted.append({"role": kind, "content": message.content})
-                text, meta = await gateway._request(values, key, role, task_id, converted, response_binding=response_binding, scrub_secrets=scrub_secrets)
+                text, meta = await gateway._request(values, key, role, task_id, converted, response_binding=response_binding, scrub_secrets=scrub_secrets, response_schema=response_schema)
                 actual.append((text, meta))
                 return ChatResult(generations=[ChatGeneration(message=AIMessage(content=text, response_metadata={"usage": meta["usage"]}))])
 
@@ -831,11 +836,15 @@ class ModelGateway:
                 # actual messages and request; a metadata assertion alone does not.
                 binding['semantic_wire_capture'] = deepcopy(semantic_wire)
         # Do not hold a thread lock across the asynchronous HTTP/Deep Agents call.
+        from .practical_models import response_schema
+        # Semantic-wire responses have a separately captured representation.
+        # Do not constrain that wire using the decoded model's different schema.
+        output_schema = response_schema(schema) if semantic_wire is None else None
         try:
             if values["api_mode"] == "deepagents":
-                text, metadata = await self._deepagents(values, key, role, task_id, messages, response_binding=binding, scrub_secrets=scrub_secrets)
+                text, metadata = await self._deepagents(values, key, role, task_id, messages, response_binding=binding, scrub_secrets=scrub_secrets, response_schema=output_schema)
             else:
-                text, metadata = await self._request(values, key, role, task_id, messages, response_binding=binding, scrub_secrets=scrub_secrets)
+                text, metadata = await self._request(values, key, role, task_id, messages, response_binding=binding, scrub_secrets=scrub_secrets, response_schema=output_schema)
         except ProviderError as error:
             if semantic_wire is not None:
                 error.metadata = self._error_metadata({**error.metadata, 'semantic_wire_capture': deepcopy(semantic_wire)}, scrub_secrets)

@@ -2,6 +2,10 @@
 // Only explicitly marked interface strings are translated. Source/evidence is never scanned.
 globalThis.OIFI18n = (() => {
   const en = {
+    'モデル接続の詳細':'Advanced model connection','応答の形式':'Response format',
+    '自動（ローカルでは構造化出力）':'Automatic (structured output for local models)',
+    '構造化出力（対応サーバー）':'Structured output (supported servers)',
+    '標準JSON（互換性優先）':'Standard JSON (compatibility)',
     'クラウドAPIまたはこのPCのローカルモデルを指定します。保存した接続から切り替えられます。':'Choose a cloud API or a local model on this PC. Switch between saved connections.',
     'Ollamaの接続先は http://127.0.0.1:11434/v1 です。APIキーは不要です。ローカル接続へ変更すると以前の接続のキーは送信しません。':'For Ollama, use http://127.0.0.1:11434/v1. No API key is needed. Switching to a local connection does not forward the previous connection’s key.',
     '表示を更新':'Refresh view',

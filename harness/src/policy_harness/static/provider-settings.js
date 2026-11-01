@@ -9,7 +9,7 @@ async function loadProviderProfiles(){
 }
 function collectProviderSettings(){
   const form=$('settings-form'),values={};
-  for(const name of ['base_url','model','review_model','api_mode','web_provider'])values[name]=form.elements[name].value;
+  for(const name of ['base_url','model','review_model','api_mode','structured_output','web_provider'])values[name]=form.elements[name].value;
   for(const name of ['reasoning_effort','web_base_url'])values[name]=form.elements[name].value||null;
   for(const name of ['model_context_tokens','max_output_tokens'])values[name]=form.elements[name].value?Number(form.elements[name].value):null;
   for(const name of ['model_api_key','web_api_key'])if(form.elements[name].value)values[name]=form.elements[name].value;

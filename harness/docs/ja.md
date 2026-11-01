@@ -30,6 +30,8 @@ Windows 10/11 x64と[WebView2 Evergreen Runtime](https://developer.microsoft.com
 
 Ollama、LM Studio、llama.cppなどのOpenAI互換サーバーに接続できます。モデルサーバーを起動し、接続設定で「互換API」を選びます。Ollamaの接続先は `http://127.0.0.1:11434/v1`、モデル欄にはインストール済みの正確なモデル名を指定します。認証のないローカルサーバーではAPIキーは空欄で使えます。認証を有効にしたサーバーには、そのサーバーのキーを指定してください。
 
+ローカル接続では、操作内容を含むJSON形式をサーバーに指定します。説明だけ返して操作指示が抜ける問題を減らし、返答は実行前にも検証します。対応していないサーバーでは「モデル接続の詳細 → 応答の形式」で「標準JSON」を選べます。方式や接続先を黙って変更して再送することはありません。クラウド接続の初期値は従来のJSON形式です。[Ollamaの構造化出力](https://docs.ollama.com/capabilities/structured-outputs)
+
 先に現在のクラウド接続に名前を付けて保存すると、後から戻せます。ローカル接続へ変更する時にキーを入力しなければ、前の接続のキーは引き継ぎません。HTTPを許可するのは `127.0.0.1`、`localhost`、`[::1]` のみです。Web情報収集の通信設定は別です。モデルをローカルにしても、依頼したWeb調査までオフラインにはなりません。
 
 文脈・出力の上限は、モデルサーバーの実際の設定に合わせます。OllamaではOIFの入力欄を変えるだけでサーバー側の文脈は増えません。必要な場合は、既存モデルを元に `FROM モデル名` と `PARAMETER num_ctx 65536` を書いたModelfileを作り、`ollama create oif-local -f Modelfile` で専用のモデル名を追加して使います。[Ollamaの設定手順](https://docs.ollama.com/api/openai-compatibility#setting-the-local-context-size)

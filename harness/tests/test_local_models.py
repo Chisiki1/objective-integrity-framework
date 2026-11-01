@@ -49,7 +49,9 @@ async def test_local_provider_without_key_reaches_both_request_routes(tmp_path, 
         requests.append(request)
         assert 'authorization' not in request.headers
         assert str(request.url) == endpoint.rstrip('/') + '/chat/completions'
-        assert json.loads(request.content)['response_format'] == {'type': 'json_object'}
+        output = json.loads(request.content)['response_format']
+        assert output['type'] == 'json_schema'
+        assert output['json_schema']['schema'] == Answer.model_json_schema()
         return httpx.Response(200, json={'model': 'local-qwen', 'choices': [
             {'message': {'role': 'assistant', 'content': '{"answer":"local"}'}, 'finish_reason': 'stop'}]})
 
@@ -96,6 +98,91 @@ async def test_remote_model_still_requires_authentication(tmp_path):
     assert 'model_api_key' in (await gateway.health())['missing']
     with pytest.raises(ConfigurationRequired, match='API key'):
         await gateway.generate('parent', 'assessment', {'task_id': 'remote-check'}, Answer)
+
+
+@pytest.mark.parametrize('mode', ['compatible', 'deepagents'])
+async def test_structured_action_format_is_bound_and_validated_without_fallback(tmp_path, mode):
+    from policy_harness.practical_models import PracticalStep
+    settings = configured(tmp_path, 'http://127.0.0.1:11434/v1')
+    settings.update({'api_mode': mode})
+    requests = []
+    def handle(request):
+        body = json.loads(request.content);requests.append(body)
+        schema = body['response_format']['json_schema']['schema']
+        branches = {b['properties']['action']['const']: b for b in schema['oneOf']}
+        assert branches['tools']['properties']['tools']['minItems'] == 1
+        assert branches['complete']['properties']['tools']['maxItems'] == 0
+        assert all('tools' in b['required'] for b in branches.values())
+        # A provider can ignore its schema: controller validation still wins.
+        return httpx.Response(200, json={'model': 'local-qwen', 'choices': [
+            {'message': {'content': '{"action":"tools","tools":[],"message":"I will save it"}'}, 'finish_reason': 'stop'}]})
+    gateway = ModelGateway(settings, Policy(), transport=httpx.MockTransport(handle))
+    with pytest.raises(ProviderError) as error:
+        await gateway.generate('parent', 'next_action', {'task_id': 'shape-check'}, PracticalStep)
+    assert len(requests) == 1 and error.value.metadata['schema_validation_failed']
+    assert error.value.metadata['response_format'] == 'json_schema'
+
+
+async def test_json_compatibility_override_survives_profile_and_has_no_silent_retry(tmp_path):
+    from policy_harness.providers import request_configuration
+    settings = configured(tmp_path, 'http://127.0.0.1:11434/v1')
+    before = request_configuration(settings.get(), 'parent')
+    settings.update({'structured_output': 'json_object'})
+    profile = settings.save_profile('Older local server')
+    settings.update({'structured_output': 'json_schema'})
+    settings.activate_profile(profile)
+    assert settings.get()['structured_output'] == 'json_object'
+    assert request_configuration(settings.get(), 'parent') != before
+    requests = []
+    def handle(request):
+        requests.append(request)
+        assert json.loads(request.content)['response_format'] == {'type': 'json_object'}
+        return httpx.Response(400, json={'error': 'fixture rejected request'})
+    with pytest.raises(ProviderError, match='HTTP 400'):
+        await ModelGateway(settings, Policy(), transport=httpx.MockTransport(handle)).generate('parent', 'assessment', {'task_id': 'compat'}, Answer)
+    assert len(requests) == 1
+    with pytest.raises(SettingsError):settings.update({'structured_output': 'unknown'})
+
+
+def test_preupgrade_profiles_load_without_rewriting_credentials_and_activate_with_default(tmp_path):
+    settings = configured(tmp_path, 'https://provider.example/v1')
+    settings.update({'model_api_key': 'OLD_PROFILE_CREDENTIAL_FIXTURE'})
+    identity = settings.save_profile('Saved before structured output')
+    document = json.loads(settings.path.read_bytes())
+    del document['values']['structured_output']
+    del document['model_profiles'][identity]['values']['structured_output']
+    settings.path.write_text(json.dumps(document), encoding='utf-8')
+    original = settings.path.read_bytes()
+    assert settings.get()['structured_output'] == 'auto'
+    assert settings.profiles()['profiles'][0]['id'] == identity
+    assert settings.path.read_bytes() == original
+    assert settings.secret('model_api_key') == 'OLD_PROFILE_CREDENTIAL_FIXTURE'
+    settings.activate_profile(identity)
+    saved = json.loads(settings.path.read_bytes())
+    assert saved['model_profiles'][identity]['values']['structured_output'] == 'auto'
+    assert saved['secrets'] == document['secrets']
+    for name, history in document['redaction_history'].items():
+        assert saved['redaction_history'][name][:len(history)] == history
+    # Normal activation retains the previously active encrypted key for
+    # redaction; the migration must not remove or re-encrypt it.
+    assert document['secrets']['model_api_key'] in saved['redaction_history']['model_api_key']
+    assert saved['model_profiles'][identity]['credential'] == document['model_profiles'][identity]['credential']
+    settings.save_profile('New copy')
+    assert len(settings.profiles()['profiles']) == 2
+
+
+@pytest.mark.parametrize('fault', ['missing', 'extra', 'invalid'])
+def test_preupgrade_profile_projection_does_not_accept_other_malformed_fields(tmp_path, fault):
+    settings = configured(tmp_path, 'http://127.0.0.1:11434/v1')
+    identity = settings.save_profile('Old profile')
+    document = json.loads(settings.path.read_bytes());values = document['model_profiles'][identity]['values']
+    values.pop('structured_output')
+    if fault == 'missing':values.pop('model')
+    elif fault == 'extra':values['unexpected'] = 'value'
+    else:values['structured_output'] = 'unsupported'
+    settings.path.write_text(json.dumps(document), encoding='utf-8');before=settings.path.read_bytes()
+    with pytest.raises(SettingsError):settings.get()
+    assert settings.path.read_bytes() == before
 
 
 async def test_local_authentication_and_redirect_are_not_silently_changed(tmp_path):

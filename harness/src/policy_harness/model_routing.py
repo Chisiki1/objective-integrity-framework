@@ -51,7 +51,7 @@ class StaleModelLease(ModelSelectionError):
 CONFIGURATION_FIELDS = (
     "base_url", "model", "review_model", "api_mode", "reasoning_effort",
     "model_context_tokens", "max_output_tokens", "request_timeout_seconds",
-    "user_agent",
+    "user_agent", "structured_output",
 )
 ROLES = ("parent", "worker", "reviewer", "web")
 CONTEXT_REQUIRED = frozenset({

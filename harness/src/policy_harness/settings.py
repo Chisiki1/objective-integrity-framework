@@ -60,7 +60,7 @@ class _WindowsDPAPI:
 
 
 DEFAULTS: dict[str, Any] = {
-    "base_url": "", "model": "", "review_model": "", "api_mode": "compatible",
+    "base_url": "", "model": "", "review_model": "", "api_mode": "compatible", "structured_output": "auto",
     "model_context_tokens": None, "max_output_tokens": None, "reasoning_effort": None,
     "web_provider": "none", "web_base_url": None,
     "request_timeout_seconds": 300.0,
@@ -70,7 +70,7 @@ DEFAULTS: dict[str, Any] = {
 }
 SECRET_NAMES = frozenset({"model_api_key", "web_api_key"})
 MODEL_FIELDS = frozenset({'base_url', 'model', 'review_model', 'api_mode', 'auth_method',
-                         'model_context_tokens', 'max_output_tokens', 'reasoning_effort', 'request_timeout_seconds'})
+                         'model_context_tokens', 'max_output_tokens', 'reasoning_effort', 'request_timeout_seconds', 'structured_output'})
 
 
 def _https_base(value: str, name: str) -> str:
@@ -139,8 +139,14 @@ class SettingsManager:
             if not isinstance(profiles, dict) or len(profiles) > 100:
                 raise ValueError()
             for identity, profile in profiles.items():
+                # Upgrade only the one known prior profile shape, in memory.
+                # Reading settings never rewrites the encrypted source file.
+                if (isinstance(profile, dict) and isinstance(profile.get('values'), dict)
+                        and set(profile['values']) == MODEL_FIELDS - {'structured_output'}):
+                    profile['values'] = {**profile['values'], 'structured_output': 'auto'}
                 if (not isinstance(identity, str) or not isinstance(profile, dict)
                         or not isinstance(profile.get('name'), str) or not 1 <= len(profile['name']) <= 80
+                        or not isinstance(profile.get('values'), dict)
                         or set(profile.get('values', {})) != MODEL_FIELDS
                         or not isinstance(profile.get('credential', ''), str)):
                     raise ValueError()
@@ -169,6 +175,8 @@ class SettingsManager:
             result["web_base_url"] = _https_base(result["web_base_url"], "web_base_url")
         if result["api_mode"] not in ("compatible", "deepagents"):
             raise SettingsError("Invalid setting: api_mode")
+        if result['structured_output'] not in ('auto', 'json_object', 'json_schema'):
+            raise SettingsError('Invalid setting: structured_output')
         if result['auth_method'] not in ('api_key', 'openrouter_oauth'):
             raise SettingsError('Invalid setting: auth_method')
         if result['auth_method'] == 'openrouter_oauth' and result['base_url'] != 'https://openrouter.ai/api/v1':

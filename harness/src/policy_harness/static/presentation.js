@@ -17,6 +17,17 @@ globalThis.OIFPresentation = (() => {
     harness_rollback:['OIFの更新を元に戻す','Restore OIF before this update']
   };
   function toolName(name) { const names=tools[name]; return names?say(...names):say('操作','Operation'); }
+  function cleanupWarning(detail, result=detail?.result) {
+    const cleanup=detail?.cleanup||result?.data?.cleanup;
+    // Older versions incorrectly treated successful browser close receipts as
+    // missing container removal. Project that precise false warning without
+    // changing the original record or hiding any actual unknown outcome.
+    if(detail?.kind==='browser_inspect'&&result?.status==='succeeded'&&result?.effect==='confirmed') {
+      const closed=result?.data?.cleanup;
+      if(closed?.browser==='closed'&&closed?.driver==='closed'&&cleanup?.reason==='Cleanup result requires inspection')return null;
+    }
+    return cleanup&&cleanup.removed!==true&&cleanup.reason?cleanup:null;
+  }
   function friendly(value) {
     return String(value ?? '')
       .replace(/The same response error recurred; original replies are preserved: 教訓には実結果・適用条件・手順・限界・次回使う場面が必要です。/g,say('旧版の学習処理がメモの不備で作業を保留しました。修正済みのため「再開」で保存した結果から続けられます。','An older learning handler held the task because a lesson was incomplete. The handler is fixed; Resume continues from the saved results.'))
@@ -31,7 +42,7 @@ globalThis.OIFPresentation = (() => {
     function adverse(value,depth=0){
       if(!value||typeof value!=='object'||depth>8)return false;
       if(['revise','hold'].includes(value.verdict)||['failed','unknown'].includes(value.success)||value.effect==='unknown'||value.achieved===false||value.unresolved?.length)return true;
-      if(value.cleanup&&value.cleanup.removed!==true&&value.cleanup.reason)return true;
+      if(cleanupWarning(value))return true;
       return Object.values(value).some(x=>adverse(x,depth+1));
     }
     if(adverse(d))return true;
@@ -103,8 +114,8 @@ globalThis.OIFPresentation = (() => {
         outcome=friendly(data.summary||result?.stdout||'')||say('操作が正常に終了し、結果を保存しました。','The action finished successfully and its result was saved.');
         if(data.bytes!==undefined)outcome+=say(` 対象は${data.bytes}バイトです。`,` The file contains ${data.bytes} bytes.`);
       } else outcome=friendly(rawSummary);
-      const cleanup=d.cleanup||result?.data?.cleanup;
-      if(cleanup&&cleanup.removed!==true&&cleanup.reason){
+      const cleanup=cleanupWarning(d,result);
+      if(cleanup){
         const warning=say('後片付けの完了を確認できていません','Cleanup has not been confirmed');
         overview+=' · '+warning;outcome+='\n'+warning+'。'+friendly(cleanup.reason);
       }

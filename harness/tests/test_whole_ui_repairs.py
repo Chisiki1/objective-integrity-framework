@@ -123,7 +123,7 @@ class Element{
 }
 const document={getElementById(id){if(!elements.has(id)){const el=new Element('div');el.id=id;elements.set(id,el);}return elements.get(id);},
  createElement:tag=>new Element(tag),createDocumentFragment:()=>new Element('fragment'),createTextNode:text=>Object.assign(new Element('text'),{textContent:text}),querySelectorAll:()=>[],documentElement:new Element('html')};
-for(const name of ['base_url','model','review_model','api_mode','reasoning_effort','model_context_tokens','max_output_tokens','web_provider','web_base_url','model_api_key','web_api_key'])document.getElementById('settings-form').elements[name]=new Element('input');
+for(const name of ['base_url','model','review_model','api_mode','structured_output','reasoning_effort','model_context_tokens','max_output_tokens','web_provider','web_base_url','model_api_key','web_api_key'])document.getElementById('settings-form').elements[name]=new Element('input');
 let deferExports=false;const pending=new Map();
 const response=record=>({ok:record.status>=200&&record.status<300,status:record.status,json:async()=>record.body});
 const context={document,console,Map,Set,Blob,window:{addEventListener(){}},history:{replaceState(){}},location:{hash:'',pathname:'/'},EventSource:class{},
