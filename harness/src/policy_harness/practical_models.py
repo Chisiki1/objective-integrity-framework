@@ -88,7 +88,7 @@ class PracticalStep(StrictModel):
         return self
 
 
-def response_schema(schema):
+def response_schema(schema, payload=None):
     """Constrain generation as well as validating it at the controller boundary.
 
     Pydantic's after-validator is not part of JSON Schema. Express its action /
@@ -107,6 +107,25 @@ def response_schema(schema):
             branch['properties']['tools'].update({'minItems': 1} if action == 'tools' else {'maxItems': 0})
             branches.append(branch)
         value = {'$defs': definitions, 'oneOf': branches}
+    elif schema is PracticalSourcePlan and isinstance(payload, dict):
+        pending = set(payload.get('pending_source_indices', []))
+        instructions = [s for s in payload.get('sources', [])
+                        if s.get('index') in pending and s.get('kind') == 'instruction'
+                        and s.get('status') == 'pending' and isinstance(s.get('text'), str) and s['text']]
+        # Bind eligible indices already supplied in this request. The model
+        # chooses the source; the controller still validates source/hash/quote
+        # and exact excerpts. Do not require repeating entire long instructions.
+        # No response or historical source is repaired here.
+        if instructions:
+            base = value['$defs']['AcceptanceChoice']
+            retained = deepcopy(base)
+            retained['properties']['disposition'] = {'const': 'retain'}
+            changed = deepcopy(base)
+            changed['properties']['disposition'] = {'enum': ['add', 'replace', 'withdraw']}
+            changed['properties']['sources'].update(minItems=1, items={'type': 'integer', 'enum': sorted({s['index'] for s in instructions})})
+            changed['properties']['quote'].update(minLength=1)
+            changed['required'] = list(dict.fromkeys([*changed['required'], 'sources', 'quote']))
+            value['$defs']['AcceptanceChoice'] = {'oneOf': [retained, changed]}
     return value
 
 

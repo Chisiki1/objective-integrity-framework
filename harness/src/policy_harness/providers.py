@@ -839,7 +839,7 @@ class ModelGateway:
         from .practical_models import response_schema
         # Semantic-wire responses have a separately captured representation.
         # Do not constrain that wire using the decoded model's different schema.
-        output_schema = response_schema(schema) if semantic_wire is None else None
+        output_schema = response_schema(schema, payload) if semantic_wire is None else None
         try:
             if values["api_mode"] == "deepagents":
                 text, metadata = await self._deepagents(values, key, role, task_id, messages, response_binding=binding, scrub_secrets=scrub_secrets, response_schema=output_schema)

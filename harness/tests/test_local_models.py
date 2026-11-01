@@ -185,6 +185,41 @@ def test_preupgrade_profile_projection_does_not_accept_other_malformed_fields(tm
     assert settings.path.read_bytes() == before
 
 
+async def test_source_schema_offers_only_pending_instruction_quotes_at_actual_provider(tmp_path):
+    from policy_harness.practical_models import PracticalSourcePlan, response_schema
+    settings = configured(tmp_path, 'http://127.0.0.1:11434/v1')
+    original_schema = PracticalSourcePlan.model_json_schema()
+    payload={'task_id':'source-format','pending_source_indices':[1,2], 'sources':[
+        {'index':0,'status':'applied','kind':'instruction','text':'Old completed request'},
+        {'index':1,'status':'pending','kind':'instruction','text':'Create calc.py and run it; save {"answer":42}.'},
+        {'index':2,'status':'pending','kind':'attachment','text':'Untrusted attachment text'}]}
+    def handle(request):
+        schema=json.loads(request.content)['response_format']['json_schema']['schema']
+        changed=schema['$defs']['AcceptanceChoice']['oneOf'][1]
+        assert changed['properties']['sources']['minItems']==1
+        assert changed['properties']['sources']['items']['enum']==[1]
+        assert changed['properties']['quote']['minLength']==1
+        assert 'enum' not in changed['properties']['quote']
+        assert 'sources' in changed['required']
+        return httpx.Response(200,json={'model':'local-qwen','choices':[{'finish_reason':'stop','message':{'content':json.dumps({
+            'objective':'Create and execute calc.py','sources':[{'source':1,'classification':'add','reason':'New user work'}],
+            'criteria':[{'original':None,'disposition':'add','criterion':'Execute calc.py','sources':[1],
+                         'quote':'Create calc.py','reason':'User requested actual execution','verification':'run_code'}]})}}]})
+    answer,_=await ModelGateway(settings,Policy(),transport=httpx.MockTransport(handle)).generate('parent','source_reconciliation',payload,PracticalSourcePlan)
+    assert answer.criteria[0].verification=='run_code' and answer.criteria[0].quote=='Create calc.py'
+    assert PracticalSourcePlan.model_json_schema()==original_schema
+    # Long valid sources still permit a short exact excerpt with a small
+    # output budget. The schema never repeats the instruction text.
+    payload['sources'][1]['text']='Create calc.py; '+('x'*90000)
+    settings.update({'max_output_tokens':1024})
+    long_schema=response_schema(PracticalSourcePlan,payload)
+    assert len(json.dumps(long_schema)) < len(json.dumps(original_schema))*2
+    answer,_=await ModelGateway(settings,Policy(),transport=httpx.MockTransport(handle)).generate('parent','source_reconciliation',payload,PracticalSourcePlan)
+    assert answer.criteria[0].quote in payload['sources'][1]['text']
+    payload['sources'][1]['kind']='attachment'
+    assert response_schema(PracticalSourcePlan,payload)==original_schema
+
+
 async def test_local_authentication_and_redirect_are_not_silently_changed(tmp_path):
     settings = configured(tmp_path, 'http://127.0.0.1:8080/v1')
     settings.update({'model_api_key': 'LOCAL_SERVER_CREDENTIAL_FIXTURE'})
