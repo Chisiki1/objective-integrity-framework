@@ -11,10 +11,12 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import sys
 import time
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid4, uuid5
+from pydantic import ValidationError
 
 from .capabilities import atomic_json, check_node, confined, relative_path, sha_file
 from .models import Decision, Operation, OperationResult, PolicyError, now
@@ -28,6 +30,8 @@ from .attachments import source_view, image_type
 from .practical_learning import PracticalLearning
 from .practical_context import PracticalContext, history_page
 from .updates import UpdateError
+from .task_focus import completed, current_focus, reconcile_focus, requirement_update, completion_evidence
+from .browser_observation import BrowserObserver, availability as browser_availability
 
 
 RUNTIME = 'practical-v1'
@@ -45,6 +49,12 @@ TOOLS = {
                   'files': 'optional source/config list', 'timeout_seconds': 'optional, 1..600'},
     'web_fetch': {'query': 'public search query or exact public HTTPS URL(s)',
                   'max_bytes': 'optional per-response byte limit, 1..8000000; default is the configured limit. Use a larger explicit read only when needed, e.g. a large observed JS bundle. Partial sources are marked truncated; they cannot prove absence in the whole file.'},
+    'browser_inspect': {'url': 'exact public HTTPS page (choose url OR path)',
+                        'path': 'existing task-relative HTML file for local JS testing (choose path OR url)',
+                        'wait_ms':'optional after DOM ready, default 1500, 0..10000',
+                        'timeout_seconds':'optional total 5..60, default 30',
+                        'refresh_reason':'optional explanation when a new observation is needed after a successful unchanged one; otherwise repeated observations reuse the immediately preceding evidence',
+                        'result':'Real rendered text, JS errors, network attempts and cookies/localStorage/sessionStorage from a fresh isolated browser. Public HTTPS GET/HEAD only; POST/sockets/service workers and media bodies are recorded as blocked. Top-level redirects open the final URL without redirect cookies; subresource redirects are recorded but blocked. No existing login/profile, form interaction or host file access. Local HTML external requests are blocked. Use saved source indices with history_read(view=web_response) to inspect fetched scripts.'},
     'history_read': {'start': 'zero-based operation index', 'count': 'optional, 1..20',
                      'offset': 'optional character offset', 'max_chars': 'optional, at most 12000',
                      'view': 'result (default), index (fields), record (full original), web_response (saved raw HTML/JS; no network)',
@@ -71,6 +81,7 @@ class PracticalEngine:
         self.executor.unresolved_lookup = self._executor_unresolved
         self.gateway.response_store = store
         self.web.acquisition_store = store
+        self.browser = BrowserObserver(store, web)
         self.store.policy_hash = policy.hash
         self.running = {}
         self.stop_requested = set()
@@ -227,6 +238,7 @@ class PracticalEngine:
             if task.get('final'):
                 self.store.record('task_final_history', task_id + ':' + expected_source_hash,
                                   {'task_id': task_id, 'source_hash': expected_source_hash, 'final': task['final']})
+                self._state(task_id, completed_acceptance=completed(task))
             self.store.update_task(task_id, final=None, status='source_update_required')
             self._state(task_id, feedback=None)
             self.start_task(task_id)
@@ -249,6 +261,7 @@ class PracticalEngine:
             if task.get('final'):
                 self.store.record('task_final_history', task_id + ':' + expected_source_hash,
                                   {'task_id': task_id, 'source_hash': expected_source_hash, 'final': task['final']})
+                self._state(task_id, completed_acceptance=completed(task))
             self.store.update_task(task_id, final=None, status='source_update_required')
             self._state(task_id, feedback=None)
             self.start_task(task_id)
@@ -309,6 +322,7 @@ class PracticalEngine:
 
     def _tool_guide(self, task=None):
         tools = dict(TOOLS)
+        tools['browser_inspect'] = dict(tools['browser_inspect'], availability=browser_availability())
         if task and self.access.get(task['id'])['mode'] == 'full':
             tools = {key: dict(value) for key, value in tools.items()}
             for name in ('file_read', 'file_write', 'file_list'):
@@ -318,6 +332,7 @@ class PracticalEngine:
                 'timeout_seconds': 'optional, 1..600; foreground command and children stop at timeout/completion'}
             for name in ('run_python', 'run_tests'):
                 tools[name]['execution'] = 'Native host Python in full access, with current-user files and network; no Docker'
+                tools[name]['cwd'] = 'optional existing absolute directory or task-relative directory; entrypoint and arguments are relative to this directory. Default task workspace.'
         settings = getattr(self.web, 'settings', None)
         if settings is not None:
             provider = settings.get().get('web_provider', 'none')
@@ -329,14 +344,23 @@ class PracticalEngine:
 
     def _payload(self, task):
         context = self.context.project(task)
+        focus = current_focus(task)
+        latest = next((s['text'] for s in reversed(task['source_history']) if s['kind'] == 'instruction'), task['objective'])
         return {'task_id': task['id'], 'policy_input_contract': 'role-scoped-v1',
                 'objective': task['objective'],
-                'acceptance': [{'index': i, 'criterion': c} for i, c in enumerate(task['acceptance'])],
+                'acceptance': [{'index': i, 'criterion': c, 'status': 'active' if i in focus['active'] else 'completed_background',
+                                'verification': focus['requirements'].get(str(i), 'classify_from_request')}
+                               for i, c in enumerate(task['acceptance'])],
+                'current_request': latest,
+                'work_focus': {**focus, 'instruction': 'Answer and act on current_request and active criteria. Carried evidence belongs to completed earlier requests: retain it internally, do not repeat those answers, rerun completed work or add old artifacts to this response unless the new request needs them. New evidence can invalidate earlier conclusions; report such a change explicitly.'},
                 'sources': self._source_views(task), **context,
                 'feedback': task['state'].get('feedback'), 'tools': self._tool_guide(task),
                 'access': self.access.get(task['id']), 'learning_context': self.learning.context(task),
                 'execution_environment': {'task_workspace': task['workspace'], 'platform': sys.platform,
-                    'python': sys.executable, 'native_commands': self.access.get(task['id'])['mode'] == 'full'},
+                    'python': sys.executable, 'native_commands': self.access.get(task['id'])['mode'] == 'full',
+                    'workspace_python': 'Docker isolation; readiness checked at execution' if shutil.which('docker') else 'Docker executable not found; workspace Python cannot run here. File tools and browser_inspect remain available. Native Python/commands require the user-selected full access mode.',
+                    'public_network': getattr(self.web,'settings',None).get().get('web_provider','none') != 'none' if getattr(self.web,'settings',None) else 'see web_fetch tool',
+                    'browser': browser_availability()},
                 'controller_use_results': self.maintenance.use_context(task),
                 'controller_recovery': {'targets': self.maintenance.recovery_targets(task['id']),
                     'instruction': 'If targets are present, only harness_rollback for that exact candidate is allowed. Restore the retained preimage; never retry apply or replay unknown ordinary effects. Original failures remain recorded. Stop if the saved preimage cannot be restored safely.'},
@@ -351,7 +375,19 @@ class PracticalEngine:
             if (saved['task_id'] == task['id'] and saved['source_hash'] == task['source_hash']
                     and saved['phase'] == phase and saved['status'] == 'responded' and not saved.get('consumed')
                     and (phase in {'next_action', 'source_reconciliation'} or saved.get('input_sha256') == digest(payload))):
-                return schema.model_validate(saved['response']), saved['id']
+                try:
+                    return schema.model_validate(saved['response']), saved['id']
+                except ValidationError as error:
+                    errors=error.errors(include_url=False,include_input=False)
+                    if schema is not PracticalSourcePlan or not all(e['type']=='missing' and len(e['loc'])==3 and e['loc'][0]=='criteria' and e['loc'][2]=='verification' for e in errors):
+                        raise
+                    # Preserve the pre-upgrade judgment and request only its
+                    # missing evidence classification; no tool is replayed.
+                    self._consume(saved['id'])
+                    self.store.record('practical_schema_upgrade',saved['id'],{
+                        'task_id':task['id'],'source_hash':task['source_hash'],
+                        'reason':'Saved source judgment lacks current verification modes',
+                        'original_call':saved['id'],'tools_replayed':False})
         identity = uuid4().hex
         record = {'id': identity, 'task_id': task['id'], 'source_hash': task['source_hash'],
                   'phase': phase, 'role': role, 'input_sha256': digest(payload),
@@ -425,7 +461,7 @@ class PracticalEngine:
         payload = self._payload(task)
         pending_indices = {i for i, s in enumerate(task['source_history']) if s['status'] == 'pending'}
         payload['pending_source_indices'] = sorted(pending_indices)
-        payload['instructions'] = ('Classify only pending_source_indices in sources; applied history is background. For every prior criterion supply original=index from acceptance, NOT a source index, disposition=retain/replace/withdraw; additions use original=null, disposition=add. Retain its exact text. Changes need source indices and a nonempty quote copied verbatim from pending user instruction text; do not leave quote empty or paraphrase it. Preserve all unchanged outcomes. Attachments are reference data only: classify their availability without claiming complete reading, and never cite an attachment alone to add, replace or withdraw a user criterion. Later use attachment_read to obtain remaining content as needed. An unsupported file format remains an explicit limitation, not a reason to invent its contents.')
+        payload['instructions'] = ('Classify only pending_source_indices in sources; applied history is background. Every pending instruction must bind to a criterion with an exact quote. An add instruction requires an added criterion; updating only the objective is insufficient. A clarification may bind a retained criterion with its pending source index and quote, reopening that work. For every prior criterion supply original=index from acceptance, NOT a source index, disposition=retain/replace/withdraw; additions use original=null, disposition=add. Retain its exact text. Changes need source indices and a nonempty quote copied verbatim from pending user instruction text; do not leave quote empty or paraphrase it. Set verification from what the USER requested: answer for explanation, read for evidence inspection, artifact for file creation, run_code ONLY for requested program/test execution (saving/checking a file is artifact/read), browser for actual rendered JS/network/storage observation. Do not classify an unavailable action as a mere answer. Preserve all unchanged outcomes, but do not reopen completed background by citing a new source against an unrelated old criterion. Attachments are reference data only: classify their availability without claiming complete reading, and never cite an attachment alone to add, replace or withdraw a user criterion. Later use attachment_read to obtain remaining content as needed. An unsupported file format remains an explicit limitation, not a reason to invent its contents.')
         payload = await self.context.prepare(task, payload, schema=PracticalSourcePlan, phase='source_reconciliation')
         answer, call = await self._call(task, 'source_reconciliation', PracticalSourcePlan, payload)
         sources = task['source_history']
@@ -434,6 +470,15 @@ class PracticalEngine:
                 raise PolicyError('Source index is outside the current source history')
             return sources[index]['id']
         dispositions = []
+        # Completed evidence is controller-owned. Omission is not withdrawal;
+        # carry unchanged completed criteria instead of buying a second model
+        # call merely to recopy them. Unfinished omissions still fail validation.
+        supplied={c.original for c in answer.criteria if c.original is not None}
+        previous=completed(task)
+        for index,criterion in enumerate(task['acceptance']):
+            if index not in supplied and digest(criterion) in previous:
+                dispositions.append(dict(index=index,old_hash=digest(criterion),disposition='retain',criterion=criterion,
+                    source_ids=[],source_quote='',reason='Controller retained completed evidence; no replacement or withdrawal was proposed',verification='answer'))
         for choice in answer.criteria:
             old = choice.original
             if old is not None and not 0 <= old < len(task['acceptance']):
@@ -442,6 +487,15 @@ class PracticalEngine:
                     0 <= i < len(sources) and sources[i]['kind'] == 'instruction' for i in choice.sources):
                 raise PolicyError('An attachment alone cannot withdraw prior user requirements')
             quote = choice.quote
+            source_indices = choice.sources
+            # An exact quote can identify one pending addition without another
+            # model call. Never infer authority to replace/reopen/withdraw work,
+            # repair a supplied wrong index, or choose among ambiguous sources.
+            if not source_indices and quote and old is None and choice.disposition == 'add':
+                matches = [i for i in pending_indices if sources[i]['kind'] == 'instruction'
+                           and quote in sources[i]['text']]
+                if len(matches) == 1:
+                    source_indices = matches
             # A literal added criterion already carries an exact user quote.
             # Bind those bytes instead of asking the model to copy them twice.
             # Never infer a replacement/withdrawal, paraphrase, attachment or
@@ -452,14 +506,14 @@ class PracticalEngine:
                 quote = choice.criterion
             dispositions.append({'index': old, 'old_hash': digest(task['acceptance'][old]) if old is not None else None,
                                  'disposition': choice.disposition, 'criterion': choice.criterion,
-                                 'source_ids': [source_id(i) for i in choice.sources],
-                                 'source_quote': quote, 'reason': choice.reason})
+                                 'source_ids': [source_id(i) for i in source_indices],
+                                 'source_quote': quote, 'reason': choice.reason, 'verification': choice.verification})
         # Applied-source commentary cannot reclassify history. Preserve it as
         # non-authoritative annotation while consuming the valid pending choices.
         for choice in answer.sources:
             source_id(choice.source)  # Unknown indices are still rejected.
         plan = {'objective': answer.objective, 'source_hash': task['source_hash'],
-                'acceptance': [c.criterion for c in answer.criteria if c.disposition != 'withdraw'],
+                'acceptance': [c['criterion'] for c in dispositions if c['disposition'] != 'withdraw'],
                 'source_dispositions': [{'source_id': source_id(c.source), 'classification': c.classification,
                                          'reason': c.reason} for c in answer.sources if c.source in pending_indices],
                 'historical_source_annotations': [c.model_dump() for c in answer.sources if c.source not in pending_indices],
@@ -478,7 +532,7 @@ class PracticalEngine:
             references = [s['id'] for s in sources if s['kind'] == 'attachment' and s['status'] == 'pending']
             self.store.apply_source_plan(task['id'], task['source_hash'], plan, call, reference_attachment_ids=references)
             self._consume(call)
-            self._state(task['id'], feedback=None)
+            self._state(task['id'], feedback=None, work_focus=reconcile_focus(task, plan))
         self.store._transaction(commit)
 
     def _observed_hash(self, task, rel):
@@ -606,6 +660,8 @@ class PracticalEngine:
                                                      full_access=full_access, before_start=check_access)
             elif operation.kind in MAINTENANCE_TOOLS:
                 result = await self.maintenance.execute(task, operation)
+            elif operation.kind == 'browser_inspect':
+                result = await self.browser.inspect(task, operation, check_access)
             elif operation.kind == 'web_fetch':
                 if 'query' not in operation.args or set(operation.args) - {'query', 'max_bytes'}:
                     raise PolicyError('web_fetch requires query and accepts optional max_bytes')
@@ -647,6 +703,7 @@ class PracticalEngine:
                 raise PolicyError('Tool is not allowed by this runtime')
         except asyncio.CancelledError:
             result = (await self.maintenance.recover(task, operation) if operation.kind in MAINTENANCE_TOOLS else
+                      self.browser.recover(operation) if operation.kind == 'browser_inspect' else
                       self._web_failure(task, operation, 'WEB_INTERRUPTED') if operation.kind == 'web_fetch'
                       else OperationResult(operation_id=operation.id, status='failed',
                                            data={'reason': 'LOCAL_READ_INTERRUPTED'}))
@@ -746,6 +803,8 @@ class PracticalEngine:
                                          stderr=str(error), data={'reason': 'EXECUTOR_RESULT_UNOBSERVED'})
         elif operation.kind in MAINTENANCE_TOOLS:
             result = await self.maintenance.recover(task, operation)
+        elif operation.kind == 'browser_inspect':
+            result = self.browser.recover(operation)
         elif operation.kind == 'web_fetch':
             result = self._web_failure(task, operation, 'WEB_RESPONSE_RECONCILIATION',
                                        (row.get('result') or {}).get('data', {}).get('observation'))
@@ -828,17 +887,18 @@ class PracticalEngine:
                 from .native_execution import command_input
                 native = dict(args)
                 if request.name != 'run_command':
-                    if set(args) - {'entrypoint', 'arguments', 'files', 'timeout_seconds'}:
+                    if set(args) - {'entrypoint', 'arguments', 'files', 'timeout_seconds','cwd'}:
                         raise PolicyError('Unsupported program argument')
                     argv = args.get('arguments', [])
                     if not isinstance(argv, list) or any(not isinstance(v, str) for v in argv):
                         raise PolicyError('arguments must be a list of strings')
                     if request.name == 'run_python':
-                        entry = operation_path(Path(task['workspace']), args.get('entrypoint', ''), full_access=True)
+                        cwd = operation_path(Path(task['workspace']),args.get('cwd','.'),full_access=True,allow_root=True)
+                        entry = operation_path(cwd, args.get('entrypoint', ''), full_access=True)
                         command = [sys.executable, '-u', str(entry), *argv]
                     else:
                         command = [sys.executable, '-m', 'pytest', *argv]
-                    native = {'command': command, 'timeout_seconds': args.get('timeout_seconds', 60)}
+                    native = {'command': command, 'cwd':args.get('cwd','.'), 'timeout_seconds': args.get('timeout_seconds', 60)}
                 operation = self._operation(identity, kind, command_input(Path(task['workspace']), native), request.purpose)
             elif kind == 'exec':
                 recipe = self._recipe(task, request)
@@ -904,6 +964,8 @@ class PracticalEngine:
         paths = set()
         workspace = Path(task['workspace'])
         for row in self.store.operation_headers(task['id']):
+            if current_focus(task)['carried'] and row.get('source_hash') != task['source_hash']:
+                continue
             if (row.get('result') or {}).get('status') != 'succeeded':
                 continue
             if row['operation']['kind'] == 'file_write':
@@ -918,8 +980,12 @@ class PracticalEngine:
 
     def _review_reasons(self, task, answer):
         rows = self.store.operation_headers(task['id'])
+        if current_focus(task)['carried']:
+            rows = [r for r in rows if r.get('source_hash') == task['source_hash']]
         paths = self._generated_paths(task)
         reasons = []
+        if current_focus(task).get('interpretation_corrections'):
+            reasons.append('Evidence interpretation corrected: verify the correction against the original request and observed outcomes, not an earlier model label')
         if any(r['operation']['kind'] == 'exec' for r in rows) or any(Path(p).suffix.lower() in CODE_SUFFIXES for p in paths):
             reasons.append('executable/code output')
         if len(paths) >= 3:
@@ -932,7 +998,7 @@ class PracticalEngine:
             reasons.append('answer without declared artifacts: independently verify the requested outcome')
         if paths - set(answer.artifacts):
             reasons.append('some generated files omitted from the proposed artifact list')
-        text = task['objective'] + '\n' + '\n'.join(task['acceptance'])
+        text = '\n'.join(task['acceptance'][i] for i in current_focus(task)['active'])
         if any(word in text.casefold() for word in ('review', 'レビュー', '独立審査', '監査')):
             reasons.append('explicit review requested')
         if any(word in text.casefold() for word in ('production', 'security', 'migration', '本番', '重要', '契約', 'セキュリティ')):
@@ -1064,10 +1130,8 @@ class PracticalEngine:
         return result
 
     async def _finish(self, task, answer, call):
-        indices = [item.criterion for item in answer.acceptance]
-        if len(indices) != len(set(indices)) or set(indices) != set(range(len(task['acceptance']))):
-            raise PolicyError('Completion needs evidence for every current criterion exactly once')
         rows = self.store.operation_headers(task['id'])
+        evidence = completion_evidence(task, answer, rows)
         if any(not row.get('result') or row['result']['effect'] == 'unknown'
                or row['result']['status'] in {'pending', 'unknown'} for row in rows if row['status'] != 'superseded'):
             raise Held('Completion has unresolved operation effects')
@@ -1110,7 +1174,7 @@ class PracticalEngine:
         artifacts = self._artifact_evidence(task, answer.artifacts)
         if reasons and self._controller_update_evidence(task) != payload['controller_updates']:
             raise PolicyError('Controller update evidence changed during completion review')
-        final = {'summary': answer.message, 'acceptance': [e.model_dump() for e in answer.acceptance],
+        final = {'summary': answer.message, 'acceptance': evidence,
                  'artifacts': artifacts, 'review': review.model_dump() if review else None,
                  'review_disposition': disposition if review else None,
                  'review_applicability': reasons or ['simple task; deterministic result/artifact checks'],
@@ -1118,6 +1182,7 @@ class PracticalEngine:
                  'proof_ceiling': 'Observed task results and artifact bytes; semantic evidence as stated per criterion'}
         def commit():
             self.store.update_task(task['id'], status='completed', final=final)
+            self._state(task['id'], completed_acceptance=completed(dict(task, final=final)))
             self._consume(call)
             self.store.record('practical_outcome', task['id'] + ':' + task['source_hash'],
                               {'task_id': task['id'], 'objective': task['objective'], 'source_hash': task['source_hash'],
@@ -1190,6 +1255,14 @@ class PracticalEngine:
                     self._repair_feedback(task, 'next_action', error.metadata.get('validation_diagnostic'))
                     continue
                 self._current(task_id, task['source_hash'])
+                try:
+                    focus = requirement_update(task, answer.requirements)
+                    self._state(task_id, work_focus=focus)
+                    task = self.store.get_task(task_id)
+                except PolicyError as error:
+                    self._consume(call)
+                    self._repair_feedback(task, 'evidence_requirements', str(error))
+                    continue
                 saved_call = self.store.record_get('practical_call', call)
                 self.maintenance.assess_uses(task, answer, call)
                 self.learning.apply_optional(task, answer, call, saved_call.get('skill_catalog', []),

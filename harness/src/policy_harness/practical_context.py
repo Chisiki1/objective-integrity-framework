@@ -13,6 +13,18 @@ from .store import canonical, digest, redact
 
 def result_data(result):
     data = result.get('data', {})
+    if isinstance(data, dict) and 'javascript_executed' in data and 'network' in data:
+        network=data['network']
+        return {**{k:v for k,v in data.items() if k not in {'network','console','rendered_text','acquisitions','storage','cookies'}},
+                'rendered_text':data.get('rendered_text','')[:10000],
+                'network_summary':{'recorded':len(network),'received':sum(x.get('disposition')=='received' for x in network),
+                                   'blocked':sum(x.get('disposition')=='blocked' for x in network)},
+                'network':network[:24], 'console':data.get('console',[])[:12],
+                'acquisitions':data.get('acquisitions',[])[:12],
+                'storage':[dict(frame,**{kind:[dict(item,value=item.get('value','')[:300]) for item in frame.get(kind,[])[:16]]
+                                        for kind in ('localStorage','sessionStorage')}) for frame in data.get('storage',[])[:4]],
+                'cookies':[dict(c,value=c.get('value','')[:300]) for c in data.get('cookies',[])[:16]],
+                'original_record':'history_read(field=data.network / data.storage / data.rendered_text) retrieves bounded original observations. Saved script source indices use view=web_response.'}
     if isinstance(data, dict) and isinstance(data.get('test_report'), dict):
         # Keep a failed verification actionable without scrolling through every
         # passing test or Docker argument. The complete result stays immutable.
@@ -121,8 +133,8 @@ def history_page(store, task_id, args, *, exclude_operation=None, web=None):
     for index, row in enumerate(rows, start):
         result = row.get('result') or {}
         if view == 'web_response':
-            if web is None or row['operation']['kind'] != 'web_fetch':
-                raise PolicyError('Select an original web_fetch operation')
+            if web is None or row['operation']['kind'] not in {'web_fetch','browser_inspect'}:
+                raise PolicyError('Select an original web_fetch or browser_inspect operation')
             data = result.get('data', {})
             sources = data.get('sources') or data.get('observation', {}).get('sources', [])
             source = args.get('source', 0)
@@ -276,6 +288,7 @@ class PracticalContext:
             count = max(1, len(history) - keep)
             summary_payload = {'task_id': task['id'], 'policy_input_contract': 'role-scoped-v1',
                 'objective': payload['objective'], 'acceptance': payload['acceptance'],
+                'current_request':payload.get('current_request'), 'work_focus':payload.get('work_focus'),
                 'sources': payload['sources'], 'previous_memory': payload['working_memory'],
                 'unresolved_effects': payload['unresolved_effects'],
                 'instructions': 'Compress the supplied earlier work into durable working memory. Preserve exact useful facts, paths, figures, decisions, first faults, incomplete work and evidence operation indices. Combine prior memory without losing still-needed facts. Do not invent success or fill missing excerpts. Never modify user requirements or authority. Current sources/criteria are supplied separately: do not recopy them, task IDs or routine hashes. Prefer under 4000 characters, retaining essential facts even when longer. The recent tail is NOT covered by this summary and may already resolve older pending work: next_action must tell the consumer to reconcile with that tail before any action, never assert that a file is unread merely because its result is absent here. Originals remain available via history_read.'}

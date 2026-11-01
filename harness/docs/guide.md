@@ -1,10 +1,12 @@
 # OIF Desktop guide
 
-Version **0.3.0** · [Quick start](../README.md) · [Japanese](ja.md)
+Version **0.4.0** · [Quick start](../README.md) · [Japanese](ja.md)
 
 ## A task from request to result
 
 Create a chat and give the desired result, constraints and files. Each new instruction retains its own progress and result. A pinned instruction summary shows whether it has been received and applied. Earlier turns collapse automatically; you can expand them without losing the current turn.
+
+Completed earlier requests remain in the record. The next answer focuses on the latest instruction and unfinished work, with source-bound criteria for added or clarified requests. Creating files, running programs and observing pages use their actual tool results as completion evidence.
 
 Important progress shows user-facing milestones, decisions, failures and results. All progress also includes the detailed model/tool events. The chat follows new content when you are following the latest work; scrolling back lets you inspect earlier content. The full timeline is newest first. Expand a progress row for a readable account, or inspect its original evidence. Explanation is available on demand.
 
@@ -36,7 +38,9 @@ Large pages receive separate excerpts so one sitemap cannot hide the other resul
 
 For a large JavaScript file, the agent can request a per-response limit with <code>web_fetch(max_bytes=8000000)</code>, up to 8 MB, while the saved default stays unchanged. Reaching a known byte limit preserves a searchable prefix marked incomplete and permits independent pages to continue. <code>history_read(view=web_response, query=["fetch(", "sendBeacon", "localStorage"])</code> searches several literal terms together. Missing matches in a prefix do not establish their absence in the whole file. Recovery of an older size-limit hold verifies the retained bytes without replaying that request.
 
-This reader does not run JavaScript or sign in. Dynamic content, runtime network requests and form submission behavior require separate observation. Reports should distinguish what the saved pages establish from what remains unobserved.
+For dynamic pages, `browser_inspect` launches a fresh isolated browser, runs the page JavaScript, and records rendered text, console errors, network attempts, cookies, localStorage and sessionStorage. The agent can also inspect an HTML file it created in the task workspace. Windows reuses installed Edge or Chrome; other platforms need Chromium installed with `python -m playwright install chromium` after installing OIF dependencies. Browser observation does not need Docker.
+
+This is passive anonymous observation. Public HTTPS GET/HEAD requests pass through the same address validation and pinned transport as the page reader. POST, WebSockets, service workers, media bodies and downloads are outside this tool's current coverage; blocked attempts are labelled in the result. Top-level HTTP redirects are resolved before opening their final URL. Cookies set along that redirect chain are not imported; redirects from scripts and other subresources are recorded but blocked. Local task HTML cannot contact external sites. The browser never opens your existing profile, signs in or submits a form. Results are bounded by time, request count and response size, with partial coverage stated. Static source reads and browser observations remain separate evidence; neither establishes the absence of vulnerabilities or all authenticated behavior.
 
 ## How learning carries forward
 
@@ -50,7 +54,7 @@ The practical policy preserves the goal, all mandatory outcomes, permissions, fi
 
 The agent can inspect non-secret runtime settings and allowlisted source. A source improvement follows proposal, isolated verification, review, activation, subsequent ordinary use and possible rollback. It cannot turn arbitrary source writes into an update by calling them learning. Changing explicit user conditions still requires the corresponding user authority.
 
-Docker Desktop with a working Linux container backend is needed for isolated shell execution and controlled code verification. Ordinary workspace file reading/writing, task management, artifact preview and the desktop UI do not require Docker. Model quality, provider reliability and a working verification environment still affect the result. Successful tests establish their tested scope, not unlimited autonomous growth.
+In workspace mode, Docker Desktop with a working Linux container backend is needed for isolated Python execution and controlled harness-code verification. In full access, Python and commands execute natively with the current user permissions and network access. Missing Docker does not make Web research offline or prevent file creation and browser observation. Ordinary workspace file reading/writing, task management, artifact preview and the desktop UI do not require Docker. Model quality, provider reliability and a working verification environment still affect the result. Successful tests establish their tested scope, not unlimited autonomous growth.
 
 ## Sending prompts
 

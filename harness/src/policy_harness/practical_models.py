@@ -6,7 +6,7 @@ from .models import StrictModel
 
 class ToolRequest(StrictModel):
     name: Literal['file_read', 'file_write', 'file_list', 'run_python', 'run_tests', 'run_command',
-                  'web_fetch', 'history_read', 'knowledge_read', 'attachment_read', 'harness_info', 'harness_read', 'harness_propose', 'harness_verify', 'harness_apply', 'harness_rollback']
+                  'web_fetch', 'browser_inspect', 'history_read', 'knowledge_read', 'attachment_read', 'harness_info', 'harness_read', 'harness_propose', 'harness_verify', 'harness_apply', 'harness_rollback']
     arguments: dict[str, Any]
     purpose: str = Field(min_length=1)
 
@@ -14,6 +14,15 @@ class ToolRequest(StrictModel):
 class CriterionEvidence(StrictModel):
     criterion: int = Field(ge=0)
     evidence: str = Field(min_length=1)
+    operation_indices: list[int] = Field(default_factory=list, max_length=32,
+        description='Actual successful zero-based operation indices supporting this criterion, not proposed actions.')
+
+
+class WorkRequirement(StrictModel):
+    criterion: int = Field(ge=0)
+    verification: Literal['answer', 'read', 'artifact', 'run_code', 'browser'] = Field(
+        description='artifact = create/save/read back a file (including byte/line checks); run_code = execute a program or test suite, ONLY when requested; browser = execute a web page and observe it. File saving is NOT run_code.')
+    reason: str = Field(default='',max_length=1200,description='When correcting an earlier interpretation, explain from the original request and actual evidence. Never waive unfinished user work.')
 
 
 class LearningNote(StrictModel):
@@ -62,6 +71,8 @@ class PracticalStep(StrictModel):
     message: str = Field(min_length=1)
     acceptance: list[CriterionEvidence] = Field(default_factory=list)
     artifacts: list[str] = Field(default_factory=list)
+    requirements: list[WorkRequirement] = Field(default_factory=list,
+        description='Classify ALL active criteria on the first step. Completion cannot omit this: answer for a text question, read for existing evidence, artifact for saving/checking a file, run_code ONLY for requested program/test execution, browser for rendered JS/network/storage. Never change an action to answer because a tool is unavailable.')
     learning: list[LearningNote] = Field(default_factory=list, max_length=8)
     skill_uses: list[SkillUse] = Field(default_factory=list, max_length=16)
     learning_assessments: list[LearningAssessment] = Field(default_factory=list, max_length=16)
@@ -125,6 +136,7 @@ class AcceptanceChoice(StrictModel):
     sources: list[int] = Field(default_factory=list)
     quote: str = Field(default='', description='For add/replace/withdraw, copy a nonempty exact quote from a referenced pending user instruction. Empty only for retain.')
     reason: str = Field(min_length=1)
+    verification: Literal['answer', 'read', 'artifact', 'run_code', 'browser'] = Field(description='Required classification from the user request. Saving/checking a file uses artifact/read. run_code is only for requested program/test execution; browser for actual page execution. answer is only a text question, not an unavailable action.')
 
 
 class PracticalSourcePlan(StrictModel):

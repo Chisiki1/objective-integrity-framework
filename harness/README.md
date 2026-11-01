@@ -1,4 +1,4 @@
-# OIF Desktop · 0.3.0
+# OIF Desktop · 0.4.0
 
 **An agent workspace that keeps the goal in view and carries useful experience into the next task.**
 
@@ -6,7 +6,7 @@ OIF combines a Windows desktop app, a persistent task engine and a shared learni
 
 ## Start in three steps
 
-1. Download **OIF-Desktop-0.3.0-windows-x64.zip** from the [release](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0).
+1. Download **OIF-Desktop-0.4.0-windows-x64.zip** from the [release](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.4.0).
 2. Extract the complete folder into a writable location. Open **OIF.exe**. Keep its `python`, `desktop`, `src`, `policy` and `scripts` folders beside it.
 3. Open **Settings**, choose an OpenAI-compatible provider and model, enter an API key if required, then start a task. Local model servers are supported; see [local setup](docs/guide.md#use-a-local-model-on-this-pc). OpenRouter also has a browser sign-in route. Availability and model capabilities depend on the provider.
 

@@ -7,7 +7,7 @@ globalThis.OIFPresentation = (() => {
     file_read:['ファイルを読む','Read a file'], file_write:['ファイルを保存する','Save a file'],
     file_list:['ファイルを探す','List files'], exec:['プログラムを実行する','Run a program'],
     run_command:['PCでコマンドを実行する','Run a command on this PC'], run_python:['Pythonを実行する','Run Python'], run_tests:['テストする','Run tests'],
-    web_fetch:['公開情報を調べる','Read public information'], capability_request:['実行環境を準備する','Prepare execution'],
+    web_fetch:['公開情報を調べる','Read public information'], browser_inspect:['ブラウザで表示・通信・保存情報を確認する','Inspect rendered page, network and storage'], capability_request:['実行環境を準備する','Prepare execution'],
     history_read:['これまでの結果を確認する','Read previous results'], knowledge_read:['過去の知識を確認する','Read task knowledge'],
     attachment_read:['添付ファイルを読む','Read an attachment'],
     harness_info:['OIFの設定を確認する','Inspect OIF settings'], harness_read:['OIFの実装を読む','Read OIF source'],

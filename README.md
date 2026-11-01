@@ -4,7 +4,7 @@
 
 Keep the objective intact. Turn experience into better next actions.
 
-Version **0.3.0** · [Download](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0) · [Changelog](CHANGELOG.md) · [Japanese guide](docs/ja/README.md).
+Version **0.4.0** · [Download](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.4.0) · [Changelog](CHANGELOG.md) · [Japanese guide](docs/ja/README.md).
 
 [![CI](https://github.com/Chisiki1/objective-integrity-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/Chisiki1/objective-integrity-framework/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
@@ -19,7 +19,7 @@ Use it as a five-minute review discipline, project-local guidance, a reusable ag
 
 The framework now has a **dedicated Windows agent workspace**. Keep instructions and results together, preview artifacts, reuse shared lessons across chats, and improve the harness through a controlled verification and recovery path.
 
-**[Download Windows x64](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0)** · [Desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0/harness/README.md) · [Learning and updates](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0/harness/docs/guide.md) · [Japanese desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0/harness/docs/ja.md)
+**[Download Windows x64](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.4.0)** · [Desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.4.0/harness/README.md) · [Learning and updates](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.4.0/harness/docs/guide.md) · [Japanese desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.4.0/harness/docs/ja.md)
 
 Extract the full ZIP, open **OIF.exe**, and configure your model in Settings. Python is included. The desktop uses the installed WebView2 Runtime. Ordinary file work needs no Docker; isolated execution and harness-code verification use Docker. The framework and skills-only downloads remain available.
 
@@ -31,6 +31,8 @@ Work then follows one discipline: one owner per objective, actions recorded befo
 
 ## What's New
 
+**0.4.0 (2026-11-02):** Focus follow-ups on current work while retaining completed evidence. Bind new instructions to completion criteria and actual action results. Inspect rendered JavaScript, network attempts and browser storage in a fresh isolated browser. See [behavior and coverage](harness/docs/guide.md#web-research).
+
 **0.3.0 (2026-11-02), stable:** Enter sends prompts by default; choose Ctrl/Cmd+Enter in Settings if preferred. Use a local OpenAI-compatible model server over loopback HTTP. Keep cloud connections as named profiles and switch without forwarding their credentials to a local server. See the [local model setup](harness/docs/guide.md#use-a-local-model-on-this-pc).
 
 **0.3.0-beta.5 (2026-10-09):** Recover Web tasks held by response-size limits without repeating their requests. Inspect large JavaScript files with bounded reads and search saved sources for several literal terms at once. Incomplete content is clearly marked.
@@ -41,7 +43,7 @@ Work then follows one discipline: one owner per objective, actions recorded befo
 
 **0.3.0-beta.2 (2026-09-28):** refreshed English and Japanese showcase images, focused on shared learning, harness improvement and actual-use records. The same six images are included in the current documentation and downloads.
 
-**0.3.0-beta.1 (2026-09-28):** the first public Windows desktop harness, persistent multi-chat execution, bounded context and record retrieval, artifact previews, access modes, shared learning with revision/merge/retirement, and controlled code-update verification. The public policy is self-contained. See the [desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0/harness/docs/guide.md) for behavior and supported scope.
+**0.3.0-beta.1 (2026-09-28):** the first public Windows desktop harness, persistent multi-chat execution, bounded context and record retrieval, artifact previews, access modes, shared learning with revision/merge/retirement, and controlled code-update verification. The public policy is self-contained. See the [desktop guide](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.4.0/harness/docs/guide.md) for behavior and supported scope.
 
 
 **0.2.1 update (2026-09-11):** consistency and clarity follow-up — stale card descriptions fixed across the docs and packaged guidance, adapters and samples aligned, and a concise "How It Works" overview added (see [CHANGELOG](CHANGELOG.md)).

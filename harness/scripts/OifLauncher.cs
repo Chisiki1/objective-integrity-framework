@@ -13,8 +13,8 @@ using System.Runtime.InteropServices;
 
 [assembly: System.Reflection.AssemblyTitle("OIF")]
 [assembly: System.Reflection.AssemblyDescription("OIF desktop application")]
-[assembly: System.Reflection.AssemblyVersion("0.3.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersion("0.3.0")]
+[assembly: System.Reflection.AssemblyVersion("0.4.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersion("0.4.0")]
 
 internal static class OifLauncher {
     internal static readonly string Root = AppDomain.CurrentDomain.BaseDirectory;

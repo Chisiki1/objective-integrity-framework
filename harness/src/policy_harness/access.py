@@ -40,7 +40,7 @@ class Access:
 
     def check(self, task, tool_name, arguments, operation_id, purpose):
         access = self.get(task['id'])
-        if tool_name not in READ_TOOLS | WRITE_TOOLS | {'web_fetch'}:
+        if tool_name not in READ_TOOLS | WRITE_TOOLS | {'web_fetch','browser_inspect'}:
             raise PolicyError('この操作は許可されたツールではありません。')
         if tool_name == 'run_command' and access['mode'] != 'full':
             raise PolicyError('PC上のコマンド実行にはフルアクセスを選択して確認してください。')

@@ -1,13 +1,13 @@
 [project]
 name = "hermes-policy-harness"
-version = "0.3.0"
+version = "0.4.0"
 description = "OIF desktop harness with persistent objectives, reusable learning and controlled self-improvement"
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "langgraph>=1.0,<2", "langgraph-checkpoint-sqlite>=3,<4",
   "deepagents>=0.7,<1", "langchain-openai>=1,<2",
   "fastapi>=0.115,<1", "uvicorn>=0.34,<1", "httpx>=0.28,<1", "pydantic>=2.10,<3",
-  "pypdf>=6,<7",
+  "pypdf>=6,<7", "playwright>=1.51,<2",
 ]
 [dependency-groups]
 dev = ["pytest>=8,<10", "pytest-asyncio>=1,<2"]
@@ -21,6 +21,7 @@ packages = ["src/policy_harness"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = [
+  "tests/test_action_focus.py",
   "tests/test_practical_runtime.py", "tests/test_practical_context.py",
   "tests/test_practical_growth.py", "tests/test_usability_learning.py", "tests/test_optional_learning.py",
   "tests/test_desktop_maintenance.py", "tests/test_artifact_preview.py",
@@ -39,6 +40,7 @@ testpaths = [
 # Only trusted root maintenance can enroll this file; candidates cannot edit it.
 [tool.oif.verification]
 paths = [
+  "tests/test_action_focus.py",
   "tests/test_practical_runtime.py", "tests/test_practical_context.py",
   "tests/test_practical_growth.py", "tests/test_usability_learning.py", "tests/test_optional_learning.py",
   "tests/test_desktop_maintenance.py", "tests/test_artifact_preview.py",

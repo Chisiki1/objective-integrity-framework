@@ -498,7 +498,8 @@ async def test_new_instruction_gets_compaction_before_source_reconciliation(tmp_
     task = store.append_instruction(task['id'], 'Keep the same output and verify the saved result.', store.get_task(task['id'])['source_hash'])
     gateway.replies += [dict(summary='Output contains hello. Original operation 0 has the observed bytes.', next_action='Reconcile the latest instruction.', evidence_indices=[0]),
                         {'objective': task['objective'], 'sources': [{'source': 1, 'classification': 'clarify', 'reason': 'Retains the output requirement'}],
-                         'criteria': [{'original': 0, 'disposition': 'retain', 'criterion': task['acceptance'][0], 'reason': 'Unchanged'}]}, finish('answer.txt')]
+                         'criteria': [{'original': 0, 'disposition': 'retain', 'criterion': task['acceptance'][0], 'reason': 'Unchanged',
+                                       'sources':[1], 'quote':'Keep the same output and verify the saved result.'}]}, finish('answer.txt')]
     measured_gateway(gateway, 2500)
     await engine.resume_task(task['id'])
     assert store.get_task(task['id'])['status'] == 'completed'

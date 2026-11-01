@@ -26,7 +26,7 @@ def validate_reconciliation(task,plan,source_texts=None):
         if item.get('classification') not in {'add','clarify','correct','replace','withdraw'} or not item.get('reason','').strip():
             raise PolicyError('Source classification and reason are required')
         classes[item['source_id']]=item['classification']
-    seen=set();accepted=[]
+    seen=set();accepted=[];covered=set()
     for item in plan.get('acceptance_dispositions',[]):
         index=item.get('index');choice=item.get('disposition');criterion=item.get('criterion')
         if not item.get('reason','').strip():raise PolicyError('Each acceptance disposition needs a reason')
@@ -39,15 +39,22 @@ def validate_reconciliation(task,plan,source_texts=None):
             if item.get('old_hash')!=digest(old):raise PolicyError('Prior acceptance source hash changed')
             if choice not in {'retain','replace','withdraw'}:raise PolicyError('Unknown acceptance disposition')
             if choice=='retain' and criterion!=old:raise PolicyError('Retained acceptance was changed')
-        if choice!='retain':
+        refs=item.get('source_ids',[])
+        current_refs=set(refs)&set(pending)
+        if choice!='retain' or current_refs:
             refs=item.get('source_ids',[]);quote=item.get('source_quote','')
             texts=source_texts or {r:s['text'] for r,s in pending.items()}
-            if not refs or not set(refs)<=set(pending) or not quote or not any(quote in texts[r] for r in refs):
+            if not refs or (choice!='retain' and not set(refs)<=set(pending)) or not quote or not any(quote in texts[r] for r in current_refs):
                 raise PolicyError('Changed acceptance needs an exact quote from the current user source')
             if choice in {'replace','withdraw'} and not any(classes[r] in {'correct','replace','withdraw'} for r in refs):
                 raise PolicyError('A mere addition cannot silently remove prior acceptance')
+            covered.update(r for r in current_refs if quote in texts[r]
+                           and (classes[r]!='add' or choice in {'add','replace'}))
         if choice!='withdraw':
             if not isinstance(criterion,str) or not criterion.strip():raise PolicyError('Nonempty acceptance required')
             accepted.append(criterion)
     if seen!=set(range(len(task['acceptance']))) or Counter(accepted)!=Counter(plan['acceptance']):
         raise PolicyError('Every prior and proposed acceptance must have exactly one source-bound disposition')
+    if any(s.get('kind','instruction')=='instruction' and identity not in covered
+           for identity,s in pending.items()):
+        raise PolicyError('Every new instruction needs a source-quoted acceptance binding. Add new work as a criterion; bind a clarification to its affected criterion. Updating only the objective does not apply the instruction.')

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 — 2026-11-02
+
+- Keep completed request evidence as background and focus follow-up responses on current work; require every new instruction to bind to acceptance criteria.
+- Connect action-based completion to successful operation evidence. Distinguish file readback, program execution and browser observation; retain explained corrections to model interpretations for final review.
+- Add isolated browser observation for public HTTPS pages and task-local HTML: executed JavaScript, rendered text, console errors, network attempts, cookies and storage, with explicit passive-observation limits.
+- Describe actual native/container/Web capabilities separately. Include the browser driver, use installed Edge/Chrome on Windows, and preserve existing permissions, task history and original results.
+- Update English and Japanese usage and release documentation together.
+
 ## 0.3.0 — 2026-11-02
 
 - First stable desktop release, retaining the existing beta release history.

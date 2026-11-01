@@ -1276,7 +1276,7 @@ class WebCollector:
             return
         field = 'raw_base64' if stage == 'response' else 'partial_base64'
         payload = {'id': key, 'stage': stage, 'record': record, field: base64.b64encode(data).decode(),
-                   'headers': {k: v for k, v in headers.items() if k in {'content-type', 'location'}}}
+                   'headers': {k: v for k, v in headers.items() if k in {'content-type', 'location'} or record.get('phase','').startswith('browser_observation')}}
         try:
             # Real settings always carry credential history. Keep original bytes
             # protected, so later keys cannot make an old plaintext cache unsafe.
@@ -1416,6 +1416,8 @@ class WebCollector:
                 record['http_dispatched'] = True
                 async with client.stream(method, target, headers=outgoing, json=body, extensions={"sni_hostname": host}) as response:
                     response_headers = dict(response.headers)
+                    if phase.startswith('browser_observation') and response.headers.get_list('set-cookie'):
+                        response_headers['set-cookie'] = '\n'.join(response.headers.get_list('set-cookie'))
                     record["http_status"] = response.status_code
                     limit = values["web_max_response_bytes"]
                     # Do not buffer several stream chunks before observing them:

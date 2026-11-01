@@ -47,6 +47,18 @@ class Gateway:
         value = self.replies.pop(0)
         if callable(value):
             value = await value(payload)
+        if phase == 'source_reconciliation' and isinstance(value, dict):
+            # Historical scripted replies explicitly select text-only proof
+            # unless this case specifies the new action verification contract.
+            value = dict(value, criteria=[dict(verification='answer', **c) if 'verification' not in c else c
+                                          for c in value.get('criteria', [])])
+        if phase == 'next_action' and isinstance(value, dict) and 'requirements' not in value:
+            # Legacy scripted scenarios explicitly classify their fixture proof;
+            # omission counterexamples pass requirements=[] to exercise rejection.
+            focus=payload.get('work_focus',{})
+            value=dict(value,requirements=[dict(criterion=i,
+                verification=focus.get('requirements',{}).get(str(i),'answer'))
+                for i in focus.get('active',[])])
         return schema.model_validate(value), {'elapsed_seconds': 0.0, 'fixture': True}
 
     async def health(self):

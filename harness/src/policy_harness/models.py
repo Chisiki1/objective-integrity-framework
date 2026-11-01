@@ -23,7 +23,7 @@ class Decision(StrictModel):
 
 class Operation(StrictModel):
     id: str = Field(default_factory=lambda: uuid4().hex)
-    kind: Literal['file_read', 'file_write', 'file_list', 'exec', 'web_fetch', 'capability_request', 'delegate', 'wait_children', 'finish', 'policy_amendment', 'plan_task', 'reconcile', 'child_reconcile', 'knowledge_update', 'history_read', 'child_integrate', 'knowledge_integrate', 'controller_read', 'prepare_update', 'verify_update', 'activate_update', 'rollback_update', 'adopt_policy', 'judgment_resolve', 'knowledge_read', 'attachment_read', 'candidate_disposition', 'knowledge_index', 'source_read', 'child_scope', 'knowledge_projection_repair', 'source_prepare', 'harness_info', 'harness_read', 'harness_propose', 'harness_verify', 'harness_apply', 'harness_rollback']
+    kind: Literal['file_read', 'file_write', 'file_list', 'exec', 'web_fetch', 'browser_inspect', 'capability_request', 'delegate', 'wait_children', 'finish', 'policy_amendment', 'plan_task', 'reconcile', 'child_reconcile', 'knowledge_update', 'history_read', 'child_integrate', 'knowledge_integrate', 'controller_read', 'prepare_update', 'verify_update', 'activate_update', 'rollback_update', 'adopt_policy', 'judgment_resolve', 'knowledge_read', 'attachment_read', 'candidate_disposition', 'knowledge_index', 'source_read', 'child_scope', 'knowledge_projection_repair', 'source_prepare', 'harness_info', 'harness_read', 'harness_propose', 'harness_verify', 'harness_apply', 'harness_rollback']
     args: dict[str, Any] = Field(default_factory=dict)
     purpose: str = Field(min_length=1)
     decisions: list[Decision] = Field(min_length=1)
