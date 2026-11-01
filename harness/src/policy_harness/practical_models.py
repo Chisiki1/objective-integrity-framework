@@ -70,7 +70,8 @@ class PracticalStep(StrictModel):
     tools: list[ToolRequest] = Field(default_factory=list, max_length=16,
         description='For action=tools, include at least one {name, arguments: {…}, purpose}. All tool parameters go INSIDE arguments. For complete/blocked, return an empty tools array. A message about a planned action does not execute it.')
     message: str = Field(min_length=1)
-    acceptance: list[CriterionEvidence] = Field(default_factory=list)
+    acceptance: list[CriterionEvidence] = Field(default_factory=list,
+        description='For complete, include every active criterion exactly once, its observed evidence and successful operation_indices. Reuse saved results; do not repeat successful tools to fill this list. Completed background is carried by the controller.')
     artifacts: list[str] = Field(default_factory=list)
     requirements: list[WorkRequirement] = Field(default_factory=list,
         description='Classify ALL active criteria on the first step. Completion cannot omit this: answer for a text question, read for existing evidence, artifact for saving/checking a file, run_code ONLY for requested program/test execution, browser for rendered JS/network/storage. Never change an action to answer because a tool is unavailable.')
@@ -105,6 +106,16 @@ def response_schema(schema, payload=None):
             branch['properties']['action'] = {'type': 'string', 'const': action}
             branch['required'] = [*branch['required'], 'tools']
             branch['properties']['tools'].update({'minItems': 1} if action == 'tools' else {'maxItems': 0})
+            focus = (payload or {}).get('work_focus', {})
+            active = focus.get('active')
+            if action == 'complete' and isinstance(active, list) and active:
+                proof = deepcopy(definitions['CriterionEvidence'])
+                proof['properties']['criterion']['enum'] = active
+                branch['properties']['acceptance'].update(minItems=len(active), maxItems=len(active), items=proof)
+                branch['required'].append('acceptance')
+                if 'artifact' in focus.get('requirements', {}).values():
+                    branch['properties']['artifacts']['minItems'] = 1
+                    branch['required'].append('artifacts')
             branches.append(branch)
         value = {'$defs': definitions, 'oneOf': branches}
     elif schema is PracticalSourcePlan and isinstance(payload, dict):
@@ -121,6 +132,7 @@ def response_schema(schema, payload=None):
             retained = deepcopy(base)
             retained['properties']['disposition'] = {'const': 'retain'}
             retained['properties']['sources'].update(maxItems=0)
+            retained['properties']['reopen'] = {'const': False, 'default': False}
             changed = deepcopy(base)
             changed['properties']['disposition'] = {'enum': ['retain', 'add', 'replace', 'withdraw']}
             changed['properties']['sources'].update(minItems=1, items={'type': 'integer', 'enum': sorted({s['index'] for s in instructions})})
@@ -191,6 +203,7 @@ class AcceptanceChoice(StrictModel):
     sources: list[int] = Field(default_factory=list)
     quote: str = Field(default='', description='For add/replace/withdraw, copy a nonempty exact quote from a referenced pending user instruction. Empty only for retain.')
     reason: str = Field(min_length=1)
+    reopen: bool = Field(default=False, description='True only when the quoted current instruction explicitly requests doing or checking this retained completed criterion again. Merely acknowledging, preserving or referring to completed work is false.')
     verification: Literal['answer', 'read', 'artifact', 'run_code', 'browser'] = Field(description='Required classification from the user request. Saving/checking a file uses artifact/read. run_code is only for requested program/test execution; browser for actual page execution. answer is only a text question, not an unavailable action.')
 
 

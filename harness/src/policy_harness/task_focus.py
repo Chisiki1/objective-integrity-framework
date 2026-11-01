@@ -19,15 +19,13 @@ def completed(task):
 
 def reconcile_focus(task, plan):
     previous = completed(task)
-    pending = {s['id'] for s in task['source_history'] if s['status'] == 'pending'}
     carried, active, requirements = {}, [], {}
     for item in plan['acceptance_dispositions']:
         if item['disposition'] == 'withdraw':
             continue
         index = len(carried) + len(active)
         key = digest(item['criterion'])
-        touched = bool(pending.intersection(item.get('source_ids', [])))
-        if item['disposition'] == 'retain' and key in previous and not touched:
+        if item['disposition'] == 'retain' and key in previous and not item.get('reopen', False):
             carried[str(index)] = dict(previous[key], criterion=index)
         else:
             active.append(index)
@@ -109,7 +107,8 @@ def completion_evidence(task, answer, rows):
     if any(str(i) not in focus['requirements'] for i in required):
         raise PolicyError('Classify every active criterion in requirements before completing: answer, read, artifact, run_code or browser. Missing classification is not a text-only request. Preserve successful work and supply its operation_indices; do not repeat tools merely to repair this response.')
     if len(supplied) != len(answer.acceptance) or set(supplied) not in (required, set(range(len(task['acceptance'])))):
-        raise PolicyError('Completion needs evidence for every active criterion exactly once; completed background is retained by the controller')
+        missing = sorted(required - set(supplied))
+        raise PolicyError(f'Completion needs evidence for active criteria {sorted(required)} exactly once; missing {missing}. Completed background is retained by the controller. Use saved successful operation_indices and repair the response; do not rerun successful tools merely to fill this evidence list.')
     kinds = {'read': {'file_read','file_list','web_fetch','browser_inspect','history_read','attachment_read','knowledge_read','harness_read','harness_info'},
              'artifact': {'file_write','exec'}, 'run_code': {'exec'}, 'browser': {'browser_inspect'}}
     for index in required:

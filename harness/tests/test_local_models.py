@@ -113,12 +113,19 @@ async def test_structured_action_format_is_bound_and_validated_without_fallback(
         assert branches['tools']['properties']['tools']['minItems'] == 1
         assert branches['complete']['properties']['tools']['maxItems'] == 0
         assert all('tools' in b['required'] for b in branches.values())
+        complete = branches['complete']
+        assert {'acceptance','artifacts'} <= set(complete['required'])
+        evidence = complete['properties']['acceptance']
+        assert evidence['minItems'] == evidence['maxItems'] == 2
+        assert evidence['items']['properties']['criterion']['enum'] == [1,2]
+        assert complete['properties']['artifacts']['minItems'] == 1
         # A provider can ignore its schema: controller validation still wins.
         return httpx.Response(200, json={'model': 'local-qwen', 'choices': [
             {'message': {'content': '{"action":"tools","tools":[],"message":"I will save it"}'}, 'finish_reason': 'stop'}]})
     gateway = ModelGateway(settings, Policy(), transport=httpx.MockTransport(handle))
     with pytest.raises(ProviderError) as error:
-        await gateway.generate('parent', 'next_action', {'task_id': 'shape-check'}, PracticalStep)
+        await gateway.generate('parent', 'next_action', {'task_id': 'shape-check',
+            'work_focus': {'active': [1,2], 'requirements': {'1':'artifact','2':'answer'}}}, PracticalStep)
     assert len(requests) == 1 and error.value.metadata['schema_validation_failed']
     assert error.value.metadata['response_format'] == 'json_schema'
 

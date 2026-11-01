@@ -41,9 +41,14 @@ def validate_reconciliation(task,plan,source_texts=None):
             if choice=='retain' and criterion!=old:raise PolicyError('Retained acceptance was changed')
         refs=item.get('source_ids',[])
         current_refs=set(refs)&set(pending)
+        texts=source_texts or {r:s['text'] for r,s in pending.items()}
+        quote=item.get('source_quote','')
+        if item.get('reopen') and (choice!='retain' or not any(
+                pending[r].get('kind','instruction')=='instruction' and quote and quote in texts[r]
+                for r in current_refs)):
+            raise PolicyError('Reopening requires a retained criterion and a quoted current user instruction')
         if choice!='retain' or current_refs:
             refs=item.get('source_ids',[]);quote=item.get('source_quote','')
-            texts=source_texts or {r:s['text'] for r,s in pending.items()}
             if not refs or (choice!='retain' and not set(refs)<=set(pending)) or not quote or not any(quote in texts[r] for r in current_refs):
                 raise PolicyError('Changed acceptance needs an exact quote from the current user source')
             if choice in {'replace','withdraw'} and not any(classes[r] in {'correct','replace','withdraw'} for r in refs):

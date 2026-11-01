@@ -38,12 +38,13 @@ async def test_completed_answer_is_background_and_new_file_work_is_active(tmp_pa
     previous=store.get_task(task['id'])
     gateway.replies.extend([
         dict(objective='Keep the original file and create note.txt',sources=[dict(source=1,classification='add',reason='New file')],
-             criteria=[dict(original=0,disposition='retain',criterion=task['acceptance'][0],reason='Completed result retained'),
+             criteria=[dict(original=0,disposition='retain',criterion=task['acceptance'][0],reason='Completed result retained',sources=[1],quote='The prior file is complete; leave it unchanged.'),
                        dict(original=None,disposition='add',criterion='Create note.txt with note',sources=[1],quote='Create note.txt with note',reason='New task',verification='artifact')]),
         steps(tool('file_write',path='note.txt',text='note')),
         dict(action='complete',message='note.txt is ready.',artifacts=['note.txt'],
              acceptance=[dict(criterion=1,evidence='The file tool saved and read back note.',operation_indices=[1])])])
-    await engine.submit_instruction(task['id'],'Create note.txt with note',previous['source_hash'])
+    instruction='The prior file is complete; leave it unchanged. Create note.txt with note'
+    await engine.submit_instruction(task['id'],instruction,previous['source_hash'])
     await engine.running[task['id']]
     current=store.get_task(task['id'])
     assert current['status']=='completed'
@@ -51,7 +52,7 @@ async def test_completed_answer_is_background_and_new_file_work_is_active(tmp_pa
     assert len(current['final']['acceptance'])==2
     assert current['final']['acceptance'][0]['completed_source_hash']==previous['source_hash']
     payload=gateway.calls[-1][2]
-    assert payload['current_request']=='Create note.txt with note'
+    assert payload['current_request']==instruction
     assert payload['work_focus']['active']==[1]
     assert payload['acceptance'][0]['status']=='completed_background'
     assert engine._generated_paths(current)=={'note.txt'}
@@ -61,18 +62,24 @@ async def test_completed_answer_is_background_and_new_file_work_is_active(tmp_pa
 
 
 @pytest.mark.asyncio
-async def test_clarification_reopens_only_its_bound_completed_requirement(tmp_path):
+@pytest.mark.parametrize('reopen',[True,False])
+async def test_clarification_reopens_only_its_bound_completed_requirement(tmp_path,reopen):
     engine,store,gateway,_,task=runtime(tmp_path,[steps(tool('file_write',path='answer.txt',text='hello')),finish('answer.txt')])
     await run(engine,store,task)
     current=store.get_task(task['id'])
-    pending=store.append_instruction(task['id'],'Verify the saved bytes again.',current['source_hash'])
+    instruction='Verify the saved bytes again.' if reopen else 'The file is complete; leave it unchanged.'
+    pending=store.append_instruction(task['id'],instruction,current['source_hash'])
     gateway.replies.append(dict(objective=task['objective'],
         sources=[dict(source=1,classification='clarify',reason='Explicit recheck')],
         criteria=[dict(original=0,disposition='retain',criterion=task['acceptance'][0],sources=[1],
-                       quote='Verify the saved bytes again.',reason='Reopen verification',verification='read')]))
+                       quote=instruction,reason='Explicit recheck' if reopen else 'Preserve completed work',verification='read',reopen=reopen)]))
     await engine._reconcile_sources(pending)
     focus=current_focus(store.get_task(task['id']))
-    assert focus['active']==[0] and not focus['carried'] and focus['requirements']=={'0':'read'}
+    if reopen:
+        assert focus['active']==[0] and not focus['carried'] and focus['requirements']=={'0':'read'}
+    else:
+        assert not focus['active'] and focus['carried']['0']['completed_source_hash']==current['source_hash']
+        assert not focus['requirements']
     store.close()
 
 
@@ -445,3 +452,44 @@ async def test_late_route_during_cleanup_cannot_start_http_or_change_saved_obser
     await asyncio.sleep(.1)
     assert engine.browser.recover(op).model_dump()==saved==result.model_dump()
     store.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('variant',['uncited','attachment'])
+async def test_reopening_needs_current_instruction_authority(tmp_path,variant):
+    engine,store,gateway,_,task=runtime(tmp_path,[])
+    pending=store.append_instruction(task['id'],'Verify again.',task['source_hash'])
+    if variant=='attachment':
+        pending['source_history'][-1]['kind']='attachment'
+    gateway.replies.append(dict(objective=task['objective'],
+        sources=[dict(source=1,classification='clarify',reason='Recheck')],
+        criteria=[dict(original=0,disposition='retain',criterion=task['acceptance'][0],
+                       sources=[] if variant=='uncited' else [1],quote='Verify again.',
+                       reason='Recheck',verification='read',reopen=True)]))
+    with pytest.raises(PolicyError,match='Reopening requires'):
+        await engine._reconcile_sources(pending)
+    assert store.get_task(task['id'])['source_history'][-1]['status']=='pending'
+    store.close()
+
+
+@pytest.mark.parametrize('quote_in_instruction',[True,False])
+def test_reopen_mixed_references_bind_quote_to_instruction(quote_in_instruction):
+    from policy_harness.sources import validate_reconciliation
+    from policy_harness.store import digest
+    quote='Check the saved result again.'
+    instruction='Summarize the attachment.' + (quote if quote_in_instruction else '')
+    task=dict(source_hash='current',acceptance=['Saved result'],source_history=[
+        dict(id='i',status='pending',kind='instruction',text=instruction),
+        dict(id='a',status='pending',kind='attachment',text=quote)])
+    plan=dict(source_hash='current',acceptance=['Saved result','Summarize the attachment.'],
+        source_dispositions=[dict(source_id=i,classification='clarify',reason='Read the instruction and attachment') for i in ['i','a']],
+        acceptance_dispositions=[
+            dict(index=0,old_hash=digest('Saved result'),disposition='retain',criterion='Saved result',
+                 source_ids=['i','a'],source_quote=quote,reason='Recheck',reopen=True),
+            dict(index=None,disposition='add',criterion='Summarize the attachment.',source_ids=['i'],
+                 source_quote='Summarize the attachment.',reason='New summary')])
+    if quote_in_instruction:
+        validate_reconciliation(task,plan)
+    else:
+        with pytest.raises(PolicyError,match='Reopening requires'):
+            validate_reconciliation(task,plan)
