@@ -143,6 +143,8 @@ class BrowserObserver:
         persist()
         browser = None
         play = None
+        driver_start = None
+        driver_manager = None
         status, error = 'failed', ''
         total_bytes = 0
         acquisitions=[]
@@ -266,7 +268,7 @@ class BrowserObserver:
                 persist()
                 active_routes.discard(route_task)
         async def observe():
-            nonlocal browser,play,context,status,preflight
+            nonlocal browser,play,context,status,preflight,driver_start,driver_manager
             try:
                 from playwright.async_api import async_playwright
             except ImportError:
@@ -292,7 +294,11 @@ class BrowserObserver:
                     target,_=_validate_url(destination)
                 data['navigation_redirects']=redirects
                 if redirects:data['coverage']['redirects']='Top-level redirects resolved by the public broker; fresh browser navigates directly to final URL. Subresource redirects are recorded but blocked.'
-            play=await async_playwright().start()
+            driver_manager=async_playwright()
+            # Keep ownership while the driver creates its pipe/process. A stop
+            # during start must still acquire and close that same driver.
+            driver_start=asyncio.create_task(driver_manager.start())
+            play=await asyncio.shield(driver_start)
             errors=[]
             for channel in browser_channels():
                 try:
@@ -366,6 +372,11 @@ class BrowserObserver:
             for pending_route in pending:pending_route.cancel()
             if pending:await asyncio.gather(*pending,return_exceptions=True)
             data['cleanup']={}
+            if driver_start is not None and play is None:
+                try:
+                    play=await asyncio.wait_for(asyncio.shield(driver_start),5)
+                except Exception as exc:
+                    data['limits'].append('driver_start: '+type(exc).__name__+': '+str(exc)[:300])
             for name,obj in (('context',context),('browser',browser)):
                 if obj:
                     try:
@@ -374,9 +385,9 @@ class BrowserObserver:
                     except Exception as exc:
                         data['cleanup'][name]='unconfirmed'
                         data['limits'].append('cleanup: '+name+': '+type(exc).__name__+': '+str(exc)[:300])
-            if play:
+            if driver_manager is not None:
                 try:
-                    await asyncio.wait_for(play.stop(),5)
+                    await asyncio.wait_for(driver_manager.__aexit__(),5)
                     data['cleanup']['driver']='closed'
                 except Exception as exc:
                     data['cleanup']['driver']='unconfirmed'

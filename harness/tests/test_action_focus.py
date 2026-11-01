@@ -402,13 +402,44 @@ async def test_browser_stop_closes_observation_and_retains_partial_result(tmp_pa
     engine,store,_,_,task=runtime(tmp_path,[])
     Path(task['workspace'],'index.html').write_text('<body>start<script>setInterval(()=>localStorage.setItem("tick",String(Date.now())),50)</script></body>',encoding='utf-8')
     operation=engine._operation('cancel-browser','browser_inspect',dict(path='index.html',wait_ms=10000),'Observe then stop')
-    entered=asyncio.Event();loop=asyncio.get_running_loop()
-    handle=asyncio.create_task(engine.browser.inspect(task,operation,lambda:loop.call_soon_threadsafe(entered.set)))
-    await entered.wait();await asyncio.sleep(.3);handle.cancel()
+    entered=asyncio.Event();loop=asyncio.get_running_loop();guards=[]
+    def before_request():
+        guards.append(True)
+        # Initial admission precedes driver startup. Stop after the local
+        # page route is entered, so this exercises an actual running browser.
+        if len(guards)>1:loop.call_soon_threadsafe(entered.set)
+    handle=asyncio.create_task(engine.browser.inspect(task,operation,before_request))
+    await asyncio.wait_for(entered.wait(),15);handle.cancel()
     with pytest.raises(asyncio.CancelledError):await asyncio.wait_for(handle,15)
     result=engine.browser.recover(operation)
     assert result.data['interrupted'] and result.status=='failed'
     assert result.data['finished_at'] and not any(x.startswith('cleanup:') for x in result.data['limits'])
+    store.close()
+
+
+@pytest.mark.asyncio
+async def test_cancel_during_driver_start_retains_handle_until_closed(tmp_path,monkeypatch):
+    import playwright.async_api as api
+    engine,store,_,_,task=runtime(tmp_path,[])
+    Path(task['workspace'],'index.html').write_text('<body>not opened</body>',encoding='utf-8')
+    actual_factory=api.async_playwright;entered=asyncio.Event();loop=asyncio.get_running_loop();closed=[]
+    class DelayedStartup:
+        def __init__(self):self.manager=actual_factory()
+        async def start(self):
+            play=await self.manager.start()
+            loop.call_soon_threadsafe(entered.set)
+            await asyncio.sleep(.3)
+            return play
+        async def __aexit__(self,*args):
+            await self.manager.__aexit__(*args);closed.append(True)
+    monkeypatch.setattr(api,'async_playwright',DelayedStartup)
+    operation=engine._operation('stop-driver-start','browser_inspect',dict(path='index.html'),'Stop during driver startup')
+    handle=asyncio.create_task(engine.browser.inspect(task,operation,lambda:None))
+    await asyncio.wait_for(entered.wait(),10);handle.cancel()
+    with pytest.raises(asyncio.CancelledError):await asyncio.wait_for(handle,10)
+    result=engine.browser.recover(operation)
+    assert closed==[True] and result.status=='failed' and result.data['interrupted']
+    assert result.data['cleanup']['driver']=='closed' and not result.data['network']
     store.close()
 
 
@@ -427,7 +458,7 @@ async def test_live_same_url_requests_keep_new_cookie_and_response(tmp_path):
     async def resolver(host):return ['93.184.216.34']
     web=WebCollector(FakeSettings(),transport=httpx.MockTransport(transport),resolver=resolver)
     web.acquisition_store=store;engine.web=web;engine.browser=BrowserObserver(store,web)
-    result=await engine._perform(task,ToolRequest(name='browser_inspect',arguments=dict(url='https://site.example/',wait_ms=300),purpose='Observe consecutive live requests'),'live-repeats')
+    result=await engine._perform(task,ToolRequest(name='browser_inspect',arguments=dict(url='https://site.example/',wait_ms=1500),purpose='Observe consecutive live requests'),'live-repeats')
     assert result.status=='succeeded',result.stderr
     assert result.data['rendered_text']=='second response' and len(calls)==3
     assert len({x['exchange_id'] for x in result.data['network'] if x.get('exchange_id')})==3
