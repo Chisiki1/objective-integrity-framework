@@ -200,6 +200,14 @@
       "value": "person@example.org",
       "reason": "Synthetic reserved-domain test data for private-source rejection.",
       "provenance": "Provider redaction regression fixtures; example.org is reserved for examples."
+    },
+    {
+      "path": "harness/tests/test_ui_preferences.py",
+      "blob_sha256": "74AC145D351F66A9936891871F14752BF9BD3FC530AC6810F550F360B9882C05",
+      "kind": "long_hex_identifier",
+      "value": "20D25566050BFAD17D0C22B77FF59B1C04BA8BE8CECE0A9377058D2A2902F573",
+      "reason": "Checks the shipped OIF logo bytes.",
+      "provenance": "harness/src/policy_harness/static/oif-outline.png"
     }
   ]
 }
