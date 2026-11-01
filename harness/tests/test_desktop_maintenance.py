@@ -249,6 +249,7 @@ async def test_candidate_requires_full_read_and_rejects_foreign_source(fixture):
 @pytest.mark.asyncio
 async def test_real_update_route_and_restart_boundary(fixture,monkeypatch):
     completed={'action':'complete','message':'The installed OIF source was updated and read back',
+               'requirements':[{'criterion':0,'verification':'answer'}],
                'acceptance':[{'criterion':0,'evidence':'Applied, loaded and read back through controller tools'}],
                'artifacts':[]}
     rejected=dict(completed,artifacts=['src/policy_harness/__init__.py'])
