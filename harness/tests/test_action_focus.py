@@ -468,21 +468,34 @@ async def test_live_same_url_requests_keep_new_cookie_and_response(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_concurrent_browser_fetches_share_total_budget(tmp_path,monkeypatch):
+@pytest.mark.parametrize('response_delay',[.03,.6])
+async def test_concurrent_browser_fetches_share_total_budget(tmp_path,monkeypatch,response_delay):
     require_browser()
     import policy_harness.browser_observation as module
+    from playwright.async_api import Page
+    # This checks aggregate admission, not a wall-clock observation window.
+    # Wait for the real page's eight requests to settle, including blocked ones.
+    # The delayed case would outlast the former 400ms snapshot on any runner.
+    async def wait_for_fetches(page,_milliseconds):
+        await page.wait_for_function('window.budgetRequestsSettled === true',timeout=10000)
+    monkeypatch.setattr(Page,'wait_for_timeout',wait_for_fetches)
     monkeypatch.setattr(module,'MAX_TOTAL_BYTES',2500);monkeypatch.setattr(module,'MAX_BODY_BYTES',1600)
     engine,store,_,_,task=runtime(tmp_path,[]);calls=[]
     async def transport(req):
         calls.append(req.url.path)
-        if req.url.path=='/':return httpx.Response(200,headers={'content-type':'text/html'},text='<body>bounded<script>for(let i=0;i<8;i++)fetch("/data?i="+i).catch(()=>{})</script></body>')
-        await asyncio.sleep(.03)
+        if req.url.path=='/':return httpx.Response(200,headers={'content-type':'text/html'},text='''<body>bounded<script>
+          Promise.allSettled(Array.from({length:8},(_,i)=>fetch('/data?i='+i).then(r=>r.text())))
+            .then(()=>{window.budgetRequestsSettled=true});
+          </script></body>''')
+        await asyncio.sleep(response_delay)
         return httpx.Response(200,headers={'content-type':'text/plain'},content=b'x'*1400)
     async def resolver(host):return ['93.184.216.34']
     web=WebCollector(FakeSettings(),transport=httpx.MockTransport(transport),resolver=resolver)
     web.acquisition_store=store;engine.web=web;engine.browser=BrowserObserver(store,web)
     result=await engine._perform(task,ToolRequest(name='browser_inspect',arguments=dict(url='https://site.example/',wait_ms=400),purpose='Observe bounded concurrent fetches'),'bounded-concurrent')
+    assert result.status=='succeeded',result.stderr
     assert result.data['received_bytes']<=2500 and len(calls)==3
+    assert sum('/data?' in row['url'] for row in result.data['network'])==8
     assert 'total_response_bytes' in result.data['limits']
     assert any(x.get('partial') for x in result.data['acquisitions'])
     store.close()
