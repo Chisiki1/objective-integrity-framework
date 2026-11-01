@@ -69,7 +69,8 @@ class PracticalStep(StrictModel):
     action: Literal['tools', 'complete', 'blocked']
     tools: list[ToolRequest] = Field(default_factory=list, max_length=16,
         description='For action=tools, include at least one {name, arguments: {…}, purpose}. All tool parameters go INSIDE arguments. For complete/blocked, return an empty tools array. A message about a planned action does not execute it.')
-    message: str = Field(min_length=1)
+    message: str = Field(min_length=1,
+        description='This is the answer the USER reads. For complete, answer the CURRENT request in the user\'s language, including requested values/findings and exact existing output filenames. A generic completion/status statement or acceptance checklist is not the requested result. Keep completed background out unless relevant.')
     acceptance: list[CriterionEvidence] = Field(default_factory=list,
         description='For complete, include every active criterion exactly once, its observed evidence and successful operation_indices. Reuse saved results; do not repeat successful tools to fill this list. Completed background is carried by the controller.')
     artifacts: list[str] = Field(default_factory=list)

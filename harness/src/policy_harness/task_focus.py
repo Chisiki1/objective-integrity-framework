@@ -161,7 +161,12 @@ def completion_evidence(task, answer, rows):
                 delivered.update(artifact_path(Path(task['workspace']),a['path'],full_access=True)
                                  for a in result.get('artifacts',[]))
         if mode in kinds and not kinds[mode].intersection(verified):
-            raise PolicyError(f'Criterion {index} requires observed {mode} evidence. Supply successful operation_indices; explaining that work was not performed cannot complete it.')
+            available=[ordinal for ordinal,row in enumerate(rows)
+                       if row['operation']['kind'] in kinds[mode]
+                       and row.get('source_hash')==task['source_hash']
+                       and (row.get('result') or {}).get('status')=='succeeded'
+                       and (row.get('result') or {}).get('effect')!='unknown']
+            raise PolicyError(f'Criterion {index} requires observed {mode} evidence. Available successful current {mode} operation indices: {available[-32:]}. Check their relevance and cite the saved results; do not repeat successful tools to repair this response. Explaining that work was not performed cannot complete it.')
         if mode == 'artifact' and not delivered.intersection(
                 artifact_path(Path(task['workspace']),p,full_access=True) for p in answer.artifacts):
             raise PolicyError('Requested file creation needs a declared deliverable produced by its cited current action. Include the output path in artifacts and cite its write/execution plus readback indices. Preserve successful files; correct this response without repeating the tools.')
