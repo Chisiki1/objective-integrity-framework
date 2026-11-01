@@ -77,9 +77,32 @@ def project_completion(task, answer, rows):
     def artifacts(row):
         return {(artifact_path(workspace,a['path'],full_access=True),a.get('sha256'))
                 for a in (row.get('result') or {}).get('artifacts',[]) if a.get('path') and a.get('sha256')}
+    selected={artifact_path(workspace,p,full_access=True) for p in result.artifacts}
+    cited_reads={ordinal for evidence in result.acceptance for ordinal in evidence.operation_indices
+                 if 0<=ordinal<len(rows) and current(rows[ordinal])
+                 and rows[ordinal]['operation']['kind']=='file_read'}
+    cited_native={ordinal for evidence in result.acceptance for ordinal in evidence.operation_indices
+                  if 0<=ordinal<len(rows) and current(rows[ordinal])
+                  and rows[ordinal]['operation']['kind']=='exec'
+                  and rows[ordinal]['result'].get('data',{}).get('execution')=='native'}
     for evidence in result.acceptance:
         if evidence.criterion not in focus['active'] or focus['requirements'].get(str(evidence.criterion))!='artifact':continue
         cited=list(evidence.operation_indices)
+        for read in cited:
+            if read not in cited_reads or not selected.intersection(p for p,_ in artifacts(rows[read])):continue
+            preceding=[ordinal for ordinal in cited_native if ordinal<read]
+            if len(preceding)==1 and preceding[0] not in evidence.operation_indices:
+                evidence.operation_indices.append(preceding[0])
+        # Models often split "create output" and "read output" into different
+        # criteria. Reuse their explicitly cited read of the selected output;
+        # the native action and semantic code review still establish creation.
+        for ordinal in cited:
+            if not 0<=ordinal<len(rows) or not current(rows[ordinal]):continue
+            row=rows[ordinal]
+            if row['operation']['kind']!='exec' or row['result'].get('data',{}).get('execution')!='native':continue
+            for read in sorted(cited_reads):
+                if read>ordinal and selected.intersection(p for p,_ in artifacts(rows[read])) and read not in evidence.operation_indices:
+                    evidence.operation_indices.append(read)
         for ordinal in cited:
             if not 0<=ordinal<len(rows) or not current(rows[ordinal]) or rows[ordinal]['operation']['kind']!='file_read':continue
             read=artifacts(rows[ordinal])

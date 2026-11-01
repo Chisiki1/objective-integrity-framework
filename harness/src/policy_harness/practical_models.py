@@ -104,7 +104,11 @@ def response_schema(schema, payload=None):
         for action in ('tools', 'complete', 'blocked'):
             branch = deepcopy(value)
             branch['properties']['action'] = {'type': 'string', 'const': action}
-            branch['required'] = [*branch['required'], 'tools']
+            # Give every alternative the same required keys. Some constrained
+            # decoders emit required properties before optional ones; differing
+            # prefixes can otherwise commit to tools/blocked before action is
+            # chosen, making a valid completion practically unreachable.
+            branch['required'] = list(dict.fromkeys([*branch['required'], 'tools', 'acceptance', 'artifacts']))
             branch['properties']['tools'].update({'minItems': 1} if action == 'tools' else {'maxItems': 0})
             focus = (payload or {}).get('work_focus', {})
             active = focus.get('active')
@@ -112,10 +116,8 @@ def response_schema(schema, payload=None):
                 proof = deepcopy(definitions['CriterionEvidence'])
                 proof['properties']['criterion']['enum'] = active
                 branch['properties']['acceptance'].update(minItems=len(active), maxItems=len(active), items=proof)
-                branch['required'].append('acceptance')
                 if 'artifact' in focus.get('requirements', {}).values():
                     branch['properties']['artifacts']['minItems'] = 1
-                    branch['required'].append('artifacts')
             branches.append(branch)
         value = {'$defs': definitions, 'oneOf': branches}
     elif schema is PracticalSourcePlan and isinstance(payload, dict):

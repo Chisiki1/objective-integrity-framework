@@ -143,6 +143,74 @@ async def test_native_created_artifact_requires_current_execution_and_subsequent
     with pytest.raises(PolicyError,match='current instruction'):completion_evidence(task,answer,rows)
     rows[0]['source_hash']=task['source_hash']
     with pytest.raises(PolicyError,match='declared deliverable'):completion_evidence(task,answer,list(reversed(rows)))
+    task['acceptance'].append('Read generated JSON')
+    task['state']['work_focus']['active'].append(1)
+    task['state']['work_focus']['requirements']['1']='read'
+    split=PracticalStep(action='complete',message='Created and read JSON',artifacts=['summary.json'],acceptance=[
+        dict(criterion=0,evidence='Executed generator',operation_indices=[0]),
+        dict(criterion=1,evidence='Read saved output',operation_indices=[1])])
+    projected=project_completion(task,split,rows)
+    assert completion_evidence(task,projected,rows)[0]['operation_indices']==[0,1]
+    assert 'executable/code output' in engine._review_reasons(task,projected)
+    store.close()
+
+
+@pytest.mark.parametrize('variant',['valid','split-exec','uncited-exec','ambiguous-exec','uncited-read','old-read','failed-read','unknown-read','different-output','read-before-execution','unknown-execution'])
+def test_native_output_projection_joins_only_cited_current_selected_read(tmp_path,variant):
+    engine,store,_,_,task=runtime(tmp_path,[])
+    task['acceptance']=['Create summary.json','Read summary.json']
+    task['state']['work_focus']=requirement_update(task,[WorkRequirement(criterion=0,verification='artifact'),WorkRequirement(criterion=1,verification='read')])
+    rows=[dict(source_hash=task['source_hash'],operation=dict(kind='exec'),result=dict(status='succeeded',effect='confirmed',data=dict(execution='native'),artifacts=[])),
+          dict(source_hash=task['source_hash'],operation=dict(kind='file_read'),result=dict(status='succeeded',effect='none',artifacts=[dict(path='summary.json',sha256='a'*64)]))]
+    answer=PracticalStep(action='complete',message='Created and read output',artifacts=['summary.json'],acceptance=[
+        dict(criterion=0,evidence='Executed generator',operation_indices=[0]),
+        dict(criterion=1,evidence='Read saved output',operation_indices=[1])])
+    if variant in {'split-exec','uncited-exec','ambiguous-exec'}:
+        task['state']['work_focus']['requirements']['1']='run_code'
+        answer.acceptance[0].operation_indices=[1]
+        answer.acceptance[1].operation_indices=[0] if variant!='uncited-exec' else []
+        if variant=='ambiguous-exec':
+            import copy
+            rows.insert(1,copy.deepcopy(rows[0]));answer.acceptance[0].operation_indices=[2];answer.acceptance[1].operation_indices=[0,1]
+    elif variant=='uncited-read':answer.acceptance[1].operation_indices=[]
+    elif variant=='old-read':rows[1]['source_hash']='old'
+    elif variant=='failed-read':rows[1]['result']['status']='failed'
+    elif variant=='unknown-read':rows[1]['result']['effect']='unknown'
+    elif variant=='different-output':rows[1]['result']['artifacts'][0]['path']='unrelated.json'
+    elif variant=='unknown-execution':rows[0]['result']['effect']='unknown'
+    elif variant=='read-before-execution':
+        rows.reverse();answer.acceptance[0].operation_indices=[1];answer.acceptance[1].operation_indices=[0]
+    original=answer.model_dump()
+    projected=project_completion(task,answer,rows)
+    if variant in {'valid','split-exec'}:
+        assert set(projected.acceptance[0].operation_indices)=={0,1}
+        assert set(completion_evidence(task,projected,rows)[0]['operation_indices'])=={0,1}
+    else:
+        assert projected.acceptance[0].operation_indices==answer.acceptance[0].operation_indices
+        with pytest.raises(PolicyError):completion_evidence(task,projected,rows)
+    assert answer.model_dump()==original
+    store.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('output_reference',[0,1])
+async def test_native_output_completes_through_actual_compact_history(tmp_path,output_reference):
+    action=steps(tool('run_python',entrypoint='generate.py'),tool('file_read',path='summary.json'))
+    action['requirements']=[dict(criterion=0,verification='artifact'),dict(criterion=1,verification='run_code')]
+    answer=dict(action='complete',message='Total is 510.',artifacts=['summary.json'],acceptance=[
+        dict(criterion=0,evidence='Output saved and read',operation_indices=[output_reference]),
+        dict(criterion=1,evidence='Generator executed, output verified',operation_indices=[0,1])])
+    engine,store,gateway,_,task=runtime(tmp_path,[action,answer,dict(verdict='accept',findings=[],rationale='Observed execution and output match')])
+    task=store.update_task(task['id'],acceptance=['Save summary.json','Run generator'])
+    engine.access.set(task['id'],'full',0,confirm_full_access=True)
+    Path(task['workspace'],'generate.py').write_text('from pathlib import Path\nPath("summary.json").write_text(\'{"total":510}\')\n')
+    result=await run(engine,store,task)
+    assert result['status']=='completed',result['state']
+    assert json.loads(Path(task['workspace'],'summary.json').read_text())=={'total':510}
+    assert set(result['final']['acceptance'][0]['operation_indices'])=={0,1}
+    assert len(store.operations(task['id']))==2
+    assert 'execution' not in store.operation_headers(task['id'])[0]['result']['data']
+    assert [c[1] for c in gateway.calls]==['next_action','next_action','final_review']
     store.close()
 
 

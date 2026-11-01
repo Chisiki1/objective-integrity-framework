@@ -109,10 +109,13 @@ async def test_structured_action_format_is_bound_and_validated_without_fallback(
     def handle(request):
         body = json.loads(request.content);requests.append(body)
         schema = body['response_format']['json_schema']['schema']
+        shown = body['messages'][0]['content'].split('Required JSON schema:\n',1)[1]
+        assert json.JSONDecoder().raw_decode(shown)[0] == schema
         branches = {b['properties']['action']['const']: b for b in schema['oneOf']}
         assert branches['tools']['properties']['tools']['minItems'] == 1
         assert branches['complete']['properties']['tools']['maxItems'] == 0
         assert all('tools' in b['required'] for b in branches.values())
+        assert all(set(b['required']) == set(branches['complete']['required']) for b in branches.values())
         complete = branches['complete']
         assert {'acceptance','artifacts'} <= set(complete['required'])
         evidence = complete['properties']['acceptance']

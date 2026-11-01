@@ -1137,12 +1137,18 @@ class PracticalEngine:
 
     async def _finish(self, task, answer, call):
         rows = self.store.operation_headers(task['id'])
+        # The compact history intentionally omits native execution metadata.
+        # Hydrate only the cited executions needed to connect saved outputs;
+        # do not load an entire long-running task's raw history.
+        for ordinal in {i for e in answer.acceptance for i in e.operation_indices}:
+            if 0<=ordinal<len(rows) and rows[ordinal]['operation']['kind']=='exec':
+                rows[ordinal]=self.store.get_operation(rows[ordinal]['operation']['id'])
         proposed=answer
         answer=project_completion(task,proposed,rows)
         if answer.model_dump()!=proposed.model_dump():
             self.store.record('completion_projection',call,dict(task_id=task['id'],source_hash=task['source_hash'],
                 original=proposed.model_dump(),projected=answer.model_dump(),
-                basis='Current observed artifact paths and matching write/read hashes only; no tool repeated or source criterion changed'))
+                basis='Current observed file proof; exact write/read bytes or cited native execution with subsequent selected-output read. No tool repeated or source criterion changed.'))
         evidence = completion_evidence(task, answer, rows)
         if any(not row.get('result') or row['result']['effect'] == 'unknown'
                or row['result']['status'] in {'pending', 'unknown'} for row in rows if row['status'] != 'superseded'):

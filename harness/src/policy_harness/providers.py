@@ -587,6 +587,10 @@ class ModelGateway:
                        if scoped else self.policy.prompt())
         if not isinstance(policy_text, str) or not policy_text:
             raise ProviderError("Complete effective policy context is unavailable.")
+        from .practical_models import response_schema
+        # The model must see the same contract that constrains its output.
+        # Captured semantic-wire requests retain their original serializer.
+        shown_schema = response_schema(schema, payload) if semantic_wire is None else schema.model_json_schema()
         instructions = (
             # Captured legacy requests keep their exact common prefix. New
             # requests use the approved responsibility boundary at this shared
@@ -604,7 +608,7 @@ class ModelGateway:
             "Never fabricate Web retrieval, measurements, Skill use, success or an API response. "
             "Do not expose internal hidden reasoning; provide concise decision rationales.\n"
             f"Role: {role}\nPhase: {phase}\n"
-            f"Required JSON schema:\n{json.dumps(schema.model_json_schema(), ensure_ascii=False)}"
+            f"Required JSON schema:\n{json.dumps(shown_schema, ensure_ascii=False)}"
         )
         if (schema is LearningApplications
                 and payload.get('application_output_contract', {}).get('schema') == APPLICATION_OUTPUT_VERSION):
