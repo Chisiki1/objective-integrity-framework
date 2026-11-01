@@ -1,4 +1,4 @@
-"""Add the desktop and showcase to an exact committed beta release.
+"""Add the desktop and showcase to an exact committed desktop release.
 
 The input is a stopped, isolated Windows build. User data, caches and generated
 console launchers are never distributed. Output must be a new directory.
@@ -6,6 +6,7 @@ console launchers are never distributed. Output must be a new directory.
 from pathlib import Path
 import argparse
 import json
+import re
 import stat
 import zipfile
 import release
@@ -39,8 +40,8 @@ def archive(path, prefix, members):
 def build(base, desktop, destination):
     identity, _ = release.source_bundle(ROOT)
     version = identity['version']
-    if '-beta.' not in version:
-        raise ValueError('This profile is for a desktop beta release')
+    if not re.fullmatch(r'\d+\.\d+\.\d+(?:-beta\.\d+)?', version):
+        raise ValueError('This profile supports stable and beta desktop releases')
     manifest = json.loads((base/'release.json').read_bytes())
     if any(manifest.get(k) != identity[k] for k in ('source_commit','source_tree','version')):
         raise ValueError('Core assets have a different source identity')
@@ -93,7 +94,7 @@ def build(base, desktop, destination):
         shots['README.md' if language == 'en' else 'README-ja.md'] = text.encode('utf-8')
     shots['LICENSE']=(ROOT/'LICENSE').read_bytes()
     archive(destination/f'OIF-Showcase-{version}.zip',f'OIF-Showcase-{version}',shots)
-    manifest.update(profile='desktop-beta-v1', artifacts=[dict(name=p.name,bytes=p.stat().st_size,sha256=plugin.digest(p.read_bytes()))
+    manifest.update(profile='desktop-beta-v1' if '-beta.' in version else 'desktop-v1', artifacts=[dict(name=p.name,bytes=p.stat().st_size,sha256=plugin.digest(p.read_bytes()))
         for p in sorted(destination.glob('*.zip'))])
     manifest['helpers'].append(dict(path='tools/desktop_release.py',sha256=plugin.digest(Path(__file__).read_bytes())))
     (destination/'release.json').write_bytes(plugin.encoded(manifest))

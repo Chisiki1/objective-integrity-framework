@@ -1,4 +1,4 @@
-# OIF Desktop · 0.3.0-beta.5
+# OIF Desktop · 0.3.0
 
 **An agent workspace that keeps the goal in view and carries useful experience into the next task.**
 
@@ -6,11 +6,11 @@ OIF combines a Windows desktop app, a persistent task engine and a shared learni
 
 ## Start in three steps
 
-1. Download **OIF-Desktop-0.3.0-beta.5-windows-x64.zip** from the [beta release](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.5).
+1. Download **OIF-Desktop-0.3.0-windows-x64.zip** from the [release](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0).
 2. Extract the complete folder into a writable location. Open **OIF.exe**. Keep its `python`, `desktop`, `src`, `policy` and `scripts` folders beside it.
-3. Open **Settings**, choose an OpenAI-compatible provider and model, enter its API key, then start a task. OpenRouter also has a browser sign-in route. Availability and model capabilities depend on the provider.
+3. Open **Settings**, choose an OpenAI-compatible provider and model, enter an API key if required, then start a task. Local model servers are supported; see [local setup](docs/guide.md#use-a-local-model-on-this-pc). OpenRouter also has a browser sign-in route. Availability and model capabilities depend on the provider.
 
-Windows 10/11 x64 and the [Microsoft Edge WebView2 Evergreen Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) are required. The Windows package includes Python and its dependencies. A separate browser window or Python installation is unnecessary. This beta is not code-signed; Windows may ask you to confirm the publisher before launching it. Verify the downloaded archive against the release checksums.
+Windows 10/11 x64 and the [Microsoft Edge WebView2 Evergreen Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) are required. The Windows package includes Python and its dependencies. A separate browser window or Python installation is unnecessary. The application is not code-signed; Windows may ask you to confirm the publisher before launching it. Verify the downloaded archive against the release checksums.
 
 ## What you can do
 
@@ -21,7 +21,7 @@ Windows 10/11 x64 and the [Microsoft Edge WebView2 Evergreen Runtime](https://de
 - **Choose the access scope.** Workspace access is the ordinary default; confirmation and read-only modes are available. Full access has a separate confirmation and allows operations outside the task workspace. It is still subject to explicit user scope.
 - **Keep working locally.** Multiple chats can run concurrently. Per-chat recovery preserves recorded results. Closing the window leaves running work available when you reopen it.
 
-Ordinary file work does **not** require Docker. Isolated shell execution and controlled harness-code verification use Docker Desktop with a working Linux container backend. Install that optional environment before using those paths. The beta has no claim of universal model compatibility or benchmark superiority over other agent products.
+Ordinary file work does **not** require Docker. Isolated shell execution and controlled harness-code verification use Docker Desktop with a working Linux container backend. Install that optional environment before using those paths. Choose a model that can reliably return structured responses and follow tool instructions; compatibility and task quality depend on that model.
 
 ## Try it
 

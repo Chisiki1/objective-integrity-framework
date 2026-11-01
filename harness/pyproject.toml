@@ -1,6 +1,6 @@
 [project]
 name = "hermes-policy-harness"
-version = "0.3.0b5"
+version = "0.3.0"
 description = "OIF desktop harness with persistent objectives, reusable learning and controlled self-improvement"
 requires-python = ">=3.12,<3.13"
 dependencies = [
@@ -25,8 +25,8 @@ testpaths = [
   "tests/test_practical_growth.py", "tests/test_usability_learning.py", "tests/test_optional_learning.py",
   "tests/test_desktop_maintenance.py", "tests/test_artifact_preview.py",
   "tests/test_conversation_records.py", "tests/test_progress_consumers.py",
-  "tests/test_ui_preferences.py", "tests/test_whole_ui_repairs.py",
-  "tests/test_providers.py", "tests/test_provider_credential_history.py",
+  "tests/test_composer_keys.py", "tests/test_ui_preferences.py", "tests/test_whole_ui_repairs.py",
+  "tests/test_providers.py", "tests/test_local_models.py", "tests/test_provider_credential_history.py",
   "tests/test_credential_recovery_continuity.py", "tests/test_provider_evidence_recovery.py",
   "tests/test_server.py", "tests/test_executor.py", "tests/test_updates.py",
   "tests/test_source_input_ui.py", "tests/test_chat_recovery.py",
@@ -43,8 +43,8 @@ paths = [
   "tests/test_practical_growth.py", "tests/test_usability_learning.py", "tests/test_optional_learning.py",
   "tests/test_desktop_maintenance.py", "tests/test_artifact_preview.py",
   "tests/test_conversation_records.py", "tests/test_progress_consumers.py",
-  "tests/test_ui_preferences.py", "tests/test_whole_ui_repairs.py",
-  "tests/test_providers.py", "tests/test_provider_credential_history.py",
+  "tests/test_composer_keys.py", "tests/test_ui_preferences.py", "tests/test_whole_ui_repairs.py",
+  "tests/test_providers.py", "tests/test_local_models.py", "tests/test_provider_credential_history.py",
   "tests/test_credential_recovery_continuity.py", "tests/test_provider_evidence_recovery.py",
   "tests/test_server.py", "tests/test_executor.py", "tests/test_updates.py",
   "tests/test_source_input_ui.py", "tests/test_chat_recovery.py",

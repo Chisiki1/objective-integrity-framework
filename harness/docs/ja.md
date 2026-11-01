@@ -1,14 +1,14 @@
 # OIF Desktop ガイド
 
-バージョン **0.3.0-beta.5** · [English](guide.md)
+バージョン **0.3.0** · [English](guide.md)
 
 ## 起動
 
-1. [β版リリース](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0-beta.5)から **OIF-Desktop-0.3.0-beta.5-windows-x64.zip** を取得します。
+1. [リリース](https://github.com/Chisiki1/objective-integrity-framework/releases/tag/v0.3.0)から **OIF-Desktop-0.3.0-windows-x64.zip** を取得します。
 2. ZIP全体を書き込み可能なフォルダーに展開し、**OIF.exe** を開きます。Pythonは同梱されています。EXEだけを別の場所に移動しないでください。
-3. 設定でプロバイダー・モデル・APIキーを指定し、作業を始めます。OpenRouterにはブラウザーでのサインイン経路もあります。OAuthが全プロバイダーに対応するわけではありません。
+3. 設定で接続先・モデルを指定し、必要な場合はAPIキーを入力して作業を始めます。OpenRouterにはブラウザーでのサインイン経路もあります。OAuthが全プロバイダーに対応するわけではありません。
 
-Windows 10/11 x64と[WebView2 Evergreen Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)が必要です。このβ版はコード署名されていないため、Windowsが実行前に確認を表示する場合があります。同じリリースのチェックサムでZIPを確認してください。
+Windows 10/11 x64と[WebView2 Evergreen Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)が必要です。このアプリはコード署名されていないため、Windowsが実行前に確認を表示する場合があります。同じリリースのチェックサムでZIPを確認してください。
 
 最初は「answer.txtに改行なしでhelloと保存し、読み戻して確認してください」と依頼してみてください。
 
@@ -20,7 +20,21 @@ Windows 10/11 x64と[WebView2 Evergreen Runtime](https://developer.microsoft.com
 
 成果物は最新の版から確認できます。テキスト・Markdown・画像・PDFはプレビューでき、ダウンロードは別操作です。長い記録はページごとに取得します。作業の詳細から未完了事項、改善案、スキルを確認できます。タスクの右クリックで名前・ピン留め・アーカイブ・整理・ローカルリンクを操作できます。リンクはこのインストールで開くためのもので、公開共有ではありません。
 
+## 指示の送信
+
+新しい作業と追加指示はEnterで送信し、Shift+Enterで改行します。「接続設定 → 送信キー」で「Ctrl/Cmd+Enterで送信」を選ぶと、Enterは改行になります。変更はすぐに反映され、この端末に保存されます。日本語などの変換確定では送信しません。
+
 ## モデル・権限・長期作業
+
+### このPCのローカルモデルを使う
+
+Ollama、LM Studio、llama.cppなどのOpenAI互換サーバーに接続できます。モデルサーバーを起動し、接続設定で「互換API」を選びます。Ollamaの接続先は `http://127.0.0.1:11434/v1`、モデル欄にはインストール済みの正確なモデル名を指定します。認証のないローカルサーバーではAPIキーは空欄で使えます。認証を有効にしたサーバーには、そのサーバーのキーを指定してください。
+
+先に現在のクラウド接続に名前を付けて保存すると、後から戻せます。ローカル接続へ変更する時にキーを入力しなければ、前の接続のキーは引き継ぎません。HTTPを許可するのは `127.0.0.1`、`localhost`、`[::1]` のみです。Web情報収集の通信設定は別です。モデルをローカルにしても、依頼したWeb調査までオフラインにはなりません。
+
+文脈・出力の上限は、モデルサーバーの実際の設定に合わせます。OllamaではOIFの入力欄を変えるだけでサーバー側の文脈は増えません。必要な場合は、既存モデルを元に `FROM モデル名` と `PARAMETER num_ctx 65536` を書いたModelfileを作り、`ollama create oif-local -f Modelfile` で専用のモデル名を追加して使います。[Ollamaの設定手順](https://docs.ollama.com/api/openai-compatibility#setting-the-local-context-size)
+
+### 権限と文脈の管理
 
 モデル名、接続先、役割やプロファイルを設定できます。モデルに合うコンテキストと出力上限を指定してください。長期作業では作業用の文脈を圧縮し、原記録は必要な範囲で取得します。圧縮した要約を原指示や証拠より上位に扱いません。
 
@@ -80,10 +94,10 @@ APIキーは現在のWindowsユーザー向けに保護されます。タスク�
 
 戻す時は現在の版を停止し、新しい作業も別途保存したうえで、バックアップ全体を元と同じパスへ戻します。バックアップ時点への復元なので、それ以降の作業は別に残してください。デスクトップの表示設定はインストール先に対応するユーザーのローカルOIFプロファイルに保存されます。非公開の開発環境や別のFramework・プラグインを自動移行する機能ではありません。
 
-## β版の検証範囲
+## 対応範囲と検証
 
 Windows x64とPracticalEngineが対象です。自動テストは再現可能な仮のプロバイダーや作業領域を使います。紹介画面はサンプルと明示しています。実プロバイダー、OSの確認画面、外部サービスの変化による動作は環境ごとに確認が必要です。不具合報告には版、対象操作、秘密情報を除いた最初のエラーと途中成果を添えてください。
 
 ## 紹介画像
 
-[日本語の紹介画像3枚](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0-beta.5/docs/showcase/ja/README.md)も公開しています。リリースの紹介画像ZIPには英語版と日本語版を収録しています。
+[日本語の紹介画像3枚](https://github.com/Chisiki1/objective-integrity-framework/blob/v0.3.0/docs/showcase/ja/README.md)も公開しています。リリースの紹介画像ZIPには英語版と日本語版を収録しています。

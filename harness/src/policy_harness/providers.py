@@ -24,7 +24,7 @@ from .models import (ConfigurationRequired, Idea, PolicyError, LearningApplicati
                      APPLICATION_OUTPUT_VERSION, APPLICATION_OUTPUT_INSTRUCTION, now)
 from .store import digest
 from .model_routing import resolve_lease
-from .settings import _WindowsDPAPI, SettingsError
+from .settings import _WindowsDPAPI, SettingsError, local_model_endpoint
 
 # This process is an independent local harness. No implicit remote trace export.
 os.environ["LANGCHAIN_TRACING_V2"] = "false"
@@ -553,7 +553,7 @@ class ModelGateway:
     async def health(self) -> dict:
         values = self.settings.get()
         missing = [name for name in ("base_url", "model", "model_context_tokens", "max_output_tokens") if not values.get(name)]
-        if not values.get("model_api_key_configured"):
+        if not values.get("model_api_key_configured") and not local_model_endpoint(values.get('base_url')):
             missing.append("model_api_key")
         return {"configured": not missing, "missing": missing, "base_url": values.get("base_url"), "model": values.get("model"), "api_mode": values.get("api_mode"), "connectivity": "not-tested", "paid_request_performed": False}
 
@@ -564,9 +564,9 @@ class ModelGateway:
         if any(not values.get(name) for name in ("base_url", "model", "model_context_tokens", "max_output_tokens")):
             raise ConfigurationRequired("Configure the provider, model, context capacity and output capacity first.")
         key = self.settings.secret("model_api_key")
-        if not key:
+        if not key and not local_model_endpoint(values['base_url']):
             raise ConfigurationRequired("A model API key is required.")
-        return values, key
+        return values, key or ''
 
     def _messages(self, role, phase, payload, schema, *, semantic_wire=None) -> list[dict]:
         payload = dict(payload)
@@ -668,7 +668,9 @@ class ModelGateway:
         tokens, counting = _message_tokens(messages)
         if tokens + values["max_output_tokens"] > values["model_context_tokens"]:
             raise ConfigurationRequired("Complete policy and input exceed the configured context estimate. No content was truncated and no request was sent.")
-        headers = {"Authorization": "Bearer " + key, "User-Agent": values["user_agent"], "x-opencode-session": session_header(task_id)}
+        headers = {"User-Agent": values["user_agent"], "x-opencode-session": session_header(task_id)}
+        if key:
+            headers['Authorization'] = 'Bearer ' + key
         body = {"model": model, "messages": messages, "stream": False, "max_tokens": values["max_output_tokens"], "response_format": {"type": "json_object"}}
         if values.get("reasoning_effort") is not None:
             body["reasoning_effort"] = values["reasoning_effort"]

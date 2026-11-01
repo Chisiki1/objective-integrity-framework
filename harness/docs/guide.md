@@ -1,6 +1,6 @@
 # OIF Desktop guide
 
-Version **0.3.0-beta.5** · [Quick start](../README.md) · [Japanese](ja.md)
+Version **0.3.0** · [Quick start](../README.md) · [Japanese](ja.md)
 
 ## A task from request to result
 
@@ -12,7 +12,17 @@ Artifacts are listed with their latest version first. Clicking a supported file 
 
 ## Models and access
 
-Settings holds provider endpoints, model names and named roles/profiles. Use an API key for a supported OpenAI-compatible endpoint. The OpenRouter sign-in flow is an optional provider-specific route. OAuth is not available for every provider. Context limits and output limits must match the model you select. Context compression keeps bounded working memory and original records; it cannot make an incorrect summary authoritative.
+### Use a local model on this PC
+
+OIF can connect to OpenAI-compatible servers such as Ollama, LM Studio and llama.cpp. Start the model server and select **Compatible API** in connection settings. For Ollama, use `http://127.0.0.1:11434/v1` and the exact installed model name. Leave the API key empty for a local server without authentication, or supply that server's own key when authentication is enabled.
+
+Save your current cloud connection under a name first so you can switch back. Changing to a local endpoint without entering a key clears the previous connection's active key; its saved profile remains available. HTTP is allowed only for `127.0.0.1`, `localhost` and `[::1]`. Web research has separate settings: selecting local inference does not make requested Web research offline.
+
+Match OIF's context and output limits to the actual model server. Changing OIF's context field does not enlarge Ollama's server context. If needed, create a Modelfile with `FROM model-name` and `PARAMETER num_ctx 65536`, then run `ollama create oif-local -f Modelfile` to add a dedicated model name using existing weights. [Ollama context configuration](https://docs.ollama.com/api/openai-compatibility#setting-the-local-context-size)
+
+### Permissions and context management
+
+Settings holds provider endpoints, model names and named roles/profiles. Use an API key when the OpenAI-compatible server requires authentication. The OpenRouter sign-in flow is an optional provider-specific route. OAuth is not available for every provider. Context limits and output limits must match the model you select. Context compression keeps bounded working memory and original records; it cannot make an incorrect summary authoritative.
 
 Access is explicit in the composer. Workspace mode confines ordinary file tools to the task folder. Confirmation mode asks before covered changes and communication. Read-only restricts mutations. Full access allows broader native file and command operations after its confirmation; choose it only for work you intend to authorize. Changing a selection applies to subsequent actions, not to already-issued effects.
 
@@ -41,6 +51,10 @@ The practical policy preserves the goal, all mandatory outcomes, permissions, fi
 The agent can inspect non-secret runtime settings and allowlisted source. A source improvement follows proposal, isolated verification, review, activation, subsequent ordinary use and possible rollback. It cannot turn arbitrary source writes into an update by calling them learning. Changing explicit user conditions still requires the corresponding user authority.
 
 Docker Desktop with a working Linux container backend is needed for isolated shell execution and controlled code verification. Ordinary workspace file reading/writing, task management, artifact preview and the desktop UI do not require Docker. Model quality, provider reliability and a working verification environment still affect the result. Successful tests establish their tested scope, not unlimited autonomous growth.
+
+## Sending prompts
+
+Enter sends a new task or follow-up instruction; Shift+Enter inserts a newline. In **Connection settings → Send key**, choose **Ctrl/Cmd+Enter to send** to make plain Enter insert a newline. This preference applies immediately and is saved on this device. Confirming Japanese or other IME text does not send the prompt.
 
 ## Stop, recover and work in parallel
 
@@ -76,6 +90,6 @@ Before updating or restarting, send or clear unsent text and attachments in ever
 
 To restore, stop and preserve the current version and its data, then restore the complete backup at the same original path. This restores the backup's point in time; retain newer work separately. Desktop preferences are in the current user's local OIF profile, keyed by installation path. These steps describe versioned public desktop packages. Private development workspaces and unrelated framework/plugin installations are not automatically migrated.
 
-## Beta scope
+## Supported and tested scope
 
 This release supports Windows x64 and the PracticalEngine. Automated tests use synthetic providers for repeatable runtime assertions. Illustrative screenshots are labelled examples. Live provider behavior, OS trust prompts and third-party service changes can differ across installations. Report a reproducible problem with the version, the affected operation and redacted logs. Keep the original first error and any partial result.

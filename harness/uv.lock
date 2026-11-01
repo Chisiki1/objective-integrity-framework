@@ -308,7 +308,7 @@ wheels = [
 
 [[package]]
 name = "hermes-policy-harness"
-version = "0.3.0b5"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "deepagents" },

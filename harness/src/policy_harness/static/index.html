@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>OIF</title><link rel="icon" href="/static/oif-desktop.png" type="image/png">
-  <script src="/static/i18n.js"></script><link rel="stylesheet" href="/static/style.css"><script src="/static/presentation.js" defer></script><script src="/static/artifact-preview.js" defer></script><script src="/static/conversation.js" defer></script><script src="/static/record-view.js" defer></script><script src="/static/app.js" defer></script><script src="/static/provider-settings.js" defer></script><script src="/static/workspace.js" defer></script>
+  <script src="/static/i18n.js"></script><link rel="stylesheet" href="/static/style.css"><script src="/static/presentation.js" defer></script><script src="/static/artifact-preview.js" defer></script><script src="/static/conversation.js" defer></script><script src="/static/record-view.js" defer></script><script src="/static/app.js" defer></script><script src="/static/provider-settings.js" defer></script><script src="/static/workspace.js" defer></script><script src="/static/composer.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main-content" data-i18n="メインへ移動">メインへ移動</a>
@@ -86,7 +86,9 @@
   </div>
   <dialog id="settings-dialog" aria-labelledby="settings-title"><form id="settings-form">
     <div class="dialog-heading"><h2 id="settings-title" data-i18n="接続設定">接続設定</h2><button id="settings-close" class="icon-button" type="button" aria-label="閉じる" data-i18n-label="閉じる">×</button></div>
-    <p class="muted" data-i18n="契約済みの接続先を指定します。キーは入力して保存できますが、画面へ再表示しません。">契約済みの接続先を指定します。キーは入力して保存できますが、画面へ再表示しません。</p>
+    <p class="muted" data-i18n="クラウドAPIまたはこのPCのローカルモデルを指定します。保存した接続から切り替えられます。">クラウドAPIまたはこのPCのローカルモデルを指定します。保存した接続から切り替えられます。</p>
+    <p class="muted" data-i18n="Ollamaの接続先は http://127.0.0.1:11434/v1 です。APIキーは不要です。ローカル接続へ変更すると以前の接続のキーは送信しません。">Ollamaの接続先は http://127.0.0.1:11434/v1 です。APIキーは不要です。ローカル接続へ変更すると以前の接続のキーは送信しません。</p>
+    <div class="fields-grid"><label class="wide"><span data-i18n="送信キー">送信キー</span><select id="send-key"><option value="enter" data-i18n="Enterで送信・Shift+Enterで改行">Enterで送信・Shift+Enterで改行</option><option value="ctrl-enter" data-i18n="Ctrl/Cmd+Enterで送信・Enterで改行">Ctrl/Cmd+Enterで送信・Enterで改行</option></select></label></div>
     <div class="fields-grid"><label class="wide"><span data-i18n="保存した接続">保存した接続</span><select id="provider-profile"><option value="">現在の設定</option></select></label></div>
     <div class="dialog-footer"><button id="profile-use" type="button" class="quiet" data-i18n="この接続を使う">この接続を使う</button><button id="profile-delete" type="button" class="quiet" data-i18n="一覧から削除">一覧から削除</button><button id="openrouter-login" type="button" class="quiet" data-i18n="OpenRouterでログイン">OpenRouterでログイン</button></div>
     <details><summary data-i18n="接続に名前を付けて保存">接続に名前を付けて保存</summary><label><span data-i18n="接続名">接続名</span><input id="profile-name" maxlength="80" placeholder="例：普段の作業用"></label><button id="profile-save" type="button" class="quiet" data-i18n="入力中の設定を保存">入力中の設定を保存</button></details>

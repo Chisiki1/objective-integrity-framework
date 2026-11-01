@@ -85,6 +85,20 @@ def _https_base(value: str, name: str) -> str:
     return value.rstrip("/")
 
 
+def local_model_endpoint(value: str) -> bool:
+    """Allow unencrypted model traffic only to explicit loopback destinations."""
+    if not isinstance(value, str) or any(c.isspace() or c == '\\' for c in value):
+        return False
+    try:
+        parsed = urlsplit(value)
+        return (parsed.scheme == 'http' and parsed.hostname in {'localhost', '127.0.0.1', '::1'}
+                and parsed.username is None and parsed.password is None
+                and not parsed.query and not parsed.fragment
+                and (parsed.port is None or 1 <= parsed.port <= 65535))
+    except ValueError:
+        return False
+
+
 class SettingsManager:
     def __init__(self, data_dir: Path, *, protector=None) -> None:
         self.data_dir = Path(data_dir)
@@ -145,7 +159,10 @@ class SettingsManager:
                 raise SettingsError(f"Invalid setting: {name}")
             result[name] = result[name].strip()
         if result["base_url"]:
-            result["base_url"] = _https_base(result["base_url"], "base_url")
+            if local_model_endpoint(result['base_url']):
+                result['base_url'] = result['base_url'].rstrip('/')
+            else:
+                result["base_url"] = _https_base(result["base_url"], "base_url")
         if result["web_base_url"]:
             if not isinstance(result["web_base_url"], str):
                 raise SettingsError("Invalid setting: web_base_url")
@@ -252,8 +269,16 @@ class SettingsManager:
             document = self._load()
             before = self.path.read_bytes() if self.path.exists() else None
             old_url, new_url = document['values']['base_url'], values.get('base_url', document['values']['base_url'])
-            if old_url and urlsplit(old_url).netloc != urlsplit(new_url).netloc and 'model_api_key' not in values:
-                raise SettingsError('接続先を変更する場合は、その接続先のAPIキーも入力してください。保存した接続の切替も利用できます。')
+            if isinstance(new_url, str):
+                new_url = new_url.strip()
+            origin_changed = (urlsplit(old_url).scheme, urlsplit(old_url).netloc) != (urlsplit(new_url).scheme, urlsplit(new_url).netloc)
+            if origin_changed and 'model_api_key' not in values and (old_url or local_model_endpoint(new_url)):
+                if local_model_endpoint(new_url):
+                    # A cloud credential must never follow a switch to a local
+                    # server. Its protected history and saved profile remain.
+                    values = dict(values, model_api_key=None, auth_method='api_key')
+                else:
+                    raise SettingsError('接続先を変更する場合は、その接続先のAPIキーも入力してください。保存した接続の切替も利用できます。')
             if 'model_api_key' in values and 'auth_method' not in values:
                 values = dict(values, auth_method='api_key')
             document["values"] = self._validate({**document["values"], **{k: v for k, v in values.items() if k in DEFAULTS}})

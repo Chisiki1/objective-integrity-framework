@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — 2026-11-02
+
+- First stable desktop release, retaining the existing beta release history.
+- Send new tasks and follow-up instructions with Enter by default; Shift+Enter inserts a newline. Settings can select Ctrl/Cmd+Enter sending. IME composition and existing attachment/submission handling are preserved.
+
+- Connect local OpenAI-compatible model servers over HTTP on explicit loopback addresses; local servers without authentication need no API key.
+- Changing from a cloud endpoint to a local one does not carry the previous active credential. Saved cloud profiles and protected credential history remain available.
+- Add matching English and Japanese local-model setup instructions, including server-side context limits. Remote model and Web-provider HTTPS requirements remain unchanged.
+
 ## 0.3.0-beta.5 — 2026-10-09
 
 - A known Web response-size limit no longer holds an entire task as an unknown operation. Recovery authenticates the retained bytes and keeps the original failure without replaying its request.

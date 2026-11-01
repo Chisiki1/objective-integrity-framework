@@ -2,6 +2,8 @@
 // Only explicitly marked interface strings are translated. Source/evidence is never scanned.
 globalThis.OIFI18n = (() => {
   const en = {
+    'クラウドAPIまたはこのPCのローカルモデルを指定します。保存した接続から切り替えられます。':'Choose a cloud API or a local model on this PC. Switch between saved connections.',
+    'Ollamaの接続先は http://127.0.0.1:11434/v1 です。APIキーは不要です。ローカル接続へ変更すると以前の接続のキーは送信しません。':'For Ollama, use http://127.0.0.1:11434/v1. No API key is needed. Switching to a local connection does not forward the previous connection’s key.',
     '表示を更新':'Refresh view',
     'このチャットの記録と接続を更新します。作業や入力中の内容は保持します。':'Refresh this chat’s records and connection. Work and drafts are retained.',
     'このチャットの表示を更新しました。':'This chat’s view has been refreshed.',
@@ -62,6 +64,7 @@ globalThis.OIFI18n = (() => {
     '最後に確認した状態：実行中。現在の状態を再確認しています。':'Last known state: running. Checking the current state.'
   });
   Object.assign(en,{'原記録':'Original record','タスクの場所':'Task location','アーカイブ':'Archive','ごみ箱':'Trash','フォルダーを作成':'Create folder','フォルダー':'Folders','このハーネスの作業方針':'How this harness works','添付':'Attach','アクセス権限':'Access permissions','タスクの操作':'Task actions','名前':'Name','保存':'Save','使う場面：':'When to use: ','使用後の評価：':'Assessment after use: '});
+  Object.assign(en,{'送信キー':'Send key','Enterで送信・Shift+Enterで改行':'Enter to send · Shift+Enter for newline','Ctrl/Cmd+Enterで送信・Enterで改行':'Ctrl/Cmd+Enter to send · Enter for newline'});
   const listeners = new Set();
   Object.assign(en,{
     '実操作に使用':'Used in an operation','使用結果を評価':'Outcome assessed',
