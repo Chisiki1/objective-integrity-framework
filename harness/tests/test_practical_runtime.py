@@ -183,7 +183,8 @@ async def test_unknown_effect_is_preserved_and_never_replayed(tmp_path, monkeypa
 
 
 @pytest.mark.asyncio
-async def test_additional_instruction_preserves_previous_acceptance_and_final(tmp_path):
+@pytest.mark.parametrize('quote', ['notes.txt contains note', ''])
+async def test_additional_instruction_preserves_previous_acceptance_and_final(tmp_path, quote):
     engine, store, gateway, web, task = runtime(tmp_path, [steps(tool('file_write', path='answer.txt', text='hello')), finish('answer.txt')])
     await run(engine, store, task)
     original = store.get_task(task['id'])
@@ -193,7 +194,7 @@ async def test_additional_instruction_preserves_previous_acceptance_and_final(tm
             {'source': 1, 'classification': 'add', 'reason': 'Additional output'}],
          'criteria': [{'original': 0, 'disposition': 'retain', 'criterion': task['acceptance'][0], 'reason': 'Still required'},
                       {'original': None, 'disposition': 'add', 'criterion': 'notes.txt contains note', 'sources': [1],
-                       'quote': 'notes.txt contains note', 'reason': 'Direct instruction'}]},
+                       'quote': quote, 'reason': 'Direct instruction'}]},
         steps(tool('file_write', path='notes.txt', text='note')), finish('answer.txt', 'notes.txt', criteria=2)])
     await engine.submit_instruction(task['id'], 'Also ensure notes.txt contains note', original['source_hash'])
     await engine.running[task['id']]
@@ -202,6 +203,38 @@ async def test_additional_instruction_preserves_previous_acceptance_and_final(tm
     assert task['acceptance'][0] in result['acceptance']
     assert len(store.records('task_final_history')) == 1
     assert len(store.operations(task['id'])) == 2
+    applied = store.records('task_source_history')[-1]['plan']['acceptance_dispositions'][-1]
+    assert applied['source_quote'] == 'notes.txt contains note'
+    # The original model reply is retained even when code binds the literal.
+    calls = store.task_records('practical_call', task['id'])
+    source_call = next(x for x in calls if x['phase'] == 'source_reconciliation')
+    assert source_call['response']['criteria'][-1]['quote'] == quote
+    store.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('kind', ['paraphrase', 'historical', 'attachment', 'wrong-quote', 'replace', 'withdraw'])
+async def test_literal_addition_binding_cannot_authorize_other_source_changes(tmp_path, kind):
+    engine, store, gateway, web, task = runtime(tmp_path, [])
+    store.update_task(task['id'], policy_hash=engine.policy.hash, state={'runtime': RUNTIME})
+    text = 'Also create notes.txt with note'
+    pending = store.append_instruction(task['id'], text, task['source_hash'],
+        attachment={'filename': 'reference.txt', 'bytes': text.encode()} if kind == 'attachment' else None)
+    choice = {'original': None, 'disposition': 'add', 'criterion': text, 'sources': [1], 'quote': '', 'reason': 'Model proposal'}
+    retained = {'original': 0, 'disposition': 'retain', 'criterion': task['acceptance'][0], 'reason': 'Keep prior outcome'}
+    if kind == 'paraphrase': choice['criterion'] = 'A note file must be present'
+    if kind == 'historical': choice.update(criterion=task['objective'], sources=[0])
+    if kind == 'wrong-quote': choice['quote'] = 'An unsupported quotation'
+    if kind in {'replace', 'withdraw'}: choice.update(original=0, disposition=kind)
+    gateway.replies.append({'objective': 'Follow the latest instruction',
+        'sources': [{'source': 1, 'classification': 'correct' if kind in {'replace', 'withdraw'} else 'add', 'reason': 'Model classification'}],
+        'criteria': [choice] if kind in {'replace', 'withdraw'} else [retained, choice]})
+    with pytest.raises(PolicyError, match='exact quote'):
+        await engine._reconcile_sources(pending)
+    current = store.get_task(task['id'])
+    assert current['acceptance'] == task['acceptance']
+    assert current['source_history'][-1]['status'] == 'pending'
+    assert not store.records('task_source_history')
     store.close()
 
 

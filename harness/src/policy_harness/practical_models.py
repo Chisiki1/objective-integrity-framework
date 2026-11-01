@@ -119,11 +119,11 @@ class SourceChoice(StrictModel):
 
 
 class AcceptanceChoice(StrictModel):
-    original: int | None
+    original: int | None = Field(description='Index in acceptance for a prior criterion; null for a new addition. Never a source index.')
     disposition: Literal['retain', 'replace', 'withdraw', 'add']
     criterion: str
     sources: list[int] = Field(default_factory=list)
-    quote: str = ''
+    quote: str = Field(default='', description='For add/replace/withdraw, copy a nonempty exact quote from a referenced pending user instruction. Empty only for retain.')
     reason: str = Field(min_length=1)
 
 
